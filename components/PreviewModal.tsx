@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { Asset } from '../types';
-import { getPreviewLink, getFileType } from '../services/assetService';
+import { getPreviewLink, getFileType, getDownloadLink } from '../services/assetService';
 
 interface PreviewModalProps {
   asset: Asset | null;
@@ -28,6 +28,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, onClose }) => {
 
   const fileType = getFileType(asset.link);
   const previewUrl = getPreviewLink(asset.link);
+  const downloadUrl = getDownloadLink(asset.link);
 
   const renderPreview = () => {
     switch (fileType) {
@@ -54,15 +55,17 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, onClose }) => {
           <div className="p-10 lg:p-16 text-center bg-white rounded-2xl shadow-sm border border-slate-100">
             <div className="text-4xl lg:text-6xl mb-6 opacity-30">🔗</div>
             <h3 className="text-xl lg:text-2xl font-extrabold text-slate-900 mb-4">No Preview Available</h3>
-            <p className="text-slate-500 mb-8 max-w-sm mx-auto text-sm">This asset can be viewed by opening the direct link below.</p>
-            <a 
-              href={asset.link} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex px-8 py-3.5 bg-wg-honorable text-white font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-wg-royal transition-all shadow-lg active:scale-95"
-            >
-              Open Resource
-            </a>
+            <p className="text-slate-500 mb-8 max-w-sm mx-auto text-sm">This asset can be viewed by opening or downloading via the links below.</p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <a 
+                href={asset.link} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex px-8 py-3.5 bg-slate-100 text-slate-700 font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-200 transition-all active:scale-95"
+              >
+                Open Resource
+              </a>
+            </div>
           </div>
         );
     }
@@ -99,14 +102,38 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, onClose }) => {
           {renderPreview()}
         </div>
 
-        <div className="px-5 lg:px-8 py-5 lg:py-8 bg-white border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-y-auto shrink-0">
+        <div className="px-5 lg:px-8 py-5 lg:py-8 bg-white border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0">
           <div className="flex-1 min-w-0">
             <h4 className="text-[8px] lg:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 lg:mb-2">Description</h4>
-            <p className="text-slate-700 text-xs lg:text-sm leading-relaxed font-medium max-w-2xl">{asset.description || 'No description provided.'}</p>
+            <p className="text-slate-700 text-xs lg:text-sm leading-relaxed font-medium max-w-2xl line-clamp-3 lg:line-clamp-none">
+              {asset.description || 'No description provided.'}
+            </p>
           </div>
-          <div className="flex flex-col items-start md:items-end gap-2 lg:gap-3 shrink-0">
-             <h4 className="text-[8px] lg:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tags</h4>
-             <div className="flex flex-wrap gap-1.5 lg:gap-2 lg:justify-end">
+          
+          <div className="flex flex-col gap-4 shrink-0 md:items-end w-full md:w-auto">
+             <div className="flex flex-wrap gap-2 md:justify-end">
+                <a 
+                  href={downloadUrl} 
+                  download={asset.title}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-wg-honorable text-white font-black uppercase tracking-widest text-[10px] rounded-full hover:bg-wg-royal transition-all shadow-lg shadow-wg-honorable/20 active:scale-95"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  Download File
+                </a>
+                <a 
+                  href={asset.link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-50 text-slate-500 font-black uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-100 transition-all active:scale-95 border border-slate-200"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                  Open Original
+                </a>
+             </div>
+             
+             <div className="flex flex-wrap gap-1.5 lg:gap-2 md:justify-end">
                 {asset.tags.map(tag => (
                   <span key={tag} className="px-2.5 py-1 bg-wg-sky/40 text-wg-honorable text-[8px] lg:text-[10px] font-black uppercase tracking-widest rounded-lg border border-wg-honorable/5">
                     #{tag}
