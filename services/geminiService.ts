@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
 export const generateAssetMetadata = async (title: string, brandName: string, typeName: string) => {
@@ -24,7 +23,9 @@ export const generateAssetMetadata = async (title: string, brandName: string, ty
       }
     });
     
-    return JSON.parse(response.text);
+    // Fix: Using .text property and trimming as recommended in the Gemini SDK guidelines, ensuring safe fallback
+    const jsonStr = response.text?.trim() || "{}";
+    return JSON.parse(jsonStr);
   } catch (error) {
     console.error("Gemini metadata generation failed", error);
     return {
