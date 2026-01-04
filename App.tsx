@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Asset, Brand, AssetType, UserRole } from './types';
 import * as service from './services/assetService';
-import { isSupabaseConfigured } from './services/supabaseClient';
+import { isSupabaseConfigured, configError } from './services/supabaseClient';
 import { LOGO_URL } from './constants';
 import AssetGrid from './components/AssetGrid';
 import PreviewModal from './components/PreviewModal';
@@ -26,11 +26,14 @@ const App: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
-    if (isSupabaseConfigured) {
+    if (configError) {
+      setLoading(false);
+      setErrorMsg(configError);
+    } else if (isSupabaseConfigured) {
       loadInitialData();
     } else {
       setLoading(false);
-      setErrorMsg("Supabase is not configured. Please check your environment variables (SUPABASE_URL and SUPABASE_ANON_KEY).");
+      setErrorMsg("Supabase configuration is missing or invalid.");
     }
   }, []);
 
@@ -41,9 +44,17 @@ const App: React.FC = () => {
       const result = await service.fetchAllData();
       setData(result);
     } catch (error: any) {
-      console.error("Supabase Error:", error);
-      const message = error?.message || error?.details || JSON.stringify(error);
-      setErrorMsg(`Failed to connect to Supabase: ${message}`);
+      console.error("Supabase Connection Error:", error);
+      
+      let friendlyMessage = "Failed to connect to Supabase.";
+      
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        friendlyMessage = "Network Error: Could not reach Supabase. Please check your internet connection, ensure your SUPABASE_URL is correct (no extra slashes or spaces), and that your Supabase project is active.";
+      } else {
+        friendlyMessage = error?.message || error?.details || "An unexpected error occurred while syncing data.";
+      }
+      
+      setErrorMsg(friendlyMessage);
     } finally {
       setLoading(false);
     }
@@ -266,9 +277,15 @@ const App: React.FC = () => {
               <div className="w-20 h-20 bg-wg-burgundy/10 text-wg-burgundy rounded-full flex items-center justify-center mb-6">
                 <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               </div>
-              <h3 className="text-xl font-extrabold text-slate-900 mb-2">Sync Error</h3>
-              <p className="text-slate-500 max-w-md font-medium">{errorMsg}</p>
-              <button onClick={loadInitialData} className="mt-8 px-8 py-3 bg-wg-honorable text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-wg-honorable/20 hover:scale-105 transition-all">Retry Connection</button>
+              <h3 className="text-xl font-extrabold text-slate-900 mb-2">Sync Connection Error</h3>
+              <p className="text-slate-500 max-w-lg font-medium leading-relaxed">{errorMsg}</p>
+              
+              <div className="mt-8 flex flex-col items-center gap-4">
+                <button onClick={loadInitialData} className="px-8 py-3 bg-wg-honorable text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-wg-honorable/20 hover:scale-105 transition-all">Retry Connection</button>
+                <div className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">
+                  Ensure your SUPABASE_URL starts with <code className="bg-slate-100 px-1 rounded">https://</code>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col gap-10">
