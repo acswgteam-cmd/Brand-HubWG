@@ -47,12 +47,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   // Brand management state
   const [newBrandName, setNewBrandName] = useState('');
   const [newBrandType, setNewBrandType] = useState<BrandType>('UNIT');
-  const [editingBrandId, setEditingBrandId] = useState<string | null>(null);
 
   // Asset Type management state
   const [newTypeName, setNewTypeName] = useState('');
   const [newTypeIcon, setNewTypeIcon] = useState('📁');
-  const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
   
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,7 +70,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         setUploadMode('file');
       }
     }
-  }, [editingAsset, brands, assetTypes]);
+  }, [editingAsset]);
 
   const handleGeminiSuggest = async () => {
     if (!formData.title) return alert('Please enter a title first.');
@@ -228,25 +226,116 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 </button>
               </div>
             </form>
-          ) : (
-             <div className="text-center py-10">
-                <p className="text-slate-400 text-xs font-medium">Brand and Format management is optimized for desktop view, but functional here.</p>
-                {/* Simplified lists for mobile entities/types would go here but keeping original logic for consistency */}
-                <div className="mt-6 text-left space-y-4">
-                  <input 
-                    value={activeTab === 'brands' ? newBrandName : newTypeName}
-                    onChange={e => activeTab === 'brands' ? setNewBrandName(e.target.value) : setNewTypeName(e.target.value)}
-                    placeholder={`New ${activeTab === 'brands' ? 'Brand' : 'Type'} Name`}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs"
-                  />
-                  <button 
-                    onClick={() => activeTab === 'brands' ? (newBrandName && (onAddBrand({id: 'b'+Date.now(), name: newBrandName, type: newBrandType}), setNewBrandName(''))) : (newTypeName && (onAddAssetType({id: 't'+Date.now(), name: newTypeName, icon: newTypeIcon}), setNewTypeName('')))}
-                    className="w-full py-4 bg-wg-honorable text-white font-black uppercase tracking-widest text-[10px] rounded-xl"
-                  >
-                    Add {activeTab === 'brands' ? 'Entity' : 'Format'}
-                  </button>
+          ) : activeTab === 'brands' ? (
+             <div className="space-y-8">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Add New Entity</h4>
+                  <div className="space-y-3">
+                    <input 
+                      value={newBrandName}
+                      onChange={e => setNewBrandName(e.target.value)}
+                      placeholder="Brand or Entity Name"
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none font-bold text-xs"
+                    />
+                    <div className="flex gap-2">
+                      <select 
+                        value={newBrandType} 
+                        onChange={e => setNewBrandType(e.target.value as BrandType)}
+                        className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none font-bold text-xs"
+                      >
+                        <option value="ENTITAS">ENTITAS (Holding)</option>
+                        <option value="UNIT">UNIT (Business Unit)</option>
+                      </select>
+                      <button 
+                        onClick={() => {
+                          if (newBrandName.trim()) {
+                            onAddBrand({ id: '', name: newBrandName, type: newBrandType });
+                            setNewBrandName('');
+                          }
+                        }}
+                        className="px-6 py-3 bg-wg-honorable text-white font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-wg-royal transition-all"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Existing Entities ({brands.length})</h4>
+                  <div className="space-y-2">
+                    {brands.map(brand => (
+                      <div key={brand.id} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl shadow-sm">
+                        <div>
+                          <p className="text-xs font-black text-slate-900">{brand.name}</p>
+                          <p className="text-[9px] font-bold text-wg-honorable uppercase tracking-widest mt-0.5">{brand.type}</p>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            if (confirm(`Delete ${brand.name}?`)) onDeleteBrand(brand.id);
+                          }}
+                          className="p-2 text-slate-300 hover:text-wg-burgundy transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
              </div>
+          ) : (
+            <div className="space-y-8">
+               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Add New Format</h4>
+                  <div className="flex gap-2">
+                    <input 
+                      value={newTypeIcon}
+                      onChange={e => setNewTypeIcon(e.target.value)}
+                      placeholder="Icon"
+                      className="w-16 px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none text-center"
+                    />
+                    <input 
+                      value={newTypeName}
+                      onChange={e => setNewTypeName(e.target.value)}
+                      placeholder="Format Name (e.g. Logos)"
+                      className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none font-bold text-xs"
+                    />
+                    <button 
+                      onClick={() => {
+                        if (newTypeName.trim()) {
+                          onAddAssetType({ id: '', name: newTypeName, icon: newTypeIcon });
+                          setNewTypeName('');
+                        }
+                      }}
+                      className="px-6 py-3 bg-wg-honorable text-white font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-wg-royal transition-all"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Existing Formats ({assetTypes.length})</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {assetTypes.map(type => (
+                      <div key={type.id} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">{type.icon}</span>
+                          <span className="text-xs font-black text-slate-900">{type.name}</span>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            if (confirm(`Delete format ${type.name}?`)) onDeleteAssetType(type.id);
+                          }}
+                          className="p-2 text-slate-300 hover:text-wg-burgundy transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+            </div>
           )}
         </div>
       </div>
