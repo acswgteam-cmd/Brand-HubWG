@@ -1,16 +1,31 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
 
-const isPlaceholder = (val?: string) => !val || val.includes('placeholder') || val === '' || val.length < 10;
+/**
+ * Utility to safely get environment variables from different possible sources
+ * (process.env for standard Node-like envs, import.meta.env for Vite-like envs)
+ */
+const getEnv = (key: string): string => {
+  try {
+    // @ts-ignore
+    const env = (typeof process !== 'undefined' && process.env) ? process.env : {};
+    // @ts-ignore
+    const meta = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : {};
+    
+    return (env[key] || meta[key] || (window as any)[key] || '').trim();
+  } catch (e) {
+    return '';
+  }
+};
 
-// Support both standard names and VITE_ prefixed names from user screenshot
-const rawUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-const rawKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+const rawUrl = getEnv('SUPABASE_URL') || getEnv('VITE_SUPABASE_URL');
+const rawKey = getEnv('SUPABASE_ANON_KEY') || getEnv('VITE_SUPABASE_ANON_KEY');
 
-// Clean the URL (remove trailing slashes and spaces)
-const supabaseUrl = rawUrl.trim().replace(/\/$/, "");
-const supabaseAnonKey = rawKey.trim();
+// Clean the URL (remove trailing slashes)
+const supabaseUrl = rawUrl.replace(/\/$/, "");
+const supabaseAnonKey = rawKey;
 
-export const isSupabaseConfigured = !isPlaceholder(supabaseUrl) && !isPlaceholder(supabaseAnonKey);
+// Improved configuration check
+export const isSupabaseConfigured = supabaseUrl.length > 10 && supabaseAnonKey.length > 10;
 
 // Validate URL format
 const isValidUrl = (url: string) => {
@@ -23,10 +38,10 @@ const isValidUrl = (url: string) => {
 };
 
 export const configError = !isSupabaseConfigured 
-  ? "Missing Supabase environment variables. Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set." 
-  : (!isValidUrl(supabaseUrl) ? `Invalid Supabase URL format: "${supabaseUrl}". It must start with https://` : null);
+  ? "Missing Supabase configuration. Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your environment variables." 
+  : (!isValidUrl(supabaseUrl) ? `Malformed Supabase URL: "${supabaseUrl}". It must start with https://` : null);
 
-// Initialize client
+// Initialize client with fallback
 export const supabase = createClient(
   isValidUrl(supabaseUrl) ? supabaseUrl : 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder'
