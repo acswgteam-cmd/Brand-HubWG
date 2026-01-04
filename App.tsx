@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Asset, Brand, AssetType, UserRole } from './types';
 import * as service from './services/assetService';
-import { isSupabaseConfigured, configError } from './services/supabaseClient';
+import { isSupabaseConfigured, configError, supabase } from './services/supabaseClient';
 import { LOGO_URL } from './constants';
 import AssetGrid from './components/AssetGrid';
 import PreviewModal from './components/PreviewModal';
@@ -26,6 +26,10 @@ const App: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
+    checkConfigAndLoad();
+  }, []);
+
+  const checkConfigAndLoad = () => {
     if (configError) {
       setLoading(false);
       setErrorMsg(configError);
@@ -33,9 +37,9 @@ const App: React.FC = () => {
       loadInitialData();
     } else {
       setLoading(false);
-      setErrorMsg("Supabase configuration is missing or invalid.");
+      setErrorMsg("Configuration variables detected but they appear to be empty or too short. Please double-check your Supabase keys.");
     }
-  }, []);
+  };
 
   const loadInitialData = async () => {
     setLoading(true);
@@ -49,9 +53,9 @@ const App: React.FC = () => {
       let friendlyMessage = "Failed to connect to Supabase.";
       
       if (error instanceof TypeError && error.message === "Failed to fetch") {
-        friendlyMessage = "Network Error: Could not reach Supabase. Please check your internet connection, ensure your SUPABASE_URL is correct (no extra slashes or spaces), and that your Supabase project is active.";
+        friendlyMessage = "Network Error: Could not reach Supabase. This usually means the URL is wrong or your internet is blocked. Check if your project is active in Supabase Dashboard.";
       } else {
-        friendlyMessage = error?.message || error?.details || "An unexpected error occurred while syncing data.";
+        friendlyMessage = error?.message || error?.details || "Database access denied. Check your project API settings.";
       }
       
       setErrorMsg(friendlyMessage);
@@ -281,9 +285,9 @@ const App: React.FC = () => {
               <p className="text-slate-500 max-w-lg font-medium leading-relaxed">{errorMsg}</p>
               
               <div className="mt-8 flex flex-col items-center gap-4">
-                <button onClick={loadInitialData} className="px-8 py-3 bg-wg-honorable text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-wg-honorable/20 hover:scale-105 transition-all">Retry Connection</button>
-                <div className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">
-                  Ensure your SUPABASE_URL starts with <code className="bg-slate-100 px-1 rounded">https://</code>
+                <button onClick={() => { window.location.reload(); }} className="px-8 py-3 bg-wg-honorable text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-wg-honorable/20 hover:scale-105 transition-all">Reload Page</button>
+                <div className="text-[10px] text-slate-300 font-bold uppercase tracking-widest mt-4">
+                  Trying to detect: <code className="bg-slate-100 px-1 rounded">VITE_SUPABASE_URL</code>
                 </div>
               </div>
             </div>
