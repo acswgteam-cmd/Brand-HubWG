@@ -6,6 +6,7 @@ const mapAsset = (dbAsset: any): Asset => ({
   id: dbAsset.id,
   title: dbAsset.title,
   brandId: dbAsset.brand_id,
+  // Fix: changed 'type_id' to 'typeId' to match the Asset interface definition
   typeId: dbAsset.type_id,
   description: dbAsset.description,
   link: dbAsset.link,
@@ -110,6 +111,21 @@ export const getPreviewLink = (url: string) => {
     const fileIdMatch = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
     if (fileIdMatch && fileIdMatch[1]) {
       return `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`;
+    }
+  }
+  return url;
+};
+
+export const getDownloadLink = (url: string) => {
+  if (!url) return '';
+  // Direct base64 data
+  if (url.startsWith('data:')) return url;
+  
+  // Google Drive Direct Download conversion
+  if (url.includes('drive.google.com')) {
+    const fileIdMatch = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
+    if (fileIdMatch && fileIdMatch[1]) {
+      return `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
     }
   }
   return url;
