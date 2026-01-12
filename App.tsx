@@ -47,7 +47,26 @@ const App: React.FC = () => {
     setLoading(true);
     try {
       const result = await service.fetchAllData();
-      setData(result);
+      
+      // Ensure everything has a unique sortOrder if it's missing (all 0s)
+      const sanitizedAssets = result.assets.map((a, i) => ({
+        ...a,
+        sortOrder: a.sortOrder || i
+      }));
+      const sanitizedBrands = result.brands.map((b, i) => ({
+        ...b,
+        sortOrder: b.sortOrder || i
+      }));
+      const sanitizedTypes = result.assetTypes.map((t, i) => ({
+        ...t,
+        sortOrder: t.sortOrder || i
+      }));
+
+      setData({
+        assets: sanitizedAssets,
+        brands: sanitizedBrands,
+        assetTypes: sanitizedTypes
+      });
     } catch (error: any) {
       setErrorMsg(error?.message || "Database connection error.");
     } finally {
@@ -57,6 +76,11 @@ const App: React.FC = () => {
 
   const handleSaveAsset = async (assetData: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => {
     try {
+      // If new asset, put it at the end
+      if (!assetData.id) {
+        assetData.sortOrder = data.assets.length;
+      }
+      
       const saved = await service.upsertAsset(assetData);
       setData(prev => {
         const index = prev.assets.findIndex(a => a.id === saved.id);
@@ -75,38 +99,54 @@ const App: React.FC = () => {
     }
   };
 
-  // Improved Reorder Handlers to prevent data loss
+  // Robust Reorder Strategy: Uses a pool of existing sortOrders to avoid collisions
   const handleReorderAssets = async (reorderedFiltered: Asset[]) => {
-    // 1. Update local state immediately for snappy UI
-    setData(prev => {
-      const otherAssets = prev.assets.filter(a => !reorderedFiltered.find(r => r.id === a.id));
-      const newState = [...otherAssets, ...reorderedFiltered];
-      return { ...prev, assets: newState };
-    });
+    // 1. Get the current sortOrders of the items being moved
+    const originalItemsInOrder = data.assets
+      .filter(a => reorderedFiltered.some(r => r.id === a.id))
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    
+    const sortOrderPool = originalItemsInOrder.map(a => a.sortOrder || 0);
 
-    // 2. Persist to DB
+    // 2. Map new order to the pool of sortOrder values
+    const updatedWithPool = reorderedFiltered.map((item, idx) => ({
+      ...item,
+      sortOrder: sortOrderPool[idx] ?? idx
+    }));
+
+    // 3. Update local state
+    setData(prev => ({
+      ...prev,
+      assets: prev.assets.map(a => updatedWithPool.find(u => u.id === a.id) || a)
+    }));
+
+    // 4. Persist mass change to DB
     try {
-      await Promise.all(reorderedFiltered.map(asset => service.upsertAsset(asset)));
+      await service.upsertAssets(updatedWithPool);
     } catch (e) {
-      console.error("Failed to save asset order:", e);
+      console.error("Failed to persist asset reorder:", e);
     }
   };
 
   const handleReorderBrands = async (newOrder: Brand[]) => {
-    setData(prev => ({ ...prev, brands: newOrder }));
+    // Re-index all to be safe
+    const updated = newOrder.map((b, i) => ({ ...b, sortOrder: i }));
+    setData(prev => ({ ...prev, brands: updated }));
     try {
-      await Promise.all(newOrder.map(brand => service.updateBrand(brand.id, brand)));
+      await service.updateBrands(updated);
     } catch (e) {
-      console.error("Failed to save brand order:", e);
+      console.error("Failed to persist brand reorder:", e);
     }
   };
 
   const handleReorderTypes = async (newOrder: AssetType[]) => {
-    setData(prev => ({ ...prev, assetTypes: newOrder }));
+    // Re-index all to be safe
+    const updated = newOrder.map((t, i) => ({ ...t, sortOrder: i }));
+    setData(prev => ({ ...prev, assetTypes: updated }));
     try {
-      await Promise.all(newOrder.map(type => service.updateAssetType(type.id, type)));
+      await service.updateAssetTypes(updated);
     } catch (e) {
-      console.error("Failed to save type order:", e);
+      console.error("Failed to persist type reorder:", e);
     }
   };
 
