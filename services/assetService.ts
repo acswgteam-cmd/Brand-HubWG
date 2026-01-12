@@ -32,26 +32,49 @@ const mapAssetType = (dbType: any): AssetType => ({
   sortOrder: dbType.sort_order ?? 0
 });
 
+/**
+ * Robust fetcher that falls back to default ordering if sort_order column is missing
+ */
 export const fetchAllData = async () => {
-  const [brandsRes, typesRes, assetsRes] = await Promise.all([
-    supabase.from('brands').select('*').order('sort_order', { ascending: true }),
-    supabase.from('asset_types').select('*').order('sort_order', { ascending: true }),
-    supabase.from('assets').select('*').order('sort_order', { ascending: true })
-  ]);
-
-  if (brandsRes.error) throw brandsRes.error;
-  if (typesRes.error) throw typesRes.error;
-  if (assetsRes.error) throw assetsRes.error;
-
-  return {
-    brands: (brandsRes.data || []).map(mapBrand),
-    assetTypes: (typesRes.data || []).map(mapAssetType),
-    assets: (assetsRes.data || []).map(mapAsset)
+  // Helper to fetch and handle "missing column" errors
+  const safeFetch = async (table: string) => {
+    let query = supabase.from(table).select('*');
+    
+    // Attempt to order by sort_order
+    const { data, error } = await query.order('sort_order', { ascending: true });
+    
+    // If column doesn't exist (error 42703), fetch without ordering
+    if (error && error.code === '42703') {
+      console.warn(`Column sort_order missing in ${table}, falling back to default order.`);
+      const fallback = await supabase.from(table).select('*');
+      if (fallback.error) throw fallback.error;
+      return fallback.data;
+    }
+    
+    if (error) throw error;
+    return data;
   };
+
+  try {
+    const [brandsData, typesData, assetsData] = await Promise.all([
+      safeFetch('brands'),
+      safeFetch('asset_types'),
+      safeFetch('assets')
+    ]);
+
+    return {
+      brands: (brandsData || []).map(mapBrand),
+      assetTypes: (typesData || []).map(mapAssetType),
+      assets: (assetsData || []).map(mapAsset)
+    };
+  } catch (err) {
+    console.error("Data fetch failed", err);
+    throw err;
+  }
 };
 
 export const upsertAsset = async (asset: Partial<Asset>) => {
-  const payload = {
+  const payload: any = {
     id: asset.id,
     title: asset.title,
     brand_id: asset.brandId,
@@ -60,9 +83,13 @@ export const upsertAsset = async (asset: Partial<Asset>) => {
     link: asset.link,
     tags: asset.tags,
     status: asset.status,
-    sort_order: asset.sortOrder ?? 0,
     updated_at: new Date().toISOString()
   };
+
+  // Only include sort_order if it's explicitly provided
+  if (asset.sortOrder !== undefined) {
+    payload.sort_order = asset.sortOrder;
+  }
 
   const { data, error } = await supabase
     .from('assets')
@@ -74,7 +101,6 @@ export const upsertAsset = async (asset: Partial<Asset>) => {
   return mapAsset(data);
 };
 
-// Bulk Upsert Assets for efficient reordering
 export const upsertAssets = async (assets: Asset[]) => {
   const payloads = assets.map(a => ({
     id: a.id,
@@ -109,11 +135,13 @@ export const createBrand = async (brand: Omit<Brand, 'id'>) => {
 };
 
 export const updateBrand = async (id: string, updates: Partial<Brand>) => {
-  const { data, error } = await supabase.from('brands').update({
+  const payload: any = {
     name: updates.name,
-    type: updates.type,
-    sort_order: updates.sortOrder ?? 0
-  }).eq('id', id).select().single();
+    type: updates.type
+  };
+  if (updates.sortOrder !== undefined) payload.sort_order = updates.sortOrder;
+
+  const { data, error } = await supabase.from('brands').update(payload).eq('id', id).select().single();
   if (error) throw error;
   return mapBrand(data);
 };
@@ -146,11 +174,13 @@ export const createAssetType = async (type: Omit<AssetType, 'id'>) => {
 };
 
 export const updateAssetType = async (id: string, updates: Partial<AssetType>) => {
-  const { data, error } = await supabase.from('asset_types').update({
+  const payload: any = {
     name: updates.name,
-    icon: updates.icon,
-    sort_order: updates.sortOrder ?? 0
-  }).eq('id', id).select().single();
+    icon: updates.icon
+  };
+  if (updates.sortOrder !== undefined) payload.sort_order = updates.sortOrder;
+
+  const { data, error } = await supabase.from('asset_types').update(payload).eq('id', id).select().single();
   if (error) throw error;
   return mapAssetType(data);
 };
