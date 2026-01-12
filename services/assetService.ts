@@ -1,19 +1,19 @@
+
 import { Asset, Brand, AssetType } from '../types';
 import { supabase } from './supabaseClient';
 
-// Helper to map Supabase database objects (snake_case) to Frontend Types (camelCase)
 const mapAsset = (dbAsset: any): Asset => ({
   id: dbAsset.id,
   title: dbAsset.title,
   brandId: dbAsset.brand_id,
-  // Fix: changed 'type_id' to 'typeId' to match the Asset interface definition
   typeId: dbAsset.type_id,
   description: dbAsset.description,
   link: dbAsset.link,
   createdAt: dbAsset.created_at,
   updatedAt: dbAsset.updated_at,
   tags: dbAsset.tags || [],
-  status: dbAsset.status
+  status: dbAsset.status,
+  sortOrder: dbAsset.sort_order ?? 0
 });
 
 const mapBrand = (dbBrand: any): Brand => ({
@@ -21,20 +21,22 @@ const mapBrand = (dbBrand: any): Brand => ({
   name: dbBrand.name,
   type: dbBrand.type,
   description: dbBrand.description,
-  logo: dbBrand.logo
+  logo: dbBrand.logo,
+  sortOrder: dbBrand.sort_order ?? 0
 });
 
 const mapAssetType = (dbType: any): AssetType => ({
   id: dbType.id,
   name: dbType.name,
-  icon: dbType.icon
+  icon: dbType.icon,
+  sortOrder: dbType.sort_order ?? 0
 });
 
 export const fetchAllData = async () => {
   const [brandsRes, typesRes, assetsRes] = await Promise.all([
-    supabase.from('brands').select('*').order('name'),
-    supabase.from('asset_types').select('*').order('name'),
-    supabase.from('assets').select('*').order('created_at', { ascending: false })
+    supabase.from('brands').select('*').order('sort_order', { ascending: true }),
+    supabase.from('asset_types').select('*').order('sort_order', { ascending: true }),
+    supabase.from('assets').select('*').order('sort_order', { ascending: true })
   ]);
 
   if (brandsRes.error) throw brandsRes.error;
@@ -58,6 +60,7 @@ export const upsertAsset = async (asset: Partial<Asset>) => {
     link: asset.link,
     tags: asset.tags,
     status: asset.status,
+    sort_order: asset.sortOrder ?? 0,
     updated_at: new Date().toISOString()
   };
 
@@ -71,16 +74,60 @@ export const upsertAsset = async (asset: Partial<Asset>) => {
   return mapAsset(data);
 };
 
+// Bulk Upsert Assets for efficient reordering
+export const upsertAssets = async (assets: Asset[]) => {
+  const payloads = assets.map(a => ({
+    id: a.id,
+    title: a.title,
+    brand_id: a.brandId,
+    type_id: a.typeId,
+    description: a.description,
+    link: a.link,
+    tags: a.tags,
+    status: a.status,
+    sort_order: a.sortOrder ?? 0,
+    updated_at: new Date().toISOString()
+  }));
+
+  const { data, error } = await supabase
+    .from('assets')
+    .upsert(payloads)
+    .select();
+
+  if (error) throw error;
+  return (data || []).map(mapAsset);
+};
+
 export const createBrand = async (brand: Omit<Brand, 'id'>) => {
-  const { data, error } = await supabase.from('brands').insert(brand).select().single();
+  const { data, error } = await supabase.from('brands').insert({
+    name: brand.name,
+    type: brand.type,
+    sort_order: brand.sortOrder ?? 0
+  }).select().single();
   if (error) throw error;
   return mapBrand(data);
 };
 
 export const updateBrand = async (id: string, updates: Partial<Brand>) => {
-  const { data, error } = await supabase.from('brands').update(updates).eq('id', id).select().single();
+  const { data, error } = await supabase.from('brands').update({
+    name: updates.name,
+    type: updates.type,
+    sort_order: updates.sortOrder ?? 0
+  }).eq('id', id).select().single();
   if (error) throw error;
   return mapBrand(data);
+};
+
+export const updateBrands = async (brands: Brand[]) => {
+  const payloads = brands.map(b => ({
+    id: b.id,
+    name: b.name,
+    type: b.type,
+    sort_order: b.sortOrder ?? 0
+  }));
+  const { data, error } = await supabase.from('brands').upsert(payloads).select();
+  if (error) throw error;
+  return (data || []).map(mapBrand);
 };
 
 export const deleteBrand = async (id: string) => {
@@ -89,15 +136,35 @@ export const deleteBrand = async (id: string) => {
 };
 
 export const createAssetType = async (type: Omit<AssetType, 'id'>) => {
-  const { data, error } = await supabase.from('asset_types').insert(type).select().single();
+  const { data, error } = await supabase.from('asset_types').insert({
+    name: type.name,
+    icon: type.icon,
+    sort_order: type.sortOrder ?? 0
+  }).select().single();
   if (error) throw error;
   return mapAssetType(data);
 };
 
 export const updateAssetType = async (id: string, updates: Partial<AssetType>) => {
-  const { data, error } = await supabase.from('asset_types').update(updates).eq('id', id).select().single();
+  const { data, error } = await supabase.from('asset_types').update({
+    name: updates.name,
+    icon: updates.icon,
+    sort_order: updates.sortOrder ?? 0
+  }).eq('id', id).select().single();
   if (error) throw error;
   return mapAssetType(data);
+};
+
+export const updateAssetTypes = async (types: AssetType[]) => {
+  const payloads = types.map(t => ({
+    id: t.id,
+    name: t.name,
+    icon: t.icon,
+    sort_order: t.sortOrder ?? 0
+  }));
+  const { data, error } = await supabase.from('asset_types').upsert(payloads).select();
+  if (error) throw error;
+  return (data || []).map(mapAssetType);
 };
 
 export const deleteAssetType = async (id: string) => {
@@ -118,10 +185,7 @@ export const getPreviewLink = (url: string) => {
 
 export const getDownloadLink = (url: string) => {
   if (!url) return '';
-  // Direct base64 data
   if (url.startsWith('data:')) return url;
-  
-  // Google Drive Direct Download conversion
   if (url.includes('drive.google.com')) {
     const fileIdMatch = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
     if (fileIdMatch && fileIdMatch[1]) {
