@@ -26,6 +26,7 @@ const App: React.FC = () => {
   const [role, setRole] = useState<UserRole>('VIEWER');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     checkConfigAndLoad();
@@ -235,8 +236,26 @@ const App: React.FC = () => {
             <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             <input type="text" placeholder="Search resources..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium outline-none focus:ring-4 focus:ring-wg-honorable/5 focus:border-wg-honorable transition-all" />
           </div>
+          
+          <div className="flex items-center gap-2 p-1 bg-slate-50 rounded-xl border border-slate-200">
+            <button 
+              onClick={() => setViewMode('grid')} 
+              className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-wg-honorable shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              title="Grid View"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+            </button>
+            <button 
+              onClick={() => setViewMode('list')} 
+              className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-wg-honorable shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              title="List View"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+          </div>
+
           {role === 'ADMIN' && (
-            <button onClick={() => setIsAddingAsset(true)} className="px-6 py-3 bg-wg-honorable text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-wg-honorable/20 hover:bg-wg-royal transition-all active:scale-95">
+            <button onClick={() => setIsAddingAsset(true)} className="px-6 py-3 bg-wg-honorable text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-wg-honorable/20 hover:bg-wg-royal transition-all active:scale-95 ml-2">
               Upload
             </button>
           )}
@@ -269,6 +288,7 @@ const App: React.FC = () => {
               brands={data.brands} 
               assetTypes={data.assetTypes} 
               isAdmin={role === 'ADMIN'} 
+              viewMode={viewMode}
               onSelectAsset={setSelectedAsset} 
               onEditAsset={(asset) => { setEditingAsset(asset); setIsAddingAsset(true); }} 
               onReorderAssets={handleReorderAssets}
