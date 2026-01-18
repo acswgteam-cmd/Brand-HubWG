@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Asset, Brand, AssetType } from '../types';
-import { getThumbnailUrl } from '../services/assetService';
+import { getThumbnailUrl, getDownloadLink } from '../services/assetService';
 
 interface AssetCardProps {
   asset: Asset;
@@ -22,6 +22,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
 }) => {
   const [imgError, setImgError] = useState(false);
   const thumbnailUrl = getThumbnailUrl(asset.link);
+  const downloadUrl = getDownloadLink(asset.link);
 
   return (
     <div 
@@ -53,18 +54,29 @@ const AssetCard: React.FC<AssetCardProps> = ({
         <h3 className="text-slate-900 font-bold text-xs mb-2 line-clamp-1" title={asset.title}>{asset.title}</h3>
         
         <div className="mt-auto pt-2 border-t border-slate-50 flex items-center justify-between">
-          <div className="flex gap-1 overflow-hidden">
+          <div className="flex gap-1 overflow-hidden flex-1 mr-2">
             {asset.tags.slice(0, 1).map(tag => (
               <span key={tag} className="px-1.5 py-0.5 bg-wg-sky/40 text-wg-honorable text-[9px] font-black uppercase rounded truncate max-w-[60px]">#{tag}</span>
             ))}
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-1 shrink-0">
+            <a 
+              href={downloadUrl} 
+              download={asset.title} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="p-1 text-slate-300 hover:text-wg-honorable transition-colors"
+              title="Download"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            </a>
             {isAdmin && onEdit && (
-              <button onClick={(e) => { e.stopPropagation(); onEdit(asset); }} className="p-1 text-slate-300 hover:text-wg-burgundy transition-colors">
+              <button onClick={(e) => { e.stopPropagation(); onEdit(asset); }} className="p-1 text-slate-300 hover:text-wg-burgundy transition-colors" title="Edit">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
               </button>
             )}
-            <button onClick={() => onSelect(asset)} className="p-1 text-slate-300 hover:text-wg-honorable transition-colors">
+            <button onClick={() => onSelect(asset)} className="p-1 text-slate-300 hover:text-wg-honorable transition-colors" title="View">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             </button>
           </div>
@@ -91,6 +103,8 @@ const AssetListRow: React.FC<AssetListRowProps> = ({
   asset, brandName, icon, onSelect, onEdit, isAdmin,
   isDragging, onDragStart, onDragOver, onDrop
 }) => {
+  const downloadUrl = getDownloadLink(asset.link);
+
   return (
     <div 
       draggable={isAdmin}
@@ -119,12 +133,23 @@ const AssetListRow: React.FC<AssetListRowProps> = ({
       </div>
 
       <div className="flex gap-2">
+        <a 
+          href={downloadUrl} 
+          download={asset.title} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="p-2 text-slate-300 hover:text-wg-honorable transition-colors"
+          title="Download"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        </a>
         {isAdmin && onEdit && (
-          <button onClick={(e) => { e.stopPropagation(); onEdit(asset); }} className="p-2 text-slate-300 hover:text-wg-burgundy transition-colors">
+          <button onClick={(e) => { e.stopPropagation(); onEdit(asset); }} className="p-2 text-slate-300 hover:text-wg-burgundy transition-colors" title="Edit">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
           </button>
         )}
-        <button onClick={() => onSelect(asset)} className="p-2 text-slate-300 hover:text-wg-honorable transition-colors">
+        <button onClick={() => onSelect(asset)} className="p-2 text-slate-300 hover:text-wg-honorable transition-colors" title="View">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
         </button>
       </div>
