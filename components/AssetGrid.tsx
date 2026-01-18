@@ -38,9 +38,10 @@ const AssetCard: React.FC<AssetCardProps> = ({
         </div>
       )}
       
-      <div className="aspect-[4/3] bg-slate-50 relative overflow-hidden cursor-pointer" onClick={() => onSelect(asset)}>
+      {/* Changed object-cover to object-contain to fit the image without cropping */}
+      <div className="aspect-[4/3] bg-slate-50 relative overflow-hidden cursor-pointer flex items-center justify-center p-2" onClick={() => onSelect(asset)}>
         {thumbnailUrl && !imgError ? (
-          <img src={thumbnailUrl} alt={asset.title} className="w-full h-full object-cover" onError={() => setImgError(true)} loading="lazy" />
+          <img src={thumbnailUrl} alt={asset.title} className="w-full h-full object-contain" onError={() => setImgError(true)} loading="lazy" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-40">{icon}</div>
         )}
@@ -103,6 +104,8 @@ const AssetListRow: React.FC<AssetListRowProps> = ({
   asset, brandName, icon, onSelect, onEdit, isAdmin,
   isDragging, onDragStart, onDragOver, onDrop
 }) => {
+  const [imgError, setImgError] = useState(false);
+  const thumbnailUrl = getThumbnailUrl(asset.link);
   const downloadUrl = getDownloadLink(asset.link);
 
   return (
@@ -113,8 +116,12 @@ const AssetListRow: React.FC<AssetListRowProps> = ({
       onDrop={onDrop}
       className={`flex items-center gap-4 p-3 bg-white border border-slate-100 rounded-xl hover:shadow-md transition-all group ${isAdmin ? 'cursor-move' : ''} ${isDragging ? 'opacity-30 border-wg-honorable scale-[0.99]' : ''}`}
     >
-      <div className="w-10 h-10 shrink-0 bg-slate-50 rounded-lg flex items-center justify-center text-xl" onClick={() => onSelect(asset)}>
-        {icon}
+      <div className="w-10 h-10 shrink-0 bg-slate-50 rounded-lg flex items-center justify-center text-xl overflow-hidden" onClick={() => onSelect(asset)}>
+        {thumbnailUrl && !imgError ? (
+          <img src={thumbnailUrl} alt={asset.title} className="w-full h-full object-cover" onError={() => setImgError(true)} loading="lazy" />
+        ) : (
+          icon
+        )}
       </div>
       
       <div className="flex-1 min-w-0" onClick={() => onSelect(asset)}>
