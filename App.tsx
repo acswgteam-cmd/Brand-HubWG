@@ -182,6 +182,16 @@ const App: React.FC = () => {
     setSelectedAssetIds(newSet);
   };
 
+  const handleDownloadIncrement = async (asset: Asset) => {
+      // Optimistically update local state so the UI reflects it immediately
+      setData(prev => ({
+          ...prev,
+          assets: prev.assets.map(a => a.id === asset.id ? { ...a, downloadCount: (a.downloadCount || 0) + 1 } : a)
+      }));
+      // Call service to update DB
+      await service.incrementDownloadCount(asset.id);
+  };
+
   const handleBatchDownload = () => {
     if (selectedAssetIds.size === 0) return;
     
@@ -189,6 +199,9 @@ const App: React.FC = () => {
     
     // Sequential download to avoid browser blocking multiple popups
     assetsToDownload.forEach((asset, index) => {
+      // Increment count for each
+      handleDownloadIncrement(asset);
+      
       setTimeout(() => {
         const link = document.createElement('a');
         link.href = service.getDownloadLink(asset.link);
@@ -449,13 +462,14 @@ const App: React.FC = () => {
                 selectionMode={isSelectionMode}
                 selectedAssetIds={selectedAssetIds}
                 onToggleSelection={handleToggleSelection}
+                onDownloadAsset={handleDownloadIncrement}
               />
             </div>
           )}
         </div>
       </main>
 
-      {selectedAsset && <PreviewModal asset={selectedAsset} onClose={() => setSelectedAsset(null)} />}
+      {selectedAsset && <PreviewModal asset={selectedAsset} onClose={() => setSelectedAsset(null)} onDownload={handleDownloadIncrement} />}
       
       {isAddingAsset && (
         <AdminPanel 
