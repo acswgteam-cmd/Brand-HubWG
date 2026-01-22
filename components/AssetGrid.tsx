@@ -56,7 +56,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
         
         <div className="mt-auto pt-2 border-t border-slate-50 flex items-center justify-between">
           <div className="flex gap-1 overflow-hidden flex-1 mr-2">
-            {asset.tags.slice(0, 1).map(tag => (
+            {asset.tags.slice(0, 3).map(tag => (
               <span key={tag} className="px-1.5 py-0.5 bg-wg-sky/40 text-wg-honorable text-[9px] font-black uppercase rounded truncate max-w-[60px]">#{tag}</span>
             ))}
           </div>
