@@ -15,11 +15,16 @@ interface AssetCardProps {
   onDragStart?: () => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDrop?: () => void;
+  // Selection props
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: (id: string) => void;
 }
 
 const AssetCard: React.FC<AssetCardProps> = ({ 
   asset, brandName, icon, onSelect, onEdit, onDelete, isAdmin,
-  isDragging, onDragStart, onDragOver, onDrop 
+  isDragging, onDragStart, onDragOver, onDrop,
+  selectionMode, isSelected, onToggleSelection
 }) => {
   const [imgError, setImgError] = useState(false);
   const thumbnailUrl = getThumbnailUrl(asset.link);
@@ -31,16 +36,29 @@ const AssetCard: React.FC<AssetCardProps> = ({
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      className={`group bg-white rounded-xl border border-slate-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col relative animate-fade-in-up ${isAdmin ? 'cursor-move' : ''} ${isDragging ? 'opacity-30 scale-95 border-wg-honorable border-2' : ''}`}
+      onClick={() => selectionMode && onToggleSelection && onToggleSelection(asset.id)}
+      className={`group bg-white rounded-xl border overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col relative animate-fade-in-up 
+        ${isAdmin ? 'cursor-move' : ''} 
+        ${isDragging ? 'opacity-30 scale-95 border-wg-honorable border-2' : ''}
+        ${isSelected ? 'border-wg-honorable ring-2 ring-wg-honorable ring-offset-2' : 'border-slate-100'}
+      `}
     >
-      {isAdmin && (
+      {/* Selection Checkbox Overlay */}
+      {selectionMode && (
+        <div className="absolute top-3 left-3 z-30 pointer-events-none">
+          <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-wg-honorable border-wg-honorable' : 'bg-white/80 border-slate-300'}`}>
+            {isSelected && <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+          </div>
+        </div>
+      )}
+
+      {isAdmin && !selectionMode && (
         <div className="absolute top-2 right-2 z-20 p-1 bg-white/80 backdrop-blur shadow-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
           <svg className="w-3.5 h-3.5 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 100 4h2a2 2 0 100-4H7zM11 2a2 2 0 100 4h2a2 2 0 100-4h-2zM7 8a2 2 0 100 4h2a2 2 0 100-4H7zM11 8a2 2 0 100 4h2a2 2 0 100-4h-2zM7 14a2 2 0 100 4h2a2 2 0 100-4H7zM11 14a2 2 0 100 4h2a2 2 0 100-4h-2z" /></svg>
         </div>
       )}
       
-      {/* Updated background to slate-200 (lighter gray) to support dark assets while keeping some contrast for white ones */}
-      <div className="aspect-[4/3] bg-slate-200 relative overflow-hidden cursor-pointer flex items-center justify-center p-2" onClick={() => onSelect(asset)}>
+      <div className="aspect-[4/3] bg-slate-200 relative overflow-hidden cursor-pointer flex items-center justify-center p-2" onClick={() => !selectionMode && onSelect(asset)}>
         {thumbnailUrl && !imgError ? (
           <img src={thumbnailUrl} alt={asset.title} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" onError={() => setImgError(true)} loading="lazy" />
         ) : (
@@ -62,30 +80,34 @@ const AssetCard: React.FC<AssetCardProps> = ({
             ))}
           </div>
           <div className="flex gap-1 shrink-0">
-            <a 
-              href={downloadUrl} 
-              download={asset.title} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="p-1 text-slate-300 hover:text-wg-honorable transition-colors hover:scale-110"
-              title="Download"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            </a>
-            {isAdmin && onEdit && (
-              <button onClick={(e) => { e.stopPropagation(); onEdit(asset); }} className="p-1 text-slate-300 hover:text-wg-royal transition-colors hover:scale-110" title="Edit">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-              </button>
+            {!selectionMode && (
+              <>
+                <a 
+                  href={downloadUrl} 
+                  download={asset.title} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-1 text-slate-300 hover:text-wg-honorable transition-colors hover:scale-110"
+                  title="Download"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                </a>
+                {isAdmin && onEdit && (
+                  <button onClick={(e) => { e.stopPropagation(); onEdit(asset); }} className="p-1 text-slate-300 hover:text-wg-royal transition-colors hover:scale-110" title="Edit">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                  </button>
+                )}
+                {isAdmin && onDelete && (
+                  <button onClick={(e) => { e.stopPropagation(); onDelete(asset.id); }} className="p-1 text-slate-300 hover:text-wg-burgundy transition-colors hover:scale-110" title="Delete">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                )}
+                <button onClick={() => onSelect(asset)} className="p-1 text-slate-300 hover:text-wg-honorable transition-colors hover:scale-110" title="View">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                </button>
+              </>
             )}
-            {isAdmin && onDelete && (
-              <button onClick={(e) => { e.stopPropagation(); onDelete(asset.id); }} className="p-1 text-slate-300 hover:text-wg-burgundy transition-colors hover:scale-110" title="Delete">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-              </button>
-            )}
-            <button onClick={() => onSelect(asset)} className="p-1 text-slate-300 hover:text-wg-honorable transition-colors hover:scale-110" title="View">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-            </button>
           </div>
         </div>
       </div>
@@ -105,11 +127,15 @@ interface AssetListRowProps {
   onDragStart?: () => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDrop?: () => void;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: (id: string) => void;
 }
 
 const AssetListRow: React.FC<AssetListRowProps> = ({
   asset, brandName, icon, onSelect, onEdit, onDelete, isAdmin,
-  isDragging, onDragStart, onDragOver, onDrop
+  isDragging, onDragStart, onDragOver, onDrop,
+  selectionMode, isSelected, onToggleSelection
 }) => {
   const [imgError, setImgError] = useState(false);
   const thumbnailUrl = getThumbnailUrl(asset.link);
@@ -121,10 +147,21 @@ const AssetListRow: React.FC<AssetListRowProps> = ({
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      className={`flex items-center gap-4 p-3 bg-white border border-slate-100 rounded-xl hover:shadow-md transition-all group animate-fade-in-up ${isAdmin ? 'cursor-move' : ''} ${isDragging ? 'opacity-30 border-wg-honorable scale-[0.99]' : ''}`}
+      onClick={() => selectionMode && onToggleSelection && onToggleSelection(asset.id)}
+      className={`flex items-center gap-4 p-3 bg-white border rounded-xl hover:shadow-md transition-all group animate-fade-in-up 
+        ${isAdmin ? 'cursor-move' : ''} 
+        ${isDragging ? 'opacity-30 border-wg-honorable scale-[0.99]' : ''}
+        ${isSelected ? 'border-wg-honorable bg-wg-honorable/5' : 'border-slate-100'}
+      `}
     >
+      {selectionMode && (
+         <div className={`w-5 h-5 shrink-0 rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-wg-honorable border-wg-honorable' : 'bg-white border-slate-300'}`}>
+            {isSelected && <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+         </div>
+      )}
+
       {/* Updated background to slate-200 (lighter gray) */}
-      <div className="w-10 h-10 shrink-0 bg-slate-200 rounded-lg flex items-center justify-center text-xl overflow-hidden" onClick={() => onSelect(asset)}>
+      <div className="w-10 h-10 shrink-0 bg-slate-200 rounded-lg flex items-center justify-center text-xl overflow-hidden" onClick={() => !selectionMode && onSelect(asset)}>
         {thumbnailUrl && !imgError ? (
           <img src={thumbnailUrl} alt={asset.title} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110" onError={() => setImgError(true)} loading="lazy" />
         ) : (
@@ -132,7 +169,7 @@ const AssetListRow: React.FC<AssetListRowProps> = ({
         )}
       </div>
       
-      <div className="flex-1 min-w-0" onClick={() => onSelect(asset)}>
+      <div className="flex-1 min-w-0" onClick={() => !selectionMode && onSelect(asset)}>
         <h3 className="text-sm font-bold text-slate-900 truncate group-hover:text-wg-honorable transition-colors">{asset.title}</h3>
         <div className="flex items-center gap-3 mt-0.5">
           <span className="text-[9px] font-black text-wg-honorable uppercase tracking-widest">{brandName}</span>
@@ -148,30 +185,34 @@ const AssetListRow: React.FC<AssetListRowProps> = ({
       </div>
 
       <div className="flex gap-2">
-        <a 
-          href={downloadUrl} 
-          download={asset.title} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="p-2 text-slate-300 hover:text-wg-honorable transition-colors hover:scale-110"
-          title="Download"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-        </a>
-        {isAdmin && onEdit && (
-          <button onClick={(e) => { e.stopPropagation(); onEdit(asset); }} className="p-2 text-slate-300 hover:text-wg-royal transition-colors hover:scale-110" title="Edit">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-          </button>
+        {!selectionMode && (
+          <>
+            <a 
+              href={downloadUrl} 
+              download={asset.title} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="p-2 text-slate-300 hover:text-wg-honorable transition-colors hover:scale-110"
+              title="Download"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            </a>
+            {isAdmin && onEdit && (
+              <button onClick={(e) => { e.stopPropagation(); onEdit(asset); }} className="p-2 text-slate-300 hover:text-wg-royal transition-colors hover:scale-110" title="Edit">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+              </button>
+            )}
+            {isAdmin && onDelete && (
+              <button onClick={(e) => { e.stopPropagation(); onDelete(asset.id); }} className="p-2 text-slate-300 hover:text-wg-burgundy transition-colors hover:scale-110" title="Delete">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            )}
+            <button onClick={() => onSelect(asset)} className="p-2 text-slate-300 hover:text-wg-honorable transition-colors hover:scale-110" title="View">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+            </button>
+          </>
         )}
-        {isAdmin && onDelete && (
-          <button onClick={(e) => { e.stopPropagation(); onDelete(asset.id); }} className="p-2 text-slate-300 hover:text-wg-burgundy transition-colors hover:scale-110" title="Delete">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-          </button>
-        )}
-        <button onClick={() => onSelect(asset)} className="p-2 text-slate-300 hover:text-wg-honorable transition-colors hover:scale-110" title="View">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-        </button>
       </div>
     </div>
   );
@@ -187,6 +228,10 @@ interface AssetGridProps {
   onEditAsset?: (asset: Asset) => void;
   onDeleteAsset?: (assetId: string) => void;
   onReorderAssets?: (assets: Asset[]) => void;
+  // Selection Props
+  selectionMode?: boolean;
+  selectedAssetIds?: Set<string>;
+  onToggleSelection?: (id: string) => void;
 }
 
 const AssetGrid: React.FC<AssetGridProps> = ({
@@ -198,7 +243,10 @@ const AssetGrid: React.FC<AssetGridProps> = ({
   onSelectAsset,
   onEditAsset,
   onDeleteAsset,
-  onReorderAssets
+  onReorderAssets,
+  selectionMode = false,
+  selectedAssetIds = new Set(),
+  onToggleSelection
 }) => {
   const [draggedAssetId, setDraggedAssetId] = useState<string | null>(null);
 
@@ -260,7 +308,10 @@ const AssetGrid: React.FC<AssetGridProps> = ({
           isDragging: draggedAssetId === asset.id,
           onDragStart: () => handleDragStart(asset.id),
           onDragOver: handleDragOver,
-          onDrop: () => handleDrop(asset.id)
+          onDrop: () => handleDrop(asset.id),
+          selectionMode,
+          isSelected: selectedAssetIds.has(asset.id),
+          onToggleSelection
         };
 
         return viewMode === 'grid' 
