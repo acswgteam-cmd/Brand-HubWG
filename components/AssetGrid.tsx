@@ -57,7 +57,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
         
         <div className="mt-auto pt-2 border-t border-slate-50 flex items-center justify-between">
           <div className="flex gap-1 overflow-hidden flex-1 mr-2">
-            {asset.tags.slice(0, 3).map(tag => (
+            {asset.tags && asset.tags.slice(0, 3).map(tag => (
               <span key={tag} className="px-1.5 py-0.5 bg-wg-sky/40 text-wg-honorable text-[9px] font-black uppercase rounded truncate max-w-[60px]">#{tag}</span>
             ))}
           </div>
@@ -141,7 +141,7 @@ const AssetListRow: React.FC<AssetListRowProps> = ({
       </div>
 
       <div className="hidden md:flex gap-1.5">
-        {asset.tags.slice(0, 2).map(tag => (
+        {asset.tags && asset.tags.slice(0, 2).map(tag => (
           <span key={tag} className="px-2 py-0.5 bg-wg-sky/30 text-wg-honorable text-[8px] font-black uppercase rounded">#{tag}</span>
         ))}
       </div>
@@ -205,7 +205,7 @@ const AssetGrid: React.FC<AssetGridProps> = ({ assets, brands, assetTypes, onSel
     setDraggedIdx(null);
   };
 
-  if (assets.length === 0) return (
+  if (!assets || assets.length === 0) return (
     <div className="flex flex-col items-center justify-center py-20 text-slate-300 animate-fade-in-up">
       <p className="text-lg font-bold">No assets found</p>
     </div>
