@@ -13,7 +13,8 @@ const mapAsset = (dbAsset: any): Asset => ({
   updatedAt: dbAsset.updated_at,
   tags: dbAsset.tags || [],
   status: dbAsset.status,
-  sortOrder: dbAsset.sort_order ?? 0
+  sortOrder: dbAsset.sort_order ?? 0,
+  downloadCount: dbAsset.download_count ?? 0
 });
 
 const mapBrand = (dbBrand: any): Brand => ({
@@ -127,6 +128,20 @@ export const upsertAssets = async (assets: Asset[]) => {
 export const deleteAsset = async (id: string) => {
   const { error } = await supabase.from('assets').delete().eq('id', id);
   if (error) throw error;
+};
+
+export const incrementDownloadCount = async (id: string) => {
+  // Fetch current count first
+  const { data } = await supabase.from('assets').select('download_count').eq('id', id).single();
+  const current = data?.download_count || 0;
+  
+  // Update with increment
+  const { error } = await supabase.from('assets').update({ 
+    download_count: current + 1 
+  }).eq('id', id);
+  
+  if (error) console.error("Failed to increment download count", error);
+  return current + 1;
 };
 
 export const createBrand = async (brand: Omit<Brand, 'id'>) => {
