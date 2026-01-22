@@ -186,10 +186,11 @@ const App: React.FC = () => {
   }), [data.brands]);
 
   // Extract all unique tags for suggestion list
+  // CHANGED: Convert all tags to lowercase to ensure case-insensitivity
   const allUniqueTags = useMemo(() => {
     const tags = new Set<string>();
     data.assets.forEach(asset => {
-      asset.tags.forEach(tag => tags.add(tag));
+      asset.tags.forEach(tag => tags.add(tag.toLowerCase()));
     });
     return Array.from(tags).sort();
   }, [data.assets]);
