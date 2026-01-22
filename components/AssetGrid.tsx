@@ -39,12 +39,12 @@ const AssetCard: React.FC<AssetCardProps> = ({
         </div>
       )}
       
-      {/* Updated background to slate-700 (dark gray) for better contrast with white assets */}
-      <div className="aspect-[4/3] bg-slate-700 relative overflow-hidden cursor-pointer flex items-center justify-center p-2" onClick={() => onSelect(asset)}>
+      {/* Updated background to slate-200 (lighter gray) to support dark assets while keeping some contrast for white ones */}
+      <div className="aspect-[4/3] bg-slate-200 relative overflow-hidden cursor-pointer flex items-center justify-center p-2" onClick={() => onSelect(asset)}>
         {thumbnailUrl && !imgError ? (
           <img src={thumbnailUrl} alt={asset.title} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" onError={() => setImgError(true)} loading="lazy" />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-40 group-hover:scale-110 transition-transform duration-300 text-white">{icon}</div>
+          <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-40 group-hover:scale-110 transition-transform duration-300 text-slate-400">{icon}</div>
         )}
       </div>
 
@@ -123,12 +123,12 @@ const AssetListRow: React.FC<AssetListRowProps> = ({
       onDrop={onDrop}
       className={`flex items-center gap-4 p-3 bg-white border border-slate-100 rounded-xl hover:shadow-md transition-all group animate-fade-in-up ${isAdmin ? 'cursor-move' : ''} ${isDragging ? 'opacity-30 border-wg-honorable scale-[0.99]' : ''}`}
     >
-      {/* Updated background to slate-700 (dark gray) for list view thumbnail as well */}
-      <div className="w-10 h-10 shrink-0 bg-slate-700 rounded-lg flex items-center justify-center text-xl overflow-hidden" onClick={() => onSelect(asset)}>
+      {/* Updated background to slate-200 (lighter gray) */}
+      <div className="w-10 h-10 shrink-0 bg-slate-200 rounded-lg flex items-center justify-center text-xl overflow-hidden" onClick={() => onSelect(asset)}>
         {thumbnailUrl && !imgError ? (
           <img src={thumbnailUrl} alt={asset.title} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110" onError={() => setImgError(true)} loading="lazy" />
         ) : (
-          <span className="text-white">{icon}</span>
+          <span className="text-slate-400">{icon}</span>
         )}
       </div>
       
@@ -181,72 +181,92 @@ interface AssetGridProps {
   assets: Asset[];
   brands: Brand[];
   assetTypes: AssetType[];
+  isAdmin: boolean;
+  viewMode: 'grid' | 'list';
   onSelectAsset: (asset: Asset) => void;
   onEditAsset?: (asset: Asset) => void;
   onDeleteAsset?: (assetId: string) => void;
   onReorderAssets?: (assets: Asset[]) => void;
-  isAdmin: boolean;
-  viewMode: 'grid' | 'list';
 }
 
-const AssetGrid: React.FC<AssetGridProps> = ({ assets, brands, assetTypes, onSelectAsset, onEditAsset, onDeleteAsset, onReorderAssets, isAdmin, viewMode }) => {
-  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+const AssetGrid: React.FC<AssetGridProps> = ({
+  assets,
+  brands,
+  assetTypes,
+  isAdmin,
+  viewMode,
+  onSelectAsset,
+  onEditAsset,
+  onDeleteAsset,
+  onReorderAssets
+}) => {
+  const [draggedAssetId, setDraggedAssetId] = useState<string | null>(null);
 
-  const getBrandName = (id: string) => brands.find(b => b.id === id)?.name || 'Unknown';
-  const getIcon = (id: string) => assetTypes.find(t => t.id === id)?.icon || '📁';
-
-  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
-  
-  const handleDrop = (targetIdx: number) => {
-    if (draggedIdx === null || draggedIdx === targetIdx || !onReorderAssets) return;
-    const newList = [...assets];
-    const [draggedItem] = newList.splice(draggedIdx, 1);
-    newList.splice(targetIdx, 0, draggedItem);
-    onReorderAssets(newList.map((item, idx) => ({ ...item, sortOrder: idx })));
-    setDraggedIdx(null);
+  const handleDragStart = (id: string) => {
+    if (!isAdmin) return;
+    setDraggedAssetId(id);
   };
 
-  if (!assets || assets.length === 0) return (
-    <div className="flex flex-col items-center justify-center py-20 text-slate-300 animate-fade-in-up">
-      <p className="text-lg font-bold">No assets found</p>
-    </div>
-  );
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!isAdmin) return;
+    e.preventDefault(); 
+  };
+
+  const handleDrop = (targetId: string) => {
+    if (!isAdmin || !draggedAssetId || !onReorderAssets) return;
+    if (draggedAssetId === targetId) return;
+
+    const draggedIndex = assets.findIndex(a => a.id === draggedAssetId);
+    const targetIndex = assets.findIndex(a => a.id === targetId);
+    
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    const newAssets = [...assets];
+    const [movedAsset] = newAssets.splice(draggedIndex, 1);
+    newAssets.splice(targetIndex, 0, movedAsset);
+    
+    onReorderAssets(newAssets);
+    setDraggedAssetId(null);
+  };
+
+  if (assets.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+        <div className="text-4xl mb-4 opacity-50">📂</div>
+        <h3 className="text-lg font-bold text-slate-900 mb-2">No Assets Found</h3>
+        <p className="text-slate-500 text-sm max-w-xs text-center">Try adjusting your filters or search query to find what you're looking for.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6" : "flex flex-col gap-3"}>
-      {assets.map((asset, index) => (
-        viewMode === 'grid' ? (
-          <AssetCard 
-            key={asset.id}
-            asset={asset}
-            brandName={getBrandName(asset.brandId)}
-            icon={getIcon(asset.typeId)}
-            onSelect={onSelectAsset}
-            onEdit={onEditAsset}
-            onDelete={onDeleteAsset}
-            isAdmin={isAdmin}
-            isDragging={draggedIdx === index}
-            onDragStart={() => isAdmin && setDraggedIdx(index)}
-            onDragOver={handleDragOver}
-            onDrop={() => handleDrop(index)}
-          />
-        ) : (
-          <AssetListRow
-            key={asset.id}
-            asset={asset}
-            brandName={getBrandName(asset.brandId)}
-            icon={getIcon(asset.typeId)}
-            onSelect={onSelectAsset}
-            onEdit={onEditAsset}
-            onDelete={onDeleteAsset}
-            isAdmin={isAdmin}
-            isDragging={draggedIdx === index}
-            onDragStart={() => isAdmin && setDraggedIdx(index)}
-            onDragOver={handleDragOver}
-            onDrop={() => handleDrop(index)}
-          />
-        )
-      ))}
+    <div className={viewMode === 'grid' 
+      ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6" 
+      : "flex flex-col gap-3"
+    }>
+      {assets.map((asset) => {
+        const brand = brands.find(b => b.id === asset.brandId);
+        const type = assetTypes.find(t => t.id === asset.typeId);
+        
+        const commonProps = {
+          key: asset.id,
+          asset,
+          brandName: brand?.name || 'Unknown Entity',
+          icon: type?.icon || '📄',
+          onSelect: onSelectAsset,
+          onEdit: onEditAsset,
+          onDelete: onDeleteAsset,
+          isAdmin,
+          isDragging: draggedAssetId === asset.id,
+          onDragStart: () => handleDragStart(asset.id),
+          onDragOver: handleDragOver,
+          onDrop: () => handleDrop(asset.id)
+        };
+
+        return viewMode === 'grid' 
+          ? <AssetCard {...commonProps} />
+          : <AssetListRow {...commonProps} />;
+      })}
     </div>
   );
 };
