@@ -1,6 +1,7 @@
 
-import { Asset, Brand, AssetType } from '../types';
+import { Asset, Brand, AssetType, AboutContent } from '../types';
 import { supabase } from './supabaseClient';
+import { DEFAULT_ABOUT_CONTENT } from '../constants';
 
 const mapAsset = (dbAsset: any): Asset => ({
   id: dbAsset.id,
@@ -74,6 +75,28 @@ export const fetchAllData = async () => {
   }
 };
 
+// --- About Content Management ---
+
+export const fetchAboutContent = async (): Promise<AboutContent> => {
+  // In a real scenario, this would fetch from a 'site_content' table.
+  // For this demo, we check localStorage first, then fallback to CONSTANT.
+  const stored = localStorage.getItem('wg_about_content');
+  if (stored) {
+    return JSON.parse(stored);
+  }
+  return DEFAULT_ABOUT_CONTENT;
+};
+
+export const saveAboutContent = async (content: AboutContent): Promise<void> => {
+  // Simulate saving to DB by saving to localStorage
+  localStorage.setItem('wg_about_content', JSON.stringify(content));
+  
+  // Optional: Try to save to Supabase if table exists (Mock implementation)
+  // const { error } = await supabase.from('site_content').upsert({ id: 'about_page', content });
+};
+
+// --- CRUD Operations ---
+
 export const upsertAsset = async (asset: Partial<Asset>) => {
   const payload: any = {
     id: asset.id,
@@ -131,11 +154,9 @@ export const deleteAsset = async (id: string) => {
 };
 
 export const incrementDownloadCount = async (id: string) => {
-  // Fetch current count first
   const { data } = await supabase.from('assets').select('download_count').eq('id', id).single();
   const current = data?.download_count || 0;
   
-  // Update with increment
   const { error } = await supabase.from('assets').update({ 
     download_count: current + 1 
   }).eq('id', id);
