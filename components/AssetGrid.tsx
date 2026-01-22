@@ -39,12 +39,12 @@ const AssetCard: React.FC<AssetCardProps> = ({
         </div>
       )}
       
-      {/* Changed object-cover to object-contain to fit the image without cropping */}
-      <div className="aspect-[4/3] bg-slate-50 relative overflow-hidden cursor-pointer flex items-center justify-center p-2" onClick={() => onSelect(asset)}>
+      {/* Updated background to slate-700 (dark gray) for better contrast with white assets */}
+      <div className="aspect-[4/3] bg-slate-700 relative overflow-hidden cursor-pointer flex items-center justify-center p-2" onClick={() => onSelect(asset)}>
         {thumbnailUrl && !imgError ? (
           <img src={thumbnailUrl} alt={asset.title} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" onError={() => setImgError(true)} loading="lazy" />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-40 group-hover:scale-110 transition-transform duration-300">{icon}</div>
+          <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-40 group-hover:scale-110 transition-transform duration-300 text-white">{icon}</div>
         )}
       </div>
 
@@ -123,11 +123,12 @@ const AssetListRow: React.FC<AssetListRowProps> = ({
       onDrop={onDrop}
       className={`flex items-center gap-4 p-3 bg-white border border-slate-100 rounded-xl hover:shadow-md transition-all group animate-fade-in-up ${isAdmin ? 'cursor-move' : ''} ${isDragging ? 'opacity-30 border-wg-honorable scale-[0.99]' : ''}`}
     >
-      <div className="w-10 h-10 shrink-0 bg-slate-50 rounded-lg flex items-center justify-center text-xl overflow-hidden" onClick={() => onSelect(asset)}>
+      {/* Updated background to slate-700 (dark gray) for list view thumbnail as well */}
+      <div className="w-10 h-10 shrink-0 bg-slate-700 rounded-lg flex items-center justify-center text-xl overflow-hidden" onClick={() => onSelect(asset)}>
         {thumbnailUrl && !imgError ? (
-          <img src={thumbnailUrl} alt={asset.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" onError={() => setImgError(true)} loading="lazy" />
+          <img src={thumbnailUrl} alt={asset.title} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110" onError={() => setImgError(true)} loading="lazy" />
         ) : (
-          icon
+          <span className="text-white">{icon}</span>
         )}
       </div>
       
