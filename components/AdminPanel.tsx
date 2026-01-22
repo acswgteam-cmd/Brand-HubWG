@@ -48,6 +48,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   });
   
   const [tagInput, setTagInput] = useState('');
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false); // Controls custom dropdown visibility
   const [activeTab, setActiveTab] = useState<'asset' | 'brands' | 'types'>('asset');
   const [uploadMode, setUploadMode] = useState<'link' | 'file'>('link');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -90,10 +91,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     
     try {
       const result = await generateAssetMetadata(formData.title, brand, type);
+      // Ensure generated tags are also lowercase
+      const lowerTags = (result.tags || []).map((t: string) => t.toLowerCase());
       setFormData(prev => ({
         ...prev,
         description: result.description,
-        tags: [...new Set([...prev.tags, ...result.tags])]
+        tags: [...new Set([...prev.tags, ...lowerTags])]
       }));
     } catch (e) {
       console.error(e);
@@ -139,12 +142,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     setDraggedIndex(null);
   };
 
-  const handleAddTag = (e: React.MouseEvent | React.KeyboardEvent) => {
-    if (e.type === 'keydown' && (e as React.KeyboardEvent).key !== 'Enter') return;
-    e.preventDefault(); // Prevent form submission
-    if (tagInput.trim()) {
-      setFormData(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
+  // Logic to add a tag: converts to lowercase for case-insensitivity
+  const addTag = (val: string) => {
+    const normalized = val.trim().toLowerCase();
+    if (normalized && !formData.tags.includes(normalized)) {
+      setFormData(prev => ({ ...prev, tags: [...prev.tags, normalized] }));
       setTagInput('');
+      setShowTagSuggestions(false);
+    }
+  };
+
+  const handleAddTagKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag(tagInput);
     }
   };
 
@@ -157,6 +168,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     if (!formData.link) return alert("Please provide a link or upload a file.");
     onSaveAsset({ ...formData, id: editingAsset?.id });
   };
+
+  // Filter tags for the custom dropdown
+  const filteredTags = existingTags.filter(t => 
+    t.toLowerCase().includes(tagInput.toLowerCase()) && !formData.tags.includes(t)
+  );
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 lg:p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -222,23 +238,38 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1 relative">
                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tags</label>
-                 <div className="flex gap-2 mb-2">
-                   <input 
-                     list="existing-tags"
-                     value={tagInput}
-                     onChange={(e) => setTagInput(e.target.value)}
-                     onKeyDown={handleAddTag}
-                     placeholder="Add a tag..."
-                     className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs"
-                   />
-                   <datalist id="existing-tags">
-                     {existingTags.map(tag => (
-                       <option key={tag} value={tag} />
-                     ))}
-                   </datalist>
-                   <button type="button" onClick={handleAddTag} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-xl font-bold text-xs transition-colors">Add</button>
+                 <div className="flex gap-2 mb-2 relative">
+                   <div className="flex-1 relative">
+                     <input 
+                       value={tagInput}
+                       onChange={(e) => {
+                         setTagInput(e.target.value);
+                         setShowTagSuggestions(true);
+                       }}
+                       onFocus={() => setShowTagSuggestions(true)}
+                       onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
+                       onKeyDown={handleAddTagKey}
+                       placeholder="Add a tag..."
+                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs"
+                     />
+                     {/* Custom Compact Dropdown */}
+                     {showTagSuggestions && tagInput && filteredTags.length > 0 && (
+                       <ul className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-32 overflow-y-auto z-50">
+                         {filteredTags.map(tag => (
+                           <li 
+                             key={tag}
+                             onClick={() => addTag(tag)}
+                             className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-wg-honorable cursor-pointer border-b border-slate-50 last:border-0"
+                           >
+                             #{tag}
+                           </li>
+                         ))}
+                       </ul>
+                     )}
+                   </div>
+                   <button type="button" onClick={() => addTag(tagInput)} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-xl font-bold text-xs transition-colors">Add</button>
                  </div>
                  <div className="flex flex-wrap gap-2">
                    {formData.tags.map(tag => (
