@@ -124,6 +124,11 @@ export const upsertAssets = async (assets: Asset[]) => {
   return (data || []).map(mapAsset);
 };
 
+export const deleteAsset = async (id: string) => {
+  const { error } = await supabase.from('assets').delete().eq('id', id);
+  if (error) throw error;
+};
+
 export const createBrand = async (brand: Omit<Brand, 'id'>) => {
   const { data, error } = await supabase.from('brands').insert({
     name: brand.name,
