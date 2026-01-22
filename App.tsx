@@ -8,7 +8,7 @@ import AssetGrid from './components/AssetGrid';
 import PreviewModal from './components/PreviewModal';
 import AdminPanel from './components/AdminPanel';
 import LoginModal from './components/LoginModal';
-import Dashboard from './components/Dashboard';
+import About from './components/About';
 
 const App: React.FC = () => {
   const [data, setData] = useState<{assets: Asset[], brands: Brand[], assetTypes: AssetType[]}>({
@@ -19,8 +19,8 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
-  // Navigation State
-  const [currentView, setCurrentView] = useState<'dashboard' | 'browse'>('dashboard');
+  // Navigation State - Renamed 'dashboard' to 'about'
+  const [currentView, setCurrentView] = useState<'about' | 'browse'>('about');
   const [activeBrandId, setActiveBrandId] = useState<string | null>(null);
   
   // Filtering & Selection State
@@ -323,7 +323,7 @@ const App: React.FC = () => {
 
       <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-50 flex flex-col border-r border-slate-200 transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-8 border-b border-slate-200 bg-white/60">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setCurrentView('dashboard'); setActiveBrandId(null); setSelectedType(null); }}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setCurrentView('about'); setActiveBrandId(null); setSelectedType(null); }}>
             <div className="w-10 h-10 bg-wg-honorable rounded-full overflow-hidden flex items-center justify-center shadow-lg shadow-wg-honorable/20">
               <img src={LOGO_URL} className="w-full h-full object-cover" />
             </div>
@@ -335,8 +335,9 @@ const App: React.FC = () => {
         </div>
         
         <nav className="flex-1 overflow-y-auto p-6 space-y-1">
-          <button onClick={() => { setCurrentView('dashboard'); setActiveBrandId(null); setSelectedType(null); setIsSidebarOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-between transition-all duration-200 ${currentView === 'dashboard' ? 'bg-wg-honorable text-white shadow-lg shadow-wg-honorable/20' : 'text-slate-500 hover:bg-wg-honorable/5 hover:translate-x-1'}`}>
-            <span>Dashboard</span>
+          <button onClick={() => { setCurrentView('about'); setActiveBrandId(null); setSelectedType(null); setIsSidebarOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-between transition-all duration-200 ${currentView === 'about' ? 'bg-wg-honorable text-white shadow-lg shadow-wg-honorable/20' : 'text-slate-500 hover:bg-wg-honorable/5 hover:translate-x-1'}`}>
+            <span>About</span>
+            {currentView === 'about' && <span className="text-xs">ℹ️</span>}
           </button>
 
           <button onClick={() => { setCurrentView('browse'); setActiveBrandId(null); setIsSidebarOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-between transition-all duration-200 ${currentView === 'browse' && !activeBrandId ? 'bg-wg-honorable text-white shadow-lg shadow-wg-honorable/20' : 'text-slate-500 hover:bg-wg-honorable/5 hover:translate-x-1'}`}>
@@ -370,7 +371,7 @@ const App: React.FC = () => {
           <button onClick={() => setIsSidebarOpen(true)} className="p-2.5 bg-slate-50 rounded-xl lg:hidden text-slate-400 hover:bg-slate-100 transition-colors"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg></button>
           <div className="relative flex-1 max-w-2xl group">
             <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-wg-honorable transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            <input type="text" placeholder="Search resources..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); if(currentView === 'dashboard' && e.target.value) setCurrentView('browse'); }} className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium outline-none focus:ring-4 focus:ring-wg-honorable/5 focus:border-wg-honorable transition-all" />
+            <input type="text" placeholder="Search resources..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); if(currentView === 'about' && e.target.value) setCurrentView('browse'); }} className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium outline-none focus:ring-4 focus:ring-wg-honorable/5 focus:border-wg-honorable transition-all" />
           </div>
           
           {currentView === 'browse' && (
@@ -415,8 +416,8 @@ const App: React.FC = () => {
         </header>
 
         <div className="flex-1 overflow-y-auto px-4 lg:px-10 py-10">
-          {currentView === 'dashboard' ? (
-            <Dashboard 
+          {currentView === 'about' ? (
+            <About 
               assets={data.assets} 
               brands={data.brands} 
               assetTypes={data.assetTypes}
