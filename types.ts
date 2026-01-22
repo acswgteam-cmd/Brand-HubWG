@@ -33,6 +33,13 @@ export interface Asset {
   downloadCount?: number; // Added for analytics
 }
 
+export interface AboutContent {
+  aboutText: string;
+  principles: string[];
+  diversityText: string;
+  services: string[];
+}
+
 export interface AppState {
   assets: Asset[];
   brands: Brand[];
