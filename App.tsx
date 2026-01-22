@@ -426,6 +426,7 @@ const App: React.FC = () => {
                  setCurrentView('browse');
                  setSelectedAsset(asset);
               }}
+              isAdmin={role === 'ADMIN'}
             />
           ) : (
             <div className="flex flex-col gap-10">
