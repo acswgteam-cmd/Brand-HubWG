@@ -14,8 +14,9 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, brands, assetTypes, onNav
   const stats = useMemo(() => {
     const totalAssets = assets.length;
     const totalBrands = brands.length;
-    // Mocking download count summation if not present in DB yet
-    const totalDownloads = assets.reduce((acc, curr) => acc + (curr.downloadCount || Math.floor(Math.random() * 50)), 0);
+    
+    // Calculate total downloads from actual data (no more random mock)
+    const totalDownloads = assets.reduce((acc, curr) => acc + (curr.downloadCount || 0), 0);
     
     // Most downloaded (Popular)
     const sortedByPop = [...assets].sort((a, b) => (b.downloadCount || 0) - (a.downloadCount || 0));
@@ -67,7 +68,7 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, brands, assetTypes, onNav
           <h3 className="text-lg font-extrabold text-slate-900 mb-6 flex items-center gap-2">
             <span className="text-xl">🔥</span> Most Popular Asset
           </h3>
-          {stats.mostPopular ? (
+          {stats.mostPopular && stats.mostPopular.downloadCount && stats.mostPopular.downloadCount > 0 ? (
             <div className="flex items-start gap-6 group cursor-pointer" onClick={() => onNavigateToAsset(stats.mostPopular)}>
               <div className="w-24 h-24 bg-slate-100 rounded-xl overflow-hidden shrink-0 border border-slate-200">
                 {getThumbnailUrl(stats.mostPopular.link) ? (
@@ -81,15 +82,18 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, brands, assetTypes, onNav
                   {brands.find(b => b.id === stats.mostPopular.brandId)?.name}
                 </div>
                 <h4 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-wg-honorable transition-colors">{stats.mostPopular.title}</h4>
-                <div className="flex gap-2">
+                <div className="flex gap-2 mb-2">
                    {stats.mostPopular.tags.slice(0,3).map(t => (
                      <span key={t} className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase">{t}</span>
                    ))}
                 </div>
+                <div className="text-xs text-slate-400 font-bold">
+                  {stats.mostPopular.downloadCount} Downloads
+                </div>
               </div>
             </div>
           ) : (
-            <p className="text-slate-400 text-sm">No data available.</p>
+            <p className="text-slate-400 text-sm">No significant download activity yet.</p>
           )}
         </div>
 
