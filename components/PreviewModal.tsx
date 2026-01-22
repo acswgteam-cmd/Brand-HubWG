@@ -99,8 +99,8 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, onClose }) => {
           </button>
         </div>
         
-        {/* Changed background from slate-50/50 to slate-700 to match thumbnail view and support white assets */}
-        <div className="p-4 lg:p-10 overflow-auto bg-slate-700 flex items-center justify-center min-h-[300px] lg:min-h-[450px]">
+        {/* Changed background from slate-700 to slate-200 (lighter gray) */}
+        <div className="p-4 lg:p-10 overflow-auto bg-slate-200 flex items-center justify-center min-h-[300px] lg:min-h-[450px]">
           {renderPreview()}
         </div>
 
