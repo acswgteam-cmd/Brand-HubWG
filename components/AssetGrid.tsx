@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Asset, Brand, AssetType } from '../types';
 import { getThumbnailUrl, getDownloadLink } from '../services/assetService';
 
@@ -19,12 +19,13 @@ interface AssetCardProps {
   selectionMode?: boolean;
   isSelected?: boolean;
   onToggleSelection?: (id: string) => void;
+  onDownload?: (asset: Asset) => void;
 }
 
 const AssetCard: React.FC<AssetCardProps> = ({ 
   asset, brandName, icon, onSelect, onEdit, onDelete, isAdmin,
   isDragging, onDragStart, onDragOver, onDrop,
-  selectionMode, isSelected, onToggleSelection
+  selectionMode, isSelected, onToggleSelection, onDownload
 }) => {
   const [imgError, setImgError] = useState(false);
   const thumbnailUrl = getThumbnailUrl(asset.link);
@@ -87,7 +88,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
                   download={asset.title} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); onDownload && onDownload(asset); }}
                   className="p-1 text-slate-300 hover:text-wg-honorable transition-colors hover:scale-110"
                   title="Download"
                 >
@@ -104,7 +105,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
                   </button>
                 )}
                 <button onClick={() => onSelect(asset)} className="p-1 text-slate-300 hover:text-wg-honorable transition-colors hover:scale-110" title="View">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                 </button>
               </>
             )}
@@ -130,12 +131,13 @@ interface AssetListRowProps {
   selectionMode?: boolean;
   isSelected?: boolean;
   onToggleSelection?: (id: string) => void;
+  onDownload?: (asset: Asset) => void;
 }
 
 const AssetListRow: React.FC<AssetListRowProps> = ({
   asset, brandName, icon, onSelect, onEdit, onDelete, isAdmin,
   isDragging, onDragStart, onDragOver, onDrop,
-  selectionMode, isSelected, onToggleSelection
+  selectionMode, isSelected, onToggleSelection, onDownload
 }) => {
   const [imgError, setImgError] = useState(false);
   const thumbnailUrl = getThumbnailUrl(asset.link);
@@ -160,7 +162,6 @@ const AssetListRow: React.FC<AssetListRowProps> = ({
          </div>
       )}
 
-      {/* Updated background to slate-200 (lighter gray) */}
       <div className="w-10 h-10 shrink-0 bg-slate-200 rounded-lg flex items-center justify-center text-xl overflow-hidden" onClick={() => !selectionMode && onSelect(asset)}>
         {thumbnailUrl && !imgError ? (
           <img src={thumbnailUrl} alt={asset.title} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110" onError={() => setImgError(true)} loading="lazy" />
@@ -192,7 +193,7 @@ const AssetListRow: React.FC<AssetListRowProps> = ({
               download={asset.title} 
               target="_blank" 
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); onDownload && onDownload(asset); }}
               className="p-2 text-slate-300 hover:text-wg-honorable transition-colors hover:scale-110"
               title="Download"
             >
@@ -228,11 +229,51 @@ interface AssetGridProps {
   onEditAsset?: (asset: Asset) => void;
   onDeleteAsset?: (assetId: string) => void;
   onReorderAssets?: (assets: Asset[]) => void;
-  // Selection Props
   selectionMode?: boolean;
   selectedAssetIds?: Set<string>;
   onToggleSelection?: (id: string) => void;
+  onDownloadAsset?: (asset: Asset) => void;
 }
+
+const getAssetGroup = (asset: Asset) => {
+  const title = asset.title.toLowerCase();
+  
+  // 1. Color Variants
+  if (title.includes('white') || title.includes('putih') || title.includes('negative')) return 'White / Negative';
+  if (title.includes('black') || title.includes('hitam') || title.includes('monochrome')) return 'Black / Monochrome';
+  if (title.includes('color') || title.includes('full') || title.includes('warna') || title.includes('blue') || title.includes('biru')) return 'Full Color / Brand';
+  
+  // 2. Shape / Orientation
+  if (title.includes('round') || title.includes('bulat') || title.includes('circle')) return 'Round / Circular';
+  if (title.includes('vert') || title.includes('port')) return 'Vertical';
+  if (title.includes('horiz') || title.includes('land')) return 'Horizontal';
+  if (title.includes('icon') || title.includes('symbol') || title.includes('logogram')) return 'Icon Only';
+  
+  // 3. Fallback to File Type via Extension
+  if (asset.link.match(/\.png$/i)) return 'PNG Images';
+  if (asset.link.match(/\.jpe?g$/i)) return 'JPG Images';
+  if (asset.link.match(/\.svg$/i)) return 'Vector (SVG)';
+  if (asset.link.match(/\.pdf$/i)) return 'Documents (PDF)';
+  if (asset.link.match(/\.mp4$/i) || asset.link.match(/\.mov$/i)) return 'Video Files';
+  
+  return 'Other Assets';
+};
+
+const GROUP_ORDER = [
+  'Full Color / Brand', 
+  'White / Negative', 
+  'Black / Monochrome', 
+  'Vertical', 
+  'Horizontal', 
+  'Round / Circular', 
+  'Icon Only',
+  'Vector (SVG)',
+  'PNG Images',
+  'JPG Images',
+  'Documents (PDF)',
+  'Video Files',
+  'Other Assets'
+];
 
 const AssetGrid: React.FC<AssetGridProps> = ({
   assets,
@@ -246,7 +287,8 @@ const AssetGrid: React.FC<AssetGridProps> = ({
   onReorderAssets,
   selectionMode = false,
   selectedAssetIds = new Set(),
-  onToggleSelection
+  onToggleSelection,
+  onDownloadAsset
 }) => {
   const [draggedAssetId, setDraggedAssetId] = useState<string | null>(null);
 
@@ -277,6 +319,32 @@ const AssetGrid: React.FC<AssetGridProps> = ({
     setDraggedAssetId(null);
   };
 
+  // Grouping Logic
+  const groupedAssets = useMemo(() => {
+    const groups: Record<string, Asset[]> = {};
+    assets.forEach(asset => {
+      const group = getAssetGroup(asset);
+      if (!groups[group]) groups[group] = [];
+      groups[group].push(asset);
+    });
+    return groups;
+  }, [assets]);
+
+  const sortedGroupKeys = useMemo(() => {
+    return Object.keys(groupedAssets).sort((a, b) => {
+      const idxA = GROUP_ORDER.indexOf(a);
+      const idxB = GROUP_ORDER.indexOf(b);
+      // If both are in the known list, sort by index
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      // If only A is known, A comes first
+      if (idxA !== -1) return -1;
+      // If only B is known, B comes first
+      if (idxB !== -1) return 1;
+      // Otherwise alphabetical
+      return a.localeCompare(b);
+    });
+  }, [groupedAssets]);
+
   if (assets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
@@ -287,37 +355,82 @@ const AssetGrid: React.FC<AssetGridProps> = ({
     );
   }
 
-  return (
-    <div className={viewMode === 'grid' 
-      ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6" 
-      : "flex flex-col gap-3"
-    }>
-      {assets.map((asset) => {
-        const brand = brands.find(b => b.id === asset.brandId);
-        const type = assetTypes.find(t => t.id === asset.typeId);
-        
-        const commonProps = {
-          key: asset.id,
-          asset,
-          brandName: brand?.name || 'Unknown Entity',
-          icon: type?.icon || '📄',
-          onSelect: onSelectAsset,
-          onEdit: onEditAsset,
-          onDelete: onDeleteAsset,
-          isAdmin,
-          isDragging: draggedAssetId === asset.id,
-          onDragStart: () => handleDragStart(asset.id),
-          onDragOver: handleDragOver,
-          onDrop: () => handleDrop(asset.id),
-          selectionMode,
-          isSelected: selectedAssetIds.has(asset.id),
-          onToggleSelection
-        };
+  // If mostly everything falls into "Other" or single group, render standard flat grid
+  const shouldRenderFlat = Object.keys(groupedAssets).length <= 1 || (Object.keys(groupedAssets).length === 2 && groupedAssets['Other Assets']?.length > 0);
 
-        return viewMode === 'grid' 
-          ? <AssetCard {...commonProps} />
-          : <AssetListRow {...commonProps} />;
-      })}
+  if (shouldRenderFlat) {
+    return (
+        <div className={viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6" : "flex flex-col gap-3"}>
+          {assets.map(asset => {
+             const brand = brands.find(b => b.id === asset.brandId);
+             const type = assetTypes.find(t => t.id === asset.typeId);
+             const commonProps = {
+                key: asset.id,
+                asset,
+                brandName: brand?.name || 'Unknown Entity',
+                icon: type?.icon || '📄',
+                onSelect: onSelectAsset,
+                onEdit: onEditAsset,
+                onDelete: onDeleteAsset,
+                isAdmin,
+                isDragging: draggedAssetId === asset.id,
+                onDragStart: () => handleDragStart(asset.id),
+                onDragOver: handleDragOver,
+                onDrop: () => handleDrop(asset.id),
+                selectionMode,
+                isSelected: selectedAssetIds.has(asset.id),
+                onToggleSelection,
+                onDownload: onDownloadAsset
+              };
+             return viewMode === 'grid' ? <AssetCard {...commonProps} /> : <AssetListRow {...commonProps} />;
+          })}
+        </div>
+    )
+  }
+
+  return (
+    <div className="space-y-10">
+      {sortedGroupKeys.map(group => (
+        <div key={group} className="animate-fade-in-up">
+          <div className="flex items-center gap-3 mb-4">
+             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">{group}</h3>
+             <div className="h-px bg-slate-100 flex-1"></div>
+             <span className="text-[10px] font-bold text-slate-300 bg-slate-50 px-2 py-0.5 rounded-full">{groupedAssets[group].length}</span>
+          </div>
+          <div className={viewMode === 'grid' 
+            ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6" 
+            : "flex flex-col gap-3"
+          }>
+            {groupedAssets[group].map((asset) => {
+              const brand = brands.find(b => b.id === asset.brandId);
+              const type = assetTypes.find(t => t.id === asset.typeId);
+              
+              const commonProps = {
+                key: asset.id,
+                asset,
+                brandName: brand?.name || 'Unknown Entity',
+                icon: type?.icon || '📄',
+                onSelect: onSelectAsset,
+                onEdit: onEditAsset,
+                onDelete: onDeleteAsset,
+                isAdmin,
+                isDragging: draggedAssetId === asset.id,
+                onDragStart: () => handleDragStart(asset.id),
+                onDragOver: handleDragOver,
+                onDrop: () => handleDrop(asset.id),
+                selectionMode,
+                isSelected: selectedAssetIds.has(asset.id),
+                onToggleSelection,
+                onDownload: onDownloadAsset
+              };
+
+              return viewMode === 'grid' 
+                ? <AssetCard {...commonProps} />
+                : <AssetListRow {...commonProps} />;
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
