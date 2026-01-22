@@ -185,6 +185,15 @@ const App: React.FC = () => {
     UNIT: data.brands.filter(b => b.type === 'UNIT')
   }), [data.brands]);
 
+  // Extract all unique tags for suggestion list
+  const allUniqueTags = useMemo(() => {
+    const tags = new Set<string>();
+    data.assets.forEach(asset => {
+      asset.tags.forEach(tag => tags.add(tag));
+    });
+    return Array.from(tags).sort();
+  }, [data.assets]);
+
   if (loading) return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-white">
       <div className="w-12 h-12 border-4 border-slate-100 border-t-wg-honorable rounded-full animate-spin mb-4"></div>
@@ -332,6 +341,7 @@ const App: React.FC = () => {
           onDeleteAssetType={async (id) => { if(confirm("Delete this format?")) { await service.deleteAssetType(id); setData(p => ({ ...p, assetTypes: p.assetTypes.filter(t => t.id !== id) })); } }}
           onReorderBrands={handleReorderBrands}
           onReorderTypes={handleReorderTypes}
+          existingTags={allUniqueTags}
         />
       )}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} onLogin={async (e, p) => { if(e==='admin@werkudara.com' && p==='admin123'){ setRole('ADMIN'); setShowLoginModal(false); return true; } return false; }} />}
