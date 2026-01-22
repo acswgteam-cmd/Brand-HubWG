@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import { Asset } from '../types';
 import { getPreviewLink, getFileType, getDownloadLink } from '../services/assetService';
@@ -98,7 +99,8 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, onClose }) => {
           </button>
         </div>
         
-        <div className="p-4 lg:p-10 overflow-auto bg-slate-50/50 flex items-center justify-center min-h-[300px] lg:min-h-[450px]">
+        {/* Changed background from slate-50/50 to slate-700 to match thumbnail view and support white assets */}
+        <div className="p-4 lg:p-10 overflow-auto bg-slate-700 flex items-center justify-center min-h-[300px] lg:min-h-[450px]">
           {renderPreview()}
         </div>
 
