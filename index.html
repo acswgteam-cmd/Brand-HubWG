@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,6 +36,15 @@
               'wg-dark': '#F5F7FA',
               'wg-light': '#FFFFFF',
               'wg-text-dark': '#1A1C1E',
+            },
+            animation: {
+              'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+            },
+            keyframes: {
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              }
             }
           }
         }
@@ -49,6 +59,14 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+        
+        .animate-fade-in-up {
+           animation: fadeInUp 0.5s ease-out forwards;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 <script type="importmap">
 {
@@ -60,10 +78,8 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-wg-light text-wg-text-dark h-screen overflow-hidden">
     <div id="root" class="h-full"></div>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>
