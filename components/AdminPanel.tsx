@@ -17,7 +17,8 @@ interface AdminPanelProps {
   onDeleteAssetType: (id: string) => void;
   onReorderBrands: (brands: Brand[]) => void;
   onReorderTypes: (types: AssetType[]) => void;
-  existingTags?: string[]; // New prop for suggestions
+  existingTags?: string[];
+  initialTab?: 'asset' | 'brands' | 'types'; // New prop
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ 
@@ -34,7 +35,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   onDeleteAssetType,
   onReorderBrands,
   onReorderTypes,
-  existingTags = []
+  existingTags = [],
+  initialTab = 'asset'
 }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -48,8 +50,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   });
   
   const [tagInput, setTagInput] = useState('');
-  const [showTagSuggestions, setShowTagSuggestions] = useState(false); // Controls custom dropdown visibility
-  const [activeTab, setActiveTab] = useState<'asset' | 'brands' | 'types'>('asset');
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+  const [activeTab, setActiveTab] = useState<'asset' | 'brands' | 'types'>(initialTab);
   const [uploadMode, setUploadMode] = useState<'link' | 'file'>('link');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   
@@ -64,6 +66,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Set initial tab if provided
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
 
   useEffect(() => {
     if (editingAsset) {
@@ -91,7 +98,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     
     try {
       const result = await generateAssetMetadata(formData.title, brand, type);
-      // Ensure generated tags are also lowercase
       const lowerTags = (result.tags || []).map((t: string) => t.toLowerCase());
       setFormData(prev => ({
         ...prev,
@@ -142,7 +148,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     setDraggedIndex(null);
   };
 
-  // Logic to add a tag: converts to lowercase for case-insensitivity
   const addTag = (val: string) => {
     const normalized = val.trim().toLowerCase();
     if (normalized && !formData.tags.includes(normalized)) {
@@ -169,7 +174,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     onSaveAsset({ ...formData, id: editingAsset?.id });
   };
 
-  // Filter tags for the custom dropdown
   const filteredTags = existingTags.filter(t => 
     t.toLowerCase().includes(tagInput.toLowerCase()) && !formData.tags.includes(t)
   );
@@ -185,7 +189,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               onClick={() => { setActiveTab(tab as any); setEditingItemId(null); }}
               className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-wg-honorable border-b-2 border-wg-honorable' : 'text-slate-400'}`}
             >
-              {tab === 'asset' ? 'Asset' : tab === 'brands' ? 'Entities' : 'Formats'}
+              {tab === 'asset' ? 'Upload Asset' : tab === 'brands' ? 'Manage Entities' : 'Manage Formats'}
             </button>
           ))}
           <button onClick={onClose} className="p-4 text-slate-300 hover:text-wg-burgundy transition-colors shrink-0">
@@ -254,7 +258,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                        placeholder="Add a tag..."
                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs"
                      />
-                     {/* Custom Compact Dropdown */}
                      {showTagSuggestions && tagInput && filteredTags.length > 0 && (
                        <ul className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-32 overflow-y-auto z-50">
                          {filteredTags.map(tag => (
