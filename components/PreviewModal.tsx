@@ -6,9 +6,10 @@ import { getPreviewLink, getFileType, getDownloadLink } from '../services/assetS
 interface PreviewModalProps {
   asset: Asset | null;
   onClose: () => void;
+  onDownload?: (asset: Asset) => void;
 }
 
-const PreviewModal: React.FC<PreviewModalProps> = ({ asset, onClose }) => {
+const PreviewModal: React.FC<PreviewModalProps> = ({ asset, onClose, onDownload }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,47 +31,6 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, onClose }) => {
   const fileType = getFileType(asset.link);
   const previewUrl = getPreviewLink(asset.link);
   const downloadUrl = getDownloadLink(asset.link);
-
-  const renderPreview = () => {
-    switch (fileType) {
-      case 'image':
-        return <img src={previewUrl} alt={asset.title} className="max-w-full max-h-[50vh] lg:max-h-[60vh] object-contain rounded-lg shadow-xl" />;
-      case 'video':
-        return (
-          <video controls className="w-full max-h-[50vh] lg:max-h-[60vh] rounded-lg shadow-xl bg-black">
-            <source src={previewUrl} />
-            Your browser does not support the video tag.
-          </video>
-        );
-      case 'pdf':
-      case 'google-drive':
-        return (
-          <iframe
-            src={previewUrl}
-            className="w-full h-[50vh] lg:h-[60vh] rounded-lg border-0 bg-white shadow-inner"
-            title={asset.title}
-          />
-        );
-      default:
-        return (
-          <div className="p-10 lg:p-16 text-center bg-white rounded-2xl shadow-sm border border-slate-100">
-            <div className="text-4xl lg:text-6xl mb-6 opacity-30">🔗</div>
-            <h3 className="text-xl lg:text-2xl font-extrabold text-slate-900 mb-4">No Preview Available</h3>
-            <p className="text-slate-500 mb-8 max-w-sm mx-auto text-sm">This asset can be viewed by opening or downloading via the links below.</p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <a 
-                href={asset.link} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex px-8 py-3.5 bg-slate-100 text-slate-700 font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-200 transition-all active:scale-95"
-              >
-                Open Resource
-              </a>
-            </div>
-          </div>
-        );
-    }
-  };
 
   return (
     <div 
@@ -101,7 +61,46 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, onClose }) => {
         
         {/* Changed background from slate-700 to slate-200 (lighter gray) */}
         <div className="p-4 lg:p-10 overflow-auto bg-slate-200 flex items-center justify-center min-h-[300px] lg:min-h-[450px]">
-          {renderPreview()}
+          {(() => {
+            switch (fileType) {
+              case 'image':
+                return <img src={previewUrl} alt={asset.title} className="max-w-full max-h-[50vh] lg:max-h-[60vh] object-contain rounded-lg shadow-xl" />;
+              case 'video':
+                return (
+                  <video controls className="w-full max-h-[50vh] lg:max-h-[60vh] rounded-lg shadow-xl bg-black">
+                    <source src={previewUrl} />
+                    Your browser does not support the video tag.
+                  </video>
+                );
+              case 'pdf':
+              case 'google-drive':
+                return (
+                  <iframe
+                    src={previewUrl}
+                    className="w-full h-[50vh] lg:h-[60vh] rounded-lg border-0 bg-white shadow-inner"
+                    title={asset.title}
+                  />
+                );
+              default:
+                return (
+                  <div className="p-10 lg:p-16 text-center bg-white rounded-2xl shadow-sm border border-slate-100">
+                    <div className="text-4xl lg:text-6xl mb-6 opacity-30">🔗</div>
+                    <h3 className="text-xl lg:text-2xl font-extrabold text-slate-900 mb-4">No Preview Available</h3>
+                    <p className="text-slate-500 mb-8 max-w-sm mx-auto text-sm">This asset can be viewed by opening or downloading via the links below.</p>
+                    <div className="flex flex-wrap justify-center gap-4">
+                      <a 
+                        href={asset.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex px-8 py-3.5 bg-slate-100 text-slate-700 font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-200 transition-all active:scale-95"
+                      >
+                        Open Resource
+                      </a>
+                    </div>
+                  </div>
+                );
+            }
+          })()}
         </div>
 
         <div className="px-5 lg:px-8 py-5 lg:py-8 bg-white border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0">
@@ -119,6 +118,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, onClose }) => {
                   download={asset.title}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => onDownload && onDownload(asset)}
                   className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-wg-honorable text-white font-black uppercase tracking-widest text-[10px] rounded-full hover:bg-wg-royal transition-all shadow-lg shadow-wg-honorable/20 active:scale-95"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
