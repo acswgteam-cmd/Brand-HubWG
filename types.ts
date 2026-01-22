@@ -1,3 +1,4 @@
+
 export type UserRole = 'ADMIN' | 'VIEWER';
 export type BrandType = 'UNIT' | 'ENTITAS';
 
@@ -7,12 +8,14 @@ export interface Brand {
   type: BrandType;
   description?: string;
   logo?: string;
+  sortOrder?: number;
 }
 
 export interface AssetType {
   id: string;
   name: string;
   icon: string;
+  sortOrder?: number;
 }
 
 export interface Asset {
@@ -26,6 +29,8 @@ export interface Asset {
   updatedAt: string;
   tags: string[];
   status: 'ACTIVE' | 'ARCHIVED';
+  sortOrder?: number;
+  downloadCount?: number; // Added for analytics
 }
 
 export interface AppState {
