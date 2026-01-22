@@ -17,6 +17,7 @@ interface AdminPanelProps {
   onDeleteAssetType: (id: string) => void;
   onReorderBrands: (brands: Brand[]) => void;
   onReorderTypes: (types: AssetType[]) => void;
+  existingTags?: string[]; // New prop for suggestions
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ 
@@ -32,7 +33,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   onUpdateAssetType,
   onDeleteAssetType,
   onReorderBrands,
-  onReorderTypes
+  onReorderTypes,
+  existingTags = []
 }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -197,7 +199,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                     className="w-full h-24 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer group"
                   >
                     <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-                    <svg className="w-6 h-6 text-slate-300 mb-2 group-hover:text-wg-honorable transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                    <svg className="w-6 h-6 text-slate-300 mb-2 group-hover:text-wg-honorable transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4 4m0 0L8 8m4-4v12" /></svg>
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
                       {isUploading ? 'Converting...' : formData.link.startsWith('data:') ? '✅ File Loaded' : 'Click to Upload Asset'}
                     </span>
@@ -224,12 +226,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tags</label>
                  <div className="flex gap-2 mb-2">
                    <input 
+                     list="existing-tags"
                      value={tagInput}
                      onChange={(e) => setTagInput(e.target.value)}
                      onKeyDown={handleAddTag}
                      placeholder="Add a tag..."
                      className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs"
                    />
+                   <datalist id="existing-tags">
+                     {existingTags.map(tag => (
+                       <option key={tag} value={tag} />
+                     ))}
+                   </datalist>
                    <button type="button" onClick={handleAddTag} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-xl font-bold text-xs transition-colors">Add</button>
                  </div>
                  <div className="flex flex-wrap gap-2">
