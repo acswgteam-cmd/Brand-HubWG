@@ -30,14 +30,21 @@ export interface Asset {
   tags: string[];
   status: 'ACTIVE' | 'ARCHIVED';
   sortOrder?: number;
-  downloadCount?: number; // Added for analytics
+  downloadCount?: number;
 }
 
 export interface AboutContent {
+  // Content
   aboutText: string;
   principles: string[];
   diversityText: string;
   services: string[];
+  
+  // Editable Titles
+  titleAbout: string;
+  titlePrinciples: string;
+  titleDiversity: string;
+  titleServices: string;
 }
 
 export interface AppState {
