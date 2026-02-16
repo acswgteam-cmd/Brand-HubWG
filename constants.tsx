@@ -1,11 +1,14 @@
 
 import { Brand, AssetType, Asset, AboutContent } from './types';
 
-// Placeholder for Pegasus logo - circular blue theme
+// Placeholder for Pegasus logo
 export const LOGO_URL = "https://api.dicebear.com/7.x/initials/svg?seed=WG&backgroundColor=1551A0&radius=50&fontFamily=Arial&bold=true";
 
 export const DEFAULT_ABOUT_CONTENT: AboutContent = {
+  titleAbout: "Who We Are",
   aboutText: "We Are Experience Designers. Based in Bali and Yogyakarta, Indonesia, Werkudara Group creates full experiences across corporate events, travel programs, wellness retreats, training sessions, and creative content. We don’t just deliver services we think through the entire journey, from start to finish.\n\nWhat makes us different is how we approach every detail with intention, clarity, and meaningful impact.",
+  
+  titlePrinciples: "Operating Principles",
   principles: [
     "Purpose-driven in everything we do",
     "Rooted in local wisdom and culture",
@@ -13,7 +16,11 @@ export const DEFAULT_ABOUT_CONTENT: AboutContent = {
     "Supportive and thoughtful team from start to finish",
     "Personalized approach that goes beyond expectations"
   ],
+  
+  titleDiversity: "Diversity & Inclusion",
   diversityText: "Diversity & Inclusion Are Who We Are. Our team comes from different backgrounds, stories, and abilities, and through this diversity, our creativity flows. It’s the spirit of inclusion in our workplace that empowers us to design experiences with empathy, meaning, and heart.",
+  
+  titleServices: "Our Services",
   services: [
     "Event Management",
     "Travel Services",
