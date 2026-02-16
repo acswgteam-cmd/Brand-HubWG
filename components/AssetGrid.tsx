@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Asset, Brand, AssetType } from '../types';
 import { getThumbnailUrl } from '../services/assetService';
 
@@ -25,8 +25,8 @@ const AssetCard: React.FC<AssetCardProps> = ({
         ${isSelected ? 'ring-2 ring-wg-honorable shadow-lg' : 'hover:-translate-y-1 hover:shadow-md'}
       `}
     >
-      {/* Image Container - Darker background for contrast */}
-      <div className="bg-slate-200 rounded-lg aspect-[4/3] w-full flex items-center justify-center p-6 mb-3 overflow-hidden">
+      {/* Image Container - Darker BG (slate-300) for contrast */}
+      <div className="bg-slate-300 rounded-lg aspect-[4/3] w-full flex items-center justify-center p-6 mb-3 overflow-hidden">
         {thumbnailUrl && !imgError ? (
           <img 
             src={thumbnailUrl} 
@@ -65,6 +65,7 @@ interface AssetGridProps {
   assetTypes: AssetType[];
   onSelectAsset: (asset: Asset) => void;
   selectedAssetId?: string | null;
+  viewMode: 'grid' | 'list';
 }
 
 const AssetGrid: React.FC<AssetGridProps> = ({
@@ -72,7 +73,8 @@ const AssetGrid: React.FC<AssetGridProps> = ({
   brands,
   assetTypes,
   onSelectAsset,
-  selectedAssetId
+  selectedAssetId,
+  viewMode
 }) => {
   
   if (assets.length === 0) {
@@ -83,6 +85,61 @@ const AssetGrid: React.FC<AssetGridProps> = ({
         <p className="text-slate-500 text-xs">Try changing filters or search terms.</p>
       </div>
     );
+  }
+
+  if (viewMode === 'list') {
+      return (
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm mb-20">
+              <table className="w-full text-left border-collapse">
+                  <thead>
+                      <tr className="bg-slate-50 border-b border-slate-100">
+                          <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-16">Preview</th>
+                          <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Title</th>
+                          <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Entity</th>
+                          <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</th>
+                          <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      {assets.map(asset => {
+                          const brand = brands.find(b => b.id === asset.brandId);
+                          const type = assetTypes.find(t => t.id === asset.typeId);
+                          const thumb = getThumbnailUrl(asset.link);
+                          const isSelected = selectedAssetId === asset.id;
+
+                          return (
+                              <tr 
+                                key={asset.id} 
+                                onClick={() => onSelectAsset(asset)}
+                                className={`cursor-pointer transition-colors border-b border-slate-50 last:border-0 ${isSelected ? 'bg-wg-honorable/5' : 'hover:bg-slate-50'}`}
+                              >
+                                  <td className="p-3">
+                                      <div className="w-10 h-10 rounded bg-slate-200 flex items-center justify-center overflow-hidden border border-slate-300">
+                                          {thumb ? (
+                                              <img src={thumb} className="w-full h-full object-cover" loading="lazy" />
+                                          ) : (
+                                              <span className="text-sm">{type?.icon}</span>
+                                          )}
+                                      </div>
+                                  </td>
+                                  <td className="p-3">
+                                      <div className={`text-sm font-bold ${isSelected ? 'text-wg-honorable' : 'text-slate-900'}`}>{asset.title}</div>
+                                      <div className="text-[10px] text-slate-400 mt-0.5">{asset.tags.slice(0, 3).map(t => `#${t} `)}</div>
+                                  </td>
+                                  <td className="p-3 text-xs font-semibold text-slate-600">{brand?.name}</td>
+                                  <td className="p-3 text-xs font-semibold text-slate-600 flex items-center gap-2">
+                                      <span>{type?.icon}</span>{type?.name}
+                                  </td>
+                                  <td className="p-3 text-xs text-slate-400 font-mono">
+                                      {new Date(asset.updatedAt).toLocaleDateString()}
+                                  </td>
+                              </tr>
+                          )
+                      })}
+                  </tbody>
+              </table>
+          </div>
+      )
   }
 
   return (
