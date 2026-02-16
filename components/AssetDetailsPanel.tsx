@@ -40,22 +40,22 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col glass-panel border-l border-white/40 shadow-2xl relative overflow-hidden animate-slide-in-right">
+    <div className="h-full flex flex-col bg-white border-l border-slate-200 relative overflow-hidden">
       
       {/* Header Actions */}
-      <div className="px-6 py-5 border-b border-white/50 flex justify-between items-center bg-white/30 backdrop-blur-md">
+      <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
         <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">
             {isEditing ? 'Editing Asset' : 'Asset Details'}
         </h2>
-        <button onClick={onClose} className="p-2 hover:bg-slate-200/50 rounded-full transition-colors text-slate-400">
+        <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400">
            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
         
-        {/* Preview Container */}
-        <div className="rounded-[2rem] overflow-hidden bg-slate-50 border border-slate-200 shadow-inner flex items-center justify-center min-h-[250px]">
+        {/* Preview Container - Darker BG */}
+        <div className="rounded-xl overflow-hidden bg-slate-200 border border-slate-300 shadow-inner flex items-center justify-center min-h-[250px]">
           {(() => {
             switch (fileType) {
               case 'image':
@@ -65,8 +65,8 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
               default:
                 return (
                    <div className="text-center p-8">
-                       <div className="text-4xl mb-2">📄</div>
-                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Preview Not Available</p>
+                       <div className="text-4xl mb-2 opacity-50">📄</div>
+                       <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Preview Not Available</p>
                    </div>
                 );
             }
@@ -75,13 +75,13 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
 
         {/* Info / Edit Form */}
         {isEditing ? (
-            <div className="space-y-5 animate-fade-in-up">
+            <div className="space-y-4 animate-fade-in-up">
                 <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Title</label>
                     <input 
                       value={editForm.title} 
                       onChange={e => setEditForm({...editForm, title: e.target.value})}
-                      className="w-full p-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-wg-honorable/20"
+                      className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-wg-honorable/20"
                     />
                 </div>
                 <div>
@@ -90,16 +90,16 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
                       value={editForm.description || ''} 
                       onChange={e => setEditForm({...editForm, description: e.target.value})}
                       rows={4}
-                      className="w-full p-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-wg-honorable/20 resize-none"
+                      className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-wg-honorable/20 resize-none"
                     />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                     <div>
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Entity</label>
                         <select 
                            value={editForm.brandId}
                            onChange={e => setEditForm({...editForm, brandId: e.target.value})}
-                           className="w-full p-2 bg-white/50 border border-slate-200 rounded-xl text-xs font-bold"
+                           className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold"
                         >
                             {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                         </select>
@@ -109,7 +109,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
                         <select 
                            value={editForm.typeId}
                            onChange={e => setEditForm({...editForm, typeId: e.target.value})}
-                           className="w-full p-2 bg-white/50 border border-slate-200 rounded-xl text-xs font-bold"
+                           className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold"
                         >
                             {assetTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
@@ -117,25 +117,25 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
                 </div>
                 
                 <div className="flex gap-2 pt-4">
-                    <button onClick={handleSave} className="flex-1 py-3 bg-wg-honorable text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-wg-honorable/20">Save Changes</button>
-                    <button onClick={() => setIsEditing(false)} className="px-4 py-3 bg-slate-200 text-slate-500 rounded-xl text-xs font-black uppercase tracking-widest">Cancel</button>
+                    <button onClick={handleSave} className="flex-1 py-2.5 bg-wg-honorable text-white rounded-lg text-xs font-black uppercase tracking-widest shadow-lg shadow-wg-honorable/20">Save</button>
+                    <button onClick={() => setIsEditing(false)} className="px-4 py-2.5 bg-slate-100 text-slate-500 rounded-lg text-xs font-black uppercase tracking-widest hover:bg-slate-200">Cancel</button>
                 </div>
             </div>
         ) : (
             <div className="space-y-6 animate-fade-in-up">
                 <div>
-                    <h1 className="text-xl font-extrabold text-slate-900 leading-tight mb-2">{asset.title}</h1>
+                    <h1 className="text-lg font-extrabold text-slate-900 leading-tight mb-2">{asset.title}</h1>
                     <div className="flex flex-wrap gap-2">
-                        <span className="px-3 py-1 bg-wg-honorable/10 text-wg-honorable rounded-lg text-[10px] font-black uppercase tracking-widest">
+                        <span className="px-2 py-1 bg-wg-honorable/10 text-wg-honorable rounded text-[10px] font-black uppercase tracking-widest">
                             {brands.find(b => b.id === asset.brandId)?.name}
                         </span>
                         {asset.tags.map(t => (
-                            <span key={t} className="px-2 py-1 bg-slate-100 text-slate-400 rounded-lg text-[10px] font-bold uppercase tracking-widest">#{t}</span>
+                            <span key={t} className="px-2 py-1 bg-slate-100 text-slate-400 rounded text-[10px] font-bold uppercase tracking-widest">#{t}</span>
                         ))}
                     </div>
                 </div>
 
-                <div className="p-5 bg-white/40 rounded-2xl border border-white/60">
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Description</h3>
                     <p className="text-sm text-slate-600 leading-relaxed font-medium">
                         {asset.description || 'No description provided.'}
@@ -148,7 +148,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
                        download={asset.title}
                        target="_blank"
                        rel="noopener noreferrer"
-                       className="flex-1 py-4 bg-wg-honorable text-white rounded-[1rem] text-xs font-black uppercase tracking-widest shadow-xl shadow-wg-honorable/20 hover:scale-[1.02] transition-transform text-center flex items-center justify-center gap-2"
+                       className="flex-1 py-3 bg-wg-honorable text-white rounded-lg text-xs font-black uppercase tracking-widest shadow-md hover:bg-wg-royal transition-colors text-center flex items-center justify-center gap-2"
                      >
                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                        Download
@@ -157,7 +157,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
                        href={asset.link} 
                        target="_blank"
                        rel="noopener noreferrer"
-                       className="px-5 py-4 bg-white border border-slate-200 text-slate-600 rounded-[1rem] hover:bg-slate-50 transition-colors"
+                       className="px-4 py-3 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
                        title="Open External Link"
                      >
                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
@@ -170,11 +170,11 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
 
       {/* Admin Footer Actions */}
       {isAdmin && !isEditing && (
-         <div className="p-6 border-t border-white/50 bg-white/30 backdrop-blur flex justify-between gap-4">
-             <button onClick={() => setIsEditing(true)} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors">
+         <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-between gap-4">
+             <button onClick={() => setIsEditing(true)} className="flex-1 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors">
                  Edit Asset
              </button>
-             <button onClick={() => { if(confirm('Delete this asset?')) onDelete(asset.id); }} className="px-4 py-3 bg-wg-burgundy/10 hover:bg-wg-burgundy/20 text-wg-burgundy rounded-xl transition-colors">
+             <button onClick={() => { if(confirm('Delete this asset?')) onDelete(asset.id); }} className="px-4 py-3 bg-white border border-red-100 hover:bg-red-50 text-wg-burgundy rounded-lg transition-colors">
                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
              </button>
          </div>
