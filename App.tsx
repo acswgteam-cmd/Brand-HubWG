@@ -193,13 +193,13 @@ const App: React.FC = () => {
     );
   };
 
-  const renderAdminLink = (view: ViewType, label: string, icon: string) => (
+  const renderAdminLink = (view: ViewType, label: string, icon: React.ReactNode) => (
     <button 
         onClick={() => navigateToAdmin(view)} 
         className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold flex items-center gap-3 transition-all duration-200 ${currentView === view ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-600 hover:bg-slate-100'}`}
         title={!isSidebarExpanded ? label : undefined}
     >
-        <span className="text-lg w-6 text-center">{icon}</span>
+        <span className="w-6 h-6 flex items-center justify-center shrink-0">{icon}</span>
         <span className={`transition-opacity duration-100 whitespace-nowrap ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>{label}</span>
     </button>
   );
@@ -256,9 +256,15 @@ const App: React.FC = () => {
                 <div className={`px-2 pb-2 text-[10px] font-black text-slate-400 uppercase tracking-widest transition-opacity duration-100 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 hidden'}`}>Admin Menu</div>
                 <div className={`border-t border-slate-100 my-2 ${!isSidebarExpanded ? 'block' : 'hidden'}`}></div>
                 <div className="space-y-1">
-                    {renderAdminLink('admin-upload', 'Upload Asset', 'cloud_upload')}
-                    {renderAdminLink('admin-brands', 'Manage Entities', 'business')}
-                    {renderAdminLink('admin-types', 'Manage Formats', 'category')}
+                    {renderAdminLink('admin-upload', 'Upload Asset', (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4 4m0 0L8 8m4-4v12" /></svg>
+                    ))}
+                    {renderAdminLink('admin-brands', 'Manage Entities', (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                    ))}
+                    {renderAdminLink('admin-types', 'Manage Formats', (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                    ))}
                 </div>
             </div>
           )}
