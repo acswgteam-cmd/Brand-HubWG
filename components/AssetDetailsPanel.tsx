@@ -43,9 +43,9 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
     <div className="h-full flex flex-col bg-white border-l border-slate-200 relative overflow-hidden">
       
       {/* Header Actions */}
-      <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
-        <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">
-            {isEditing ? 'Editing Asset' : 'Asset Details'}
+      <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0 z-10">
+        <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest truncate max-w-[200px]">
+            {isEditing ? 'Editing Asset' : asset.title}
         </h2>
         <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400">
            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -54,19 +54,29 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
         
-        {/* Preview Container - Darker BG */}
-        <div className="rounded-xl overflow-hidden bg-slate-200 border border-slate-300 shadow-inner flex items-center justify-center min-h-[250px]">
+        {/* Preview Container - Enhanced for Video/PDF/Drive */}
+        <div className="rounded-xl overflow-hidden bg-slate-300 border border-slate-300 shadow-inner flex items-center justify-center min-h-[300px]">
           {(() => {
             switch (fileType) {
               case 'image':
-                return <img src={previewUrl} alt={asset.title} className="w-full h-auto object-cover" />;
+                return <img src={previewUrl} alt={asset.title} className="w-full h-auto max-h-[400px] object-contain" />;
               case 'video':
-                return <video controls src={previewUrl} className="w-full h-full object-cover" />;
+                return <video controls src={previewUrl} className="w-full h-full max-h-[400px] bg-black" />;
+              case 'pdf':
+              case 'google-drive':
+                return (
+                    <iframe 
+                        src={previewUrl} 
+                        className="w-full h-[400px] bg-white" 
+                        title="Asset Preview"
+                    />
+                );
               default:
                 return (
                    <div className="text-center p-8">
-                       <div className="text-4xl mb-2 opacity-50">📄</div>
-                       <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Preview Not Available</p>
+                       <div className="text-4xl mb-4 opacity-40 text-slate-600">🔗</div>
+                       <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">External Link</p>
+                       <a href={asset.link} target="_blank" rel="noreferrer" className="text-xs text-wg-honorable hover:underline break-all">{asset.link}</a>
                    </div>
                 );
             }
@@ -124,7 +134,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
         ) : (
             <div className="space-y-6 animate-fade-in-up">
                 <div>
-                    <h1 className="text-lg font-extrabold text-slate-900 leading-tight mb-2">{asset.title}</h1>
+                    <h1 className="text-xl font-extrabold text-slate-900 leading-tight mb-2">{asset.title}</h1>
                     <div className="flex flex-wrap gap-2">
                         <span className="px-2 py-1 bg-wg-honorable/10 text-wg-honorable rounded text-[10px] font-black uppercase tracking-widest">
                             {brands.find(b => b.id === asset.brandId)?.name}
@@ -148,7 +158,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
                        download={asset.title}
                        target="_blank"
                        rel="noopener noreferrer"
-                       className="flex-1 py-3 bg-wg-honorable text-white rounded-lg text-xs font-black uppercase tracking-widest shadow-md hover:bg-wg-royal transition-colors text-center flex items-center justify-center gap-2"
+                       className="flex-1 py-3.5 bg-wg-honorable text-white rounded-lg text-xs font-black uppercase tracking-widest shadow-md hover:bg-wg-royal transition-colors text-center flex items-center justify-center gap-2"
                      >
                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                        Download
@@ -157,11 +167,23 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
                        href={asset.link} 
                        target="_blank"
                        rel="noopener noreferrer"
-                       className="px-4 py-3 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+                       className="px-5 py-3.5 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
                        title="Open External Link"
                      >
                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                      </a>
+                </div>
+                
+                {/* Meta Info */}
+                <div className="pt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
+                     <div>
+                         <span className="text-[9px] font-bold text-slate-400 uppercase block">Created</span>
+                         <span className="text-xs font-mono text-slate-600">{new Date(asset.createdAt).toLocaleDateString()}</span>
+                     </div>
+                     <div>
+                         <span className="text-[9px] font-bold text-slate-400 uppercase block">Updated</span>
+                         <span className="text-xs font-mono text-slate-600">{new Date(asset.updatedAt).toLocaleDateString()}</span>
+                     </div>
                 </div>
             </div>
         )}
@@ -170,7 +192,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
 
       {/* Admin Footer Actions */}
       {isAdmin && !isEditing && (
-         <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-between gap-4">
+         <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-between gap-4 shrink-0">
              <button onClick={() => setIsEditing(true)} className="flex-1 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors">
                  Edit Asset
              </button>
