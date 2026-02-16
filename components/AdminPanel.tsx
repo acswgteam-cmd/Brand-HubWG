@@ -8,7 +8,7 @@ interface AdminPanelProps {
   assetTypes: AssetType[];
   editingAsset: Asset | null;
   onSaveAsset: (asset: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => void;
-  onClose: () => void;
+  onClose: () => void; // Used as "Go Back" now
   onAddBrand: (brand: Brand) => void;
   onUpdateBrand: (brand: Brand) => void;
   onDeleteBrand: (id: string) => void;
@@ -18,7 +18,7 @@ interface AdminPanelProps {
   onReorderBrands: (brands: Brand[]) => void;
   onReorderTypes: (types: AssetType[]) => void;
   existingTags?: string[];
-  initialTab?: 'asset' | 'brands' | 'types'; // New prop
+  activeView: 'admin-upload' | 'admin-brands' | 'admin-types';
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ 
@@ -36,7 +36,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   onReorderBrands,
   onReorderTypes,
   existingTags = [],
-  initialTab = 'asset'
+  activeView
 }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -51,7 +51,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   
   const [tagInput, setTagInput] = useState('');
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
-  const [activeTab, setActiveTab] = useState<'asset' | 'brands' | 'types'>(initialTab);
   const [uploadMode, setUploadMode] = useState<'link' | 'file'>('link');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   
@@ -67,13 +66,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Set initial tab if provided
   useEffect(() => {
-    if (initialTab) setActiveTab(initialTab);
-  }, [initialTab]);
-
-  useEffect(() => {
-    if (editingAsset) {
+    if (editingAsset && activeView === 'admin-upload') {
       setFormData({
         title: editingAsset.title,
         brandId: editingAsset.brandId,
@@ -87,8 +81,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       if (editingAsset.link.startsWith('data:')) {
         setUploadMode('file');
       }
+    } else {
+        // Reset form for new upload
+        setFormData({
+            title: '',
+            brandId: brands[0]?.id || '',
+            typeId: assetTypes[0]?.id || '',
+            description: '',
+            link: '',
+            tags: [],
+            status: 'ACTIVE',
+            sortOrder: 0
+        });
     }
-  }, [editingAsset]);
+  }, [editingAsset, activeView]);
 
   const handleGeminiSuggest = async () => {
     if (!formData.title) return alert('Please enter a title first.');
@@ -179,30 +185,29 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 lg:p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-2xl rounded-[1.5rem] lg:rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-        
-        <div className="flex bg-slate-50 border-b border-slate-100 shrink-0">
-          {['asset', 'brands', 'types'].map((tab) => (
-            <button 
-              key={tab}
-              onClick={() => { setActiveTab(tab as any); setEditingItemId(null); }}
-              className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-wg-honorable border-b-2 border-wg-honorable' : 'text-slate-400'}`}
-            >
-              {tab === 'asset' ? 'Upload Asset' : tab === 'brands' ? 'Manage Entities' : 'Manage Formats'}
-            </button>
-          ))}
-          <button onClick={onClose} className="p-4 text-slate-300 hover:text-wg-burgundy transition-colors shrink-0">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
+    <div className="flex flex-col gap-8 pb-20">
+      
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-sm font-bold text-slate-400">
+         <button onClick={onClose} className="hover:text-slate-600 transition-colors">Admin</button>
+         <span>/</span>
+         <span className="text-slate-900">
+            {activeView === 'admin-upload' ? (editingAsset ? 'Edit Asset' : 'Upload Asset') :
+             activeView === 'admin-brands' ? 'Manage Entities' : 'Manage Formats'}
+         </span>
+      </div>
 
-        <div className="p-6 lg:p-8 overflow-y-auto">
-          {activeTab === 'asset' ? (
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm max-w-4xl">
+        <div className="p-8">
+          {activeView === 'admin-upload' ? (
             <form onSubmit={handleSaveAsset} className="space-y-6">
+              <div className="flex items-center justify-between mb-2">
+                 <h2 className="text-xl font-extrabold text-slate-900">{editingAsset ? 'Edit Asset' : 'New Asset Upload'}</h2>
+              </div>
+              
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Asset Title</label>
-                <input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-sm" />
+                <input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-sm focus:border-wg-honorable" placeholder="e.g. Werkudara Logo Horizontal" />
               </div>
               
               <div className="space-y-3">
@@ -212,16 +217,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
                 
                 {uploadMode === 'link' ? (
-                  <input required value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} placeholder="https://drive.google.com/..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs" />
+                  <input required value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} placeholder="https://drive.google.com/..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-xs" />
                 ) : (
                   <div 
                     onClick={() => fileInputRef.current?.click()} 
-                    className="w-full h-24 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer group"
+                    className="w-full h-32 border-2 border-dashed border-slate-200 rounded-lg flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer group"
                   >
                     <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-                    <svg className="w-6 h-6 text-slate-300 mb-2 group-hover:text-wg-honorable transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4 4m0 0L8 8m4-4v12" /></svg>
+                    <svg className="w-8 h-8 text-slate-300 mb-2 group-hover:text-wg-honorable transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4 4m0 0L8 8m4-4v12" /></svg>
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                      {isUploading ? 'Converting...' : formData.link.startsWith('data:') ? '✅ File Loaded' : 'Click to Upload Asset'}
+                      {isUploading ? 'Converting...' : formData.link.startsWith('data:') ? '✅ File Loaded' : 'Click to Select File'}
                     </span>
                   </div>
                 )}
@@ -230,13 +235,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Entity</label>
-                  <select value={formData.brandId} onChange={e => setFormData({...formData, brandId: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs">
+                  <select value={formData.brandId} onChange={e => setFormData({...formData, brandId: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-xs">
                     {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Format</label>
-                  <select value={formData.typeId} onChange={e => setFormData({...formData, typeId: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs">
+                  <select value={formData.typeId} onChange={e => setFormData({...formData, typeId: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-xs">
                     {assetTypes.map(t => <option key={t.id} value={t.id}>{t.icon} {t.name}</option>)}
                   </select>
                 </div>
@@ -256,10 +261,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                        onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
                        onKeyDown={handleAddTagKey}
                        placeholder="Add a tag..."
-                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs"
+                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-xs"
                      />
                      {showTagSuggestions && tagInput && filteredTags.length > 0 && (
-                       <ul className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-32 overflow-y-auto z-50">
+                       <ul className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-32 overflow-y-auto z-50">
                          {filteredTags.map(tag => (
                            <li 
                              key={tag}
@@ -272,7 +277,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                        </ul>
                      )}
                    </div>
-                   <button type="button" onClick={() => addTag(tagInput)} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-xl font-bold text-xs transition-colors">Add</button>
+                   <button type="button" onClick={() => addTag(tagInput)} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-xs transition-colors">Add</button>
                  </div>
                  <div className="flex flex-wrap gap-2">
                    {formData.tags.map(tag => (
@@ -289,26 +294,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Description</label>
                   <button type="button" onClick={handleGeminiSuggest} disabled={isGenerating} className="text-[9px] font-black text-wg-ice hover:text-wg-honorable disabled:opacity-50 transition-all">✨ AI SUGGEST</button>
                 </div>
-                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-xs resize-none" />
+                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-xs resize-none" />
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 shrink-0">
-                <button type="button" onClick={onClose} className="px-6 py-3 text-slate-400 font-black uppercase tracking-widest text-[10px]">Cancel</button>
-                <button type="submit" disabled={isUploading} className="px-8 py-3.5 bg-wg-honorable text-white font-black uppercase tracking-widest text-[10px] rounded-full hover:bg-wg-royal transition-all shadow-lg active:scale-95 disabled:opacity-50">
+              <div className="pt-6 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+                <button type="button" onClick={onClose} className="px-6 py-3 text-slate-400 font-black uppercase tracking-widest text-[10px] hover:text-slate-600">Cancel</button>
+                <button type="submit" disabled={isUploading} className="px-8 py-3 bg-wg-honorable text-white font-black uppercase tracking-widest text-[10px] rounded-lg hover:bg-wg-royal transition-all shadow-lg active:scale-95 disabled:opacity-50">
                   {editingAsset ? 'Update Asset' : 'Publish Asset'}
                 </button>
               </div>
             </form>
-          ) : activeTab === 'brands' ? (
+          ) : activeView === 'admin-brands' ? (
             <div className="space-y-6">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex gap-2">
-                <input value={newBrandName} onChange={e => setNewBrandName(e.target.value)} placeholder="New Entity Name" className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold" />
-                <button onClick={() => { if(newBrandName){ onAddBrand({id:'', name:newBrandName, type:newBrandType, sortOrder: brands.length}); setNewBrandName(''); } }} className="px-6 bg-wg-honorable text-white font-black uppercase text-[10px] rounded-xl">Add</button>
+              <h2 className="text-xl font-extrabold text-slate-900">Manage Entities</h2>
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 flex gap-2">
+                <input value={newBrandName} onChange={e => setNewBrandName(e.target.value)} placeholder="New Entity Name" className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-lg text-xs font-bold" />
+                <button onClick={() => { if(newBrandName){ onAddBrand({id:'', name:newBrandName, type:newBrandType, sortOrder: brands.length}); setNewBrandName(''); } }} className="px-6 bg-wg-honorable text-white font-black uppercase text-[10px] rounded-lg">Add</button>
               </div>
               <div className="space-y-2">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Manage Entities</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Draggable List</p>
                 {brands.map((brand, index) => (
-                  <div key={brand.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index, 'brands')} className={`flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl cursor-move group transition-all ${draggedIndex === index ? 'opacity-40 scale-95' : 'hover:border-wg-honorable/30 hover:shadow-md'}`}>
+                  <div key={brand.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index, 'brands')} className={`flex items-center justify-between p-4 bg-white border border-slate-100 rounded-lg cursor-move group transition-all ${draggedIndex === index ? 'opacity-40 scale-95' : 'hover:border-wg-honorable/30 hover:shadow-md'}`}>
                     {editingItemId === brand.id ? (
                        <div className="flex-1 flex gap-2 mr-2">
                           <input 
@@ -337,15 +343,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex gap-2">
-                <input value={newTypeIcon} onChange={e => setNewTypeIcon(e.target.value)} className="w-16 px-2 py-3 bg-white border border-slate-200 rounded-xl text-center" />
-                <input value={newTypeName} onChange={e => setNewTypeName(e.target.value)} placeholder="New Format Name" className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold" />
-                <button onClick={() => { if(newTypeName){ onAddAssetType({id:'', name:newTypeName, icon:newTypeIcon, sortOrder: assetTypes.length}); setNewTypeName(''); } }} className="px-6 bg-wg-honorable text-white font-black uppercase text-[10px] rounded-xl">Add</button>
+               <h2 className="text-xl font-extrabold text-slate-900">Manage Formats</h2>
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 flex gap-2">
+                <input value={newTypeIcon} onChange={e => setNewTypeIcon(e.target.value)} className="w-16 px-2 py-3 bg-white border border-slate-200 rounded-lg text-center" />
+                <input value={newTypeName} onChange={e => setNewTypeName(e.target.value)} placeholder="New Format Name" className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-lg text-xs font-bold" />
+                <button onClick={() => { if(newTypeName){ onAddAssetType({id:'', name:newTypeName, icon:newTypeIcon, sortOrder: assetTypes.length}); setNewTypeName(''); } }} className="px-6 bg-wg-honorable text-white font-black uppercase text-[10px] rounded-lg">Add</button>
               </div>
               <div className="space-y-2">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Manage Formats</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Draggable List</p>
                 {assetTypes.map((type, index) => (
-                  <div key={type.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index, 'types')} className={`flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl cursor-move group transition-all ${draggedIndex === index ? 'opacity-40 scale-95' : 'hover:border-wg-honorable/30 hover:shadow-md'}`}>
+                  <div key={type.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index, 'types')} className={`flex items-center justify-between p-4 bg-white border border-slate-100 rounded-lg cursor-move group transition-all ${draggedIndex === index ? 'opacity-40 scale-95' : 'hover:border-wg-honorable/30 hover:shadow-md'}`}>
                     {editingItemId === type.id ? (
                        <div className="flex-1 flex gap-2 mr-2">
                           <input 
