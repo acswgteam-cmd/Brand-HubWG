@@ -15,7 +15,7 @@ const About: React.FC<AboutProps> = ({ assets, brands, assetTypes, onNavigateToA
   const [content, setContent] = useState<AboutContent | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   
-  // Edit buffers - Including Titles now
+  // Edit buffers
   const [editData, setEditData] = useState<AboutContent | null>(null);
   const [editServicesString, setEditServicesString] = useState('');
   const [editPrinciplesString, setEditPrinciplesString] = useState('');
@@ -68,14 +68,14 @@ const About: React.FC<AboutProps> = ({ assets, brands, assetTypes, onNavigateToA
       
       {/* Header Area */}
       <div className="flex items-center justify-between mb-12">
-         <div className="glass-card px-6 py-3 rounded-full flex items-center gap-4">
+         <div className="bg-white border border-slate-200 px-6 py-3 rounded-full flex items-center gap-4">
             <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">About Brand Hub</h2>
             <div className="w-px h-6 bg-slate-300"></div>
             <span className="text-xs font-bold text-slate-500">Overview & Guidelines</span>
          </div>
          
          {isAdmin && (
-           <div className="glass-card p-1.5 rounded-xl">
+           <div className="bg-white border border-slate-200 p-1.5 rounded-lg">
              {isEditing ? (
                <div className="flex gap-2">
                  <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 bg-slate-100 text-slate-600 font-bold text-xs rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>
@@ -92,7 +92,7 @@ const About: React.FC<AboutProps> = ({ assets, brands, assetTypes, onNavigateToA
       </div>
 
       {/* Stats Row */}
-      <div className="glass-panel rounded-[2.5rem] p-8 grid grid-cols-2 md:grid-cols-4 gap-8 mb-16 relative overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-xl p-8 grid grid-cols-2 md:grid-cols-4 gap-8 mb-16 relative overflow-hidden">
         {/* Decorative Blur */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-wg-sky/30 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
@@ -100,15 +100,15 @@ const About: React.FC<AboutProps> = ({ assets, brands, assetTypes, onNavigateToA
           <div className="text-4xl font-black text-slate-900 mb-2">{stats.totalAssets}</div>
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Assets</div>
         </div>
-        <div className="relative z-10 border-l border-white/40 pl-8">
+        <div className="relative z-10 border-l border-slate-100 pl-8">
           <div className="text-4xl font-black text-slate-900 mb-2">{stats.totalBrands}</div>
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Entities</div>
         </div>
-        <div className="relative z-10 border-l border-white/40 pl-8">
+        <div className="relative z-10 border-l border-slate-100 pl-8">
           <div className="text-4xl font-black text-slate-900 mb-2">{stats.totalDownloads}</div>
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Downloads</div>
         </div>
-        <div className="relative z-10 border-l border-white/40 pl-8">
+        <div className="relative z-10 border-l border-slate-100 pl-8">
           <div className="text-4xl font-black text-wg-honorable mb-2">{stats.newFilesCount}</div>
           <div className="text-[10px] font-bold text-wg-honorable/60 uppercase tracking-widest">New This Week</div>
         </div>
@@ -120,7 +120,7 @@ const About: React.FC<AboutProps> = ({ assets, brands, assetTypes, onNavigateToA
         {/* Section 1: About */}
         <section className="relative">
            {isEditing && editData ? (
-             <div className="space-y-4 p-6 bg-white/50 rounded-2xl border border-slate-200">
+             <div className="space-y-4 p-6 bg-white rounded-xl border border-slate-200">
                 <input 
                   value={editData.titleAbout} 
                   onChange={e => setEditData({...editData, titleAbout: e.target.value})}
@@ -146,7 +146,7 @@ const About: React.FC<AboutProps> = ({ assets, brands, assetTypes, onNavigateToA
         {/* Section 2: Operating Principles */}
         <section>
            {isEditing && editData ? (
-             <div className="space-y-4 p-6 bg-white/50 rounded-2xl border border-slate-200">
+             <div className="space-y-4 p-6 bg-white rounded-xl border border-slate-200">
                 <input 
                   value={editData.titlePrinciples} 
                   onChange={e => setEditData({...editData, titlePrinciples: e.target.value})}
@@ -165,7 +165,7 @@ const About: React.FC<AboutProps> = ({ assets, brands, assetTypes, onNavigateToA
                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8">{content.titlePrinciples}</h3>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  {content.principles.map((principle, i) => (
-                   <div key={i} className="glass-card p-6 rounded-2xl flex items-start gap-4 group hover:bg-white transition-colors">
+                   <div key={i} className="bg-white border border-slate-200 p-6 rounded-xl flex items-start gap-4 group hover:shadow-md transition-all">
                      <span className="mt-1 w-2 h-2 bg-wg-honorable rounded-full shrink-0 group-hover:scale-150 transition-transform"></span>
                      <span className="text-lg text-slate-700 font-bold leading-relaxed">{principle}</span>
                    </div>
@@ -178,7 +178,7 @@ const About: React.FC<AboutProps> = ({ assets, brands, assetTypes, onNavigateToA
         {/* Section 3: Diversity */}
         <section>
            {isEditing && editData ? (
-             <div className="space-y-4 p-6 bg-white/50 rounded-2xl border border-slate-200">
+             <div className="space-y-4 p-6 bg-white rounded-xl border border-slate-200">
                 <input 
                   value={editData.titleDiversity} 
                   onChange={e => setEditData({...editData, titleDiversity: e.target.value})}
@@ -192,8 +192,8 @@ const About: React.FC<AboutProps> = ({ assets, brands, assetTypes, onNavigateToA
                 />
              </div>
            ) : (
-             <div className="glass-panel p-10 rounded-[2.5rem] relative overflow-hidden">
-               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-wg-honorable to-wg-ice"></div>
+             <div className="bg-white border border-slate-200 p-10 rounded-xl relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-wg-honorable to-wg-ice"></div>
                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">{content.titleDiversity}</h3>
                <p className="text-xl text-slate-800 leading-relaxed font-medium">
                  {content.diversityText}
@@ -205,7 +205,7 @@ const About: React.FC<AboutProps> = ({ assets, brands, assetTypes, onNavigateToA
         {/* Section 4: Services */}
         <section>
            {isEditing && editData ? (
-             <div className="space-y-4 p-6 bg-white/50 rounded-2xl border border-slate-200">
+             <div className="space-y-4 p-6 bg-white rounded-xl border border-slate-200">
                 <input 
                   value={editData.titleServices} 
                   onChange={e => setEditData({...editData, titleServices: e.target.value})}
@@ -224,7 +224,7 @@ const About: React.FC<AboutProps> = ({ assets, brands, assetTypes, onNavigateToA
                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8">{content.titleServices}</h3>
                <div className="flex flex-wrap gap-3">
                  {content.services.map((service, i) => (
-                   <span key={i} className="px-6 py-3 glass-card text-slate-700 font-bold text-sm rounded-full border border-white/50 hover:border-wg-honorable hover:text-wg-honorable hover:bg-white transition-all cursor-default">
+                   <span key={i} className="px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold text-sm rounded-full hover:border-wg-honorable hover:text-wg-honorable transition-all cursor-default">
                      {service}
                    </span>
                  ))}
