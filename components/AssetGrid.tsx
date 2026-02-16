@@ -21,12 +21,12 @@ const AssetCard: React.FC<AssetCardProps> = ({
     <div 
       onClick={() => onSelect(asset)}
       className={`
-        glass-card rounded-[2rem] p-4 cursor-pointer transition-all duration-300 relative group
-        ${isSelected ? 'ring-2 ring-wg-honorable shadow-lg scale-[1.02] bg-white' : 'hover:-translate-y-1 hover:shadow-xl hover:bg-white/80'}
+        bg-white rounded-xl p-3 cursor-pointer transition-all duration-300 relative group border border-slate-200
+        ${isSelected ? 'ring-2 ring-wg-honorable shadow-lg' : 'hover:-translate-y-1 hover:shadow-md'}
       `}
     >
-      {/* Image Container - Minimalist with padding */}
-      <div className="bg-slate-50/80 rounded-[1.5rem] aspect-[4/3] w-full flex items-center justify-center p-6 mb-4 overflow-hidden border border-slate-100">
+      {/* Image Container - Darker background for contrast */}
+      <div className="bg-slate-200 rounded-lg aspect-[4/3] w-full flex items-center justify-center p-6 mb-3 overflow-hidden">
         {thumbnailUrl && !imgError ? (
           <img 
             src={thumbnailUrl} 
@@ -36,20 +36,20 @@ const AssetCard: React.FC<AssetCardProps> = ({
             loading="lazy" 
           />
         ) : (
-          <div className="text-4xl opacity-30 text-slate-400 group-hover:scale-110 transition-transform">{icon}</div>
+          <div className="text-3xl opacity-40 text-slate-500 group-hover:scale-110 transition-transform">{icon}</div>
         )}
       </div>
 
       <div className="px-1">
-        <h3 className="text-slate-900 font-bold text-sm mb-1 leading-tight line-clamp-2 min-h-[2.5em]">
+        <h3 className="text-slate-900 font-bold text-xs mb-1.5 leading-snug line-clamp-2 min-h-[2.5em]">
           {asset.title}
         </h3>
-        <div className="flex items-center justify-between mt-2">
-           <span className="text-[9px] font-black text-wg-honorable/70 uppercase tracking-widest truncate max-w-[60%]">
+        <div className="flex items-center justify-between">
+           <span className="text-[10px] font-bold text-slate-400 truncate max-w-[60%]">
              {brandName}
            </span>
            {asset.tags.length > 0 && (
-             <span className="px-2 py-0.5 bg-slate-100 rounded-full text-[9px] font-bold text-slate-400 uppercase tracking-wide">
+             <span className="px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-500 uppercase tracking-wide">
                {asset.tags[0]}
              </span>
            )}
@@ -75,26 +75,18 @@ const AssetGrid: React.FC<AssetGridProps> = ({
   selectedAssetId
 }) => {
   
-  // Grouping Logic (Simplified)
-  const groupedAssets = useMemo(() => {
-    // Just simple flat list for now or minimal grouping if needed.
-    // Let's keep it clean as requested -> "Spacing antar elemen buat yang agak lega"
-    // We will render a flat grid for maximum breathability
-    return assets;
-  }, [assets]);
-
   if (assets.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 glass-card rounded-[2.5rem] border-dashed border-slate-300">
-        <div className="text-5xl mb-4 opacity-30">📂</div>
-        <h3 className="text-lg font-bold text-slate-900 mb-2">No Assets Found</h3>
-        <p className="text-slate-500 text-sm">Try changing filters.</p>
+      <div className="flex flex-col items-center justify-center h-96 bg-white rounded-xl border-2 border-dashed border-slate-200">
+        <div className="text-4xl mb-4 opacity-30">📂</div>
+        <h3 className="text-base font-bold text-slate-900 mb-1">No Assets Found</h3>
+        <p className="text-slate-500 text-xs">Try changing filters or search terms.</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 lg:gap-8 pb-20">
+    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 lg:gap-6 pb-20">
       {assets.map(asset => {
          const brand = brands.find(b => b.id === asset.brandId);
          const type = assetTypes.find(t => t.id === asset.typeId);
