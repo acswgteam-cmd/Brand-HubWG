@@ -6,16 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brand-Hub – Werkudara Group</title>
     
-    <!-- Primary Meta Tags -->
     <meta name="title" content="Brand-Hub – Werkudara Group">
     <meta name="description" content="Centralized digital asset management for Werkudara Group entities.">
     
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Brand-Hub – Werkudara Group">
-    <meta property="og:description" content="Access logos, templates, and brand guidelines in one place.">
-    <meta property="og:image" content="https://api.dicebear.com/7.x/initials/svg?seed=WG&backgroundColor=1551A0&radius=0">
-
     <link rel="icon" type="image/png" href="https://api.dicebear.com/7.x/initials/svg?seed=WG&backgroundColor=1551A0&radius=50">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -39,11 +32,16 @@
             },
             animation: {
               'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+              'slide-in-right': 'slideInRight 0.3s ease-out forwards',
             },
             keyframes: {
               fadeInUp: {
                 '0%': { opacity: '0', transform: 'translateY(10px)' },
                 '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              slideInRight: {
+                '0%': { transform: 'translateX(100%)', opacity: '0' },
+                '100%': { transform: 'translateX(0)', opacity: '1' },
               }
             }
           }
@@ -52,21 +50,36 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .modal-enter { opacity: 0; transform: scale(0.95); }
-        .modal-enter-active { opacity: 1; transform: scale(1); transition: all 200ms ease-out; }
+        body { 
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          /* Soft gradient background for glassmorphism */
+          background: linear-gradient(135deg, #f0f4f8 0%, #dbeafe 100%);
+          background-attachment: fixed;
+        }
+        
+        .glass-panel {
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.5);
+          box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        .glass-card {
+          background: rgba(255, 255, 255, 0.65);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.6);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+        }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        .animate-fade-in-up {
-           animation: fadeInUp 0.5s ease-out forwards;
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 <script type="importmap">
 {
@@ -80,7 +93,7 @@
 }
 </script>
 </head>
-<body class="bg-wg-light text-wg-text-dark h-screen overflow-hidden">
+<body class="text-wg-text-dark h-screen overflow-hidden">
     <div id="root" class="h-full"></div>
     <script type="module" src="/index.tsx"></script>
 </body>
