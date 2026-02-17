@@ -54,26 +54,26 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
         
-        {/* Preview Container - Enhanced for Video/PDF/Drive/CDR */}
-        <div className="rounded-xl overflow-hidden bg-slate-300 border border-slate-300 shadow-inner flex items-center justify-center min-h-[300px]">
+        {/* Preview Container - Enhanced for Video/PDF/Drive/CDR - Added p-6 padding */}
+        <div className="rounded-xl overflow-hidden bg-slate-300 border border-slate-300 shadow-inner flex items-center justify-center min-h-[300px] p-6 relative">
           {(() => {
             switch (fileType) {
               case 'image':
-                return <img src={previewUrl} alt={asset.title} className="w-full h-auto max-h-[400px] object-contain" />;
+                return <img src={previewUrl} alt={asset.title} className="max-w-full h-auto max-h-[400px] object-contain shadow-sm rounded" />;
               case 'video':
-                return <video controls src={previewUrl} className="w-full h-full max-h-[400px] bg-black" />;
+                return <video controls src={previewUrl} className="w-full h-full max-h-[400px] bg-black rounded" />;
               case 'pdf':
               case 'google-drive':
                 return (
                     <iframe 
                         src={previewUrl} 
-                        className="w-full h-[400px] bg-white" 
+                        className="w-full h-[400px] bg-white rounded" 
                         title="Asset Preview"
                     />
                 );
               case 'cdr':
                 return (
-                    <div className="text-center p-8 bg-slate-100/50 w-full h-full flex flex-col items-center justify-center">
+                    <div className="text-center p-8 bg-slate-100/50 w-full h-full flex flex-col items-center justify-center rounded">
                         <div className="text-5xl mb-4 text-wg-lime">✏️</div>
                         <h3 className="text-lg font-bold text-slate-700">CorelDraw File</h3>
                         <p className="text-xs text-slate-500 max-w-[200px] mt-2">Browser preview is not available for .cdr files. Please download to view.</p>
