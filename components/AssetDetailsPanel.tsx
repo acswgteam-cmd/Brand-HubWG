@@ -54,7 +54,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
         
-        {/* Preview Container - Enhanced for Video/PDF/Drive */}
+        {/* Preview Container - Enhanced for Video/PDF/Drive/CDR */}
         <div className="rounded-xl overflow-hidden bg-slate-300 border border-slate-300 shadow-inner flex items-center justify-center min-h-[300px]">
           {(() => {
             switch (fileType) {
@@ -70,6 +70,14 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
                         className="w-full h-[400px] bg-white" 
                         title="Asset Preview"
                     />
+                );
+              case 'cdr':
+                return (
+                    <div className="text-center p-8 bg-slate-100/50 w-full h-full flex flex-col items-center justify-center">
+                        <div className="text-5xl mb-4 text-wg-lime">✏️</div>
+                        <h3 className="text-lg font-bold text-slate-700">CorelDraw File</h3>
+                        <p className="text-xs text-slate-500 max-w-[200px] mt-2">Browser preview is not available for .cdr files. Please download to view.</p>
+                    </div>
                 );
               default:
                 return (
