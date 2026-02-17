@@ -292,6 +292,7 @@ export const getFileType = (url: string) => {
   if (lowerUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/)) return 'image';
   if (lowerUrl.match(/\.(mp4|webm|ogg)$/)) return 'video';
   if (lowerUrl.match(/\.(pdf)$/)) return 'pdf';
+  if (lowerUrl.match(/\.(cdr)$/)) return 'cdr'; // Added CDR support
   if (url.includes('drive.google.com')) return 'google-drive';
   return 'link';
 };
