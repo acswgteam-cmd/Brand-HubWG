@@ -26,13 +26,13 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('about');
   const [activeBrandId, setActiveBrandId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   
   // Filtering & Selection
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [multiSelection, setMultiSelection] = useState<Set<string>>(new Set());
 
   // Admin State
   const [role, setRole] = useState<UserRole>('VIEWER');
@@ -40,9 +40,6 @@ const App: React.FC = () => {
   
   // Editing state for Admin Panel
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
-
-  // Helper to determine if sidebar is visually expanded
-  const isSidebarExpanded = !isSidebarCollapsed || isSidebarHovered;
 
   useEffect(() => {
     checkConfigAndLoad();
@@ -113,6 +110,11 @@ const App: React.FC = () => {
             await service.deleteAsset(assetId);
             setData(prev => ({ ...prev, assets: prev.assets.filter(a => a.id !== assetId) }));
             if (selectedAsset?.id === assetId) setSelectedAsset(null);
+            if (multiSelection.has(assetId)) {
+                const newSet = new Set(multiSelection);
+                newSet.delete(assetId);
+                setMultiSelection(newSet);
+            }
         } catch (error: any) {
             alert("Failed to delete asset: " + error.message);
         }
@@ -135,6 +137,35 @@ const App: React.FC = () => {
       setEditingAsset(assetToEdit);
       setCurrentView(view);
       setSelectedAsset(null); // Close right sidebar to focus on admin task
+  };
+
+  const handleToggleSelection = (id: string) => {
+      setMultiSelection(prev => {
+          const newSet = new Set(prev);
+          if (newSet.has(id)) newSet.delete(id);
+          else newSet.add(id);
+          return newSet;
+      });
+  };
+
+  const handleDownloadSelected = () => {
+      if (multiSelection.size === 0) return;
+      const confirmDownload = window.confirm(`Download ${multiSelection.size} files? Note: Your browser may block multiple automatic downloads.`);
+      if (!confirmDownload) return;
+
+      const assetsToDownload = data.assets.filter(a => multiSelection.has(a.id));
+      
+      assetsToDownload.forEach((asset, index) => {
+          setTimeout(() => {
+              const link = document.createElement('a');
+              link.href = service.getDownloadLink(asset.link);
+              link.download = asset.title; // Hint, though often ignored by cross-origin
+              link.target = "_blank";
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+          }, index * 500); // Stagger downloads
+      });
   };
 
   const filteredAssets = useMemo(() => {
@@ -164,23 +195,31 @@ const App: React.FC = () => {
       <div key={brand.id} className="mb-1 group relative">
         <button 
           onClick={() => { setActiveBrandId(brand.id); setSelectedType(null); setCurrentView('browse'); }} 
-          className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold flex items-center gap-3 transition-all duration-200 
+          className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold flex items-center gap-3 transition-all duration-200 group
             ${isActive && !selectedType ? 'bg-wg-honorable text-white shadow-lg shadow-wg-honorable/20' : 'text-slate-500 hover:bg-slate-100'}`}
-          title={!isSidebarExpanded ? brand.name : undefined}
         >
           {/* First letter Icon */}
           <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] shrink-0 font-black ${isActive ? 'bg-white text-wg-honorable' : 'bg-slate-200 text-slate-500'}`}>
             {brand.name.charAt(0)}
           </div>
           
-          <div className={`flex-1 flex justify-between items-center overflow-hidden transition-opacity duration-100 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 w-0'}`}>
-             <span className="truncate">{brand.name}</span>
-             {availableTypes.length > 0 && isActive && <span className="text-[9px] opacity-70">▼</span>}
-          </div>
+          {!isSidebarCollapsed && (
+             <div className="flex-1 flex justify-between items-center overflow-hidden">
+                 <span className="truncate">{brand.name}</span>
+                 {availableTypes.length > 0 && isActive && <span className="text-[9px] opacity-70">▼</span>}
+             </div>
+          )}
+          
+          {/* Tooltip for Minimized State */}
+          {isSidebarCollapsed && (
+             <div className="absolute left-full ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                 {brand.name}
+             </div>
+          )}
         </button>
         
-        {/* Submenu for Formats */}
-        {isActive && availableTypes.length > 0 && isSidebarExpanded && (
+        {/* Submenu for Formats - Only when Expanded */}
+        {isActive && availableTypes.length > 0 && !isSidebarCollapsed && (
           <div className="ml-9 mt-1 space-y-0.5 animate-fade-in-up">
             {availableTypes.map(type => (
                <button key={type.id} onClick={() => { setSelectedType(type.id); setCurrentView('browse'); }} className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${selectedType === type.id ? 'text-wg-honorable bg-wg-honorable/10' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
@@ -194,14 +233,20 @@ const App: React.FC = () => {
   };
 
   const renderAdminLink = (view: ViewType, label: string, icon: React.ReactNode) => (
-    <button 
-        onClick={() => navigateToAdmin(view)} 
-        className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold flex items-center gap-3 transition-all duration-200 ${currentView === view ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-600 hover:bg-slate-100'}`}
-        title={!isSidebarExpanded ? label : undefined}
-    >
-        <span className="w-6 h-6 flex items-center justify-center shrink-0">{icon}</span>
-        <span className={`transition-opacity duration-100 whitespace-nowrap ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>{label}</span>
-    </button>
+    <div className="relative group">
+        <button 
+            onClick={() => navigateToAdmin(view)} 
+            className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold flex items-center gap-3 transition-all duration-200 ${currentView === view ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-600 hover:bg-slate-100'}`}
+        >
+            <span className="w-6 h-6 flex items-center justify-center shrink-0">{icon}</span>
+            {!isSidebarCollapsed && <span className="whitespace-nowrap">{label}</span>}
+        </button>
+        {isSidebarCollapsed && (
+             <div className="absolute left-full ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                 {label}
+             </div>
+        )}
+    </div>
   );
 
   if (loading) return (
@@ -216,45 +261,70 @@ const App: React.FC = () => {
       
       {/* 1. Left Sidebar Navigation */}
       <aside 
-         onMouseEnter={() => setIsSidebarHovered(true)}
-         onMouseLeave={() => setIsSidebarHovered(false)}
-         className={`flex-shrink-0 bg-white border-r border-slate-200 flex flex-col transition-all duration-100 ease-linear z-30 fixed lg:static h-full shadow-xl lg:shadow-none
-         ${isSidebarExpanded ? 'w-72' : 'w-20'}`}
+         className={`flex-shrink-0 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out z-30 fixed lg:static h-full shadow-xl lg:shadow-none
+         ${isSidebarCollapsed ? 'w-20' : 'w-72'}`}
       >
-        <div className={`p-6 border-b border-slate-100 flex items-center ${!isSidebarExpanded ? 'justify-center' : 'justify-between'}`}>
+        <div className={`p-6 border-b border-slate-100 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
           <div className="flex items-center gap-3 cursor-pointer overflow-hidden" onClick={() => { setCurrentView('about'); setActiveBrandId(null); setSelectedType(null); setSelectedAsset(null); }}>
             <div className="w-10 h-10 bg-wg-honorable rounded-xl flex items-center justify-center shadow-lg shadow-wg-honorable/20 shrink-0">
               <img src={LOGO_URL} className="w-full h-full object-cover" />
             </div>
-            <div className={`min-w-0 transition-opacity duration-100 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>
-                <h1 className="text-base font-extrabold tracking-tight text-slate-900 leading-tight">Brand-Hub</h1>
-                <span className="text-[9px] font-black text-wg-honorable uppercase tracking-widest truncate block">Werkudara Group</span>
-            </div>
+            {!isSidebarCollapsed && (
+                <div className="min-w-0">
+                    <h1 className="text-base font-extrabold tracking-tight text-slate-900 leading-tight">Brand-Hub</h1>
+                    <span className="text-[9px] font-black text-wg-honorable uppercase tracking-widest truncate block">Werkudara Group</span>
+                </div>
+            )}
           </div>
           
-          {isSidebarExpanded && (
-             <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="p-1.5 text-slate-300 hover:text-slate-600 hidden lg:block">
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isSidebarCollapsed ? "M13 5l7 7-7 7M5 5l7 7-7 7" : "M11 19l-7-7 7-7m8 14l-7-7 7-7"} /></svg>
+          {!isSidebarCollapsed && (
+             <button onClick={() => setIsSidebarCollapsed(true)} className="p-1.5 text-slate-300 hover:text-slate-600 hidden lg:block">
+               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
              </button>
           )}
         </div>
+
+        {/* Minimized Toggle */}
+        {isSidebarCollapsed && (
+            <div className="flex justify-center py-4 border-b border-slate-50">
+                <button onClick={() => setIsSidebarCollapsed(false)} className="p-2 bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                </button>
+            </div>
+        )}
         
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 no-scrollbar">
           {/* Main Navigation */}
-          <button onClick={() => { setCurrentView('about'); setActiveBrandId(null); setSelectedType(null); setSelectedAsset(null); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold flex items-center gap-3 transition-all duration-200 ${currentView === 'about' ? 'bg-wg-honorable text-white shadow-lg shadow-wg-honorable/20' : 'text-slate-500 hover:bg-slate-100'}`} title="About">
-            <span className="text-lg w-6 text-center">ℹ️</span>
-            <span className={`transition-opacity duration-100 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>About</span>
-          </button>
-          <button onClick={() => { setCurrentView('browse'); setActiveBrandId(null); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold flex items-center gap-3 transition-all duration-200 ${currentView === 'browse' && !activeBrandId ? 'bg-wg-honorable text-white shadow-lg shadow-wg-honorable/20' : 'text-slate-500 hover:bg-slate-100'}`} title="All Assets">
-            <span className="text-lg w-6 text-center">📂</span>
-            <span className={`transition-opacity duration-100 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>All Assets</span>
-          </button>
+          <div className="relative group">
+            <button onClick={() => { setCurrentView('about'); setActiveBrandId(null); setSelectedType(null); setSelectedAsset(null); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold flex items-center gap-3 transition-all duration-200 ${currentView === 'about' ? 'bg-wg-honorable text-white shadow-lg shadow-wg-honorable/20' : 'text-slate-500 hover:bg-slate-100'}`}>
+                <span className="text-lg w-6 text-center">ℹ️</span>
+                {!isSidebarCollapsed && <span>About</span>}
+            </button>
+            {isSidebarCollapsed && (
+                <div className="absolute left-full ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                    About
+                </div>
+            )}
+          </div>
+
+          <div className="relative group">
+            <button onClick={() => { setCurrentView('browse'); setActiveBrandId(null); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold flex items-center gap-3 transition-all duration-200 ${currentView === 'browse' && !activeBrandId ? 'bg-wg-honorable text-white shadow-lg shadow-wg-honorable/20' : 'text-slate-500 hover:bg-slate-100'}`}>
+                <span className="text-lg w-6 text-center">📂</span>
+                {!isSidebarCollapsed && <span>All Assets</span>}
+            </button>
+            {isSidebarCollapsed && (
+                <div className="absolute left-full ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                    All Assets
+                </div>
+            )}
+          </div>
           
           {/* Admin Menu Section */}
           {role === 'ADMIN' && (
             <div className="mt-6">
-                <div className={`px-2 pb-2 text-[10px] font-black text-slate-400 uppercase tracking-widest transition-opacity duration-100 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 hidden'}`}>Admin Menu</div>
-                <div className={`border-t border-slate-100 my-2 ${!isSidebarExpanded ? 'block' : 'hidden'}`}></div>
+                {!isSidebarCollapsed && <div className="px-2 pb-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Admin Menu</div>}
+                {isSidebarCollapsed && <div className="h-4"></div>}
+                <div className={`border-t border-slate-100 my-2 ${isSidebarCollapsed ? 'hidden' : 'block'}`}></div>
                 <div className="space-y-1">
                     {renderAdminLink('admin-upload', 'Upload Asset', (
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4 4m0 0L8 8m4-4v12" /></svg>
@@ -270,26 +340,31 @@ const App: React.FC = () => {
           )}
 
           {/* Browse Section */}
-          <div className={`mt-6 transition-opacity duration-100 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 hidden'}`}>
-             <div className="px-2 pb-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Holding</div>
+          <div className="mt-6">
+             {!isSidebarCollapsed && <div className="px-2 pb-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Holding</div>}
           </div>
           {brandsByType.ENTITAS.map(renderBrandLink)}
           
-          <div className={`mt-6 transition-opacity duration-100 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 hidden'}`}>
-            <div className="px-2 pb-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Business Units</div>
+          <div className="mt-6">
+             {!isSidebarCollapsed && <div className="px-2 pb-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Business Units</div>}
           </div>
           {brandsByType.UNIT.map(renderBrandLink)}
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
+        <div className="p-4 border-t border-slate-100 relative group">
           <button onClick={() => { role === 'ADMIN' ? setRole('VIEWER') : setShowLoginModal(true); }} className={`w-full p-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-center border transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap overflow-hidden ${role === 'ADMIN' ? 'text-wg-burgundy border-wg-burgundy/20 bg-wg-burgundy/5' : 'text-wg-honorable border-wg-honorable/20 hover:bg-wg-honorable/5'}`}>
-            {isSidebarExpanded ? (role === 'ADMIN' ? 'Exit Admin Mode' : 'Admin Login') : (role === 'ADMIN' ? '🔓' : '🔒')}
+            {isSidebarCollapsed ? (role === 'ADMIN' ? '🔓' : '🔒') : (role === 'ADMIN' ? 'Exit Admin Mode' : 'Admin Login')}
           </button>
+          {isSidebarCollapsed && (
+             <div className="absolute left-full top-4 ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                 {role === 'ADMIN' ? 'Logout' : 'Admin Login'}
+             </div>
+          )}
         </div>
       </aside>
 
       {/* 2. Main Content Area */}
-      <main className={`flex-1 flex flex-col min-w-0 overflow-hidden relative bg-[#F9F9F8] transition-all duration-300 ${isSidebarExpanded && window.innerWidth < 1024 ? 'ml-72' : 'ml-20 lg:ml-0'}`}>
+      <main className={`flex-1 flex flex-col min-w-0 overflow-hidden relative bg-[#F9F9F8] transition-all duration-300 ${isSidebarCollapsed && window.innerWidth < 1024 ? 'ml-20' : 'ml-0'}`}>
         <header className="h-20 px-8 flex items-center gap-6 shrink-0 transition-all border-b border-transparent justify-between">
           
           {/* Breadcrumb / Title */}
@@ -297,10 +372,23 @@ const App: React.FC = () => {
              {currentView === 'about' ? (
                 <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">About Us</h2>
              ) : currentView === 'browse' ? (
-                <div className="flex items-center gap-2 text-sm font-bold text-slate-500 truncate">
-                   <span>Browse</span>
-                   <span className="text-slate-300">/</span>
-                   <span className="text-slate-900 truncate">{activeBrandId ? data.brands.find(b => b.id === activeBrandId)?.name : 'All Assets'}</span>
+                <div className="flex items-center gap-4">
+                   <div className="flex items-center gap-2 text-sm font-bold text-slate-500 truncate">
+                      <span>Browse</span>
+                      <span className="text-slate-300">/</span>
+                      <span className="text-slate-900 truncate">{activeBrandId ? data.brands.find(b => b.id === activeBrandId)?.name : 'All Assets'}</span>
+                   </div>
+                   
+                   {/* Multi Select Download Button */}
+                   {multiSelection.size > 0 && (
+                       <button 
+                         onClick={handleDownloadSelected}
+                         className="px-4 py-1.5 bg-wg-honorable text-white text-xs font-bold rounded-full shadow-lg shadow-wg-honorable/20 hover:bg-wg-royal transition-all animate-fade-in-up flex items-center gap-2"
+                       >
+                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                           Download Selected ({multiSelection.size})
+                       </button>
+                   )}
                 </div>
              ) : (
                 <div className="flex items-center gap-2 text-sm font-bold text-slate-500">
@@ -380,6 +468,8 @@ const App: React.FC = () => {
                  onSelectAsset={setSelectedAsset}
                  selectedAssetId={selectedAsset?.id}
                  viewMode={viewMode}
+                 multiSelection={multiSelection}
+                 onToggleSelection={handleToggleSelection}
                />
             </div>
           ) : (
