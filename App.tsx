@@ -210,10 +210,12 @@ const App: React.FC = () => {
              </div>
           )}
           
-          {/* Tooltip for Minimized State */}
+          {/* Tooltip for Minimized State - High Z-index and Fixed position emulation (via absolute outside overflow) */}
           {isSidebarCollapsed && (
-             <div className="absolute left-full ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+             <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-md shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[100] whitespace-nowrap">
                  {brand.name}
+                 {/* Little arrow pointing left */}
+                 <div className="absolute top-1/2 right-full -translate-y-1/2 border-4 border-transparent border-r-slate-800"></div>
              </div>
           )}
         </button>
@@ -233,7 +235,7 @@ const App: React.FC = () => {
   };
 
   const renderAdminLink = (view: ViewType, label: string, icon: React.ReactNode) => (
-    <div className="relative group">
+    <div className="relative group mb-1">
         <button 
             onClick={() => navigateToAdmin(view)} 
             className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold flex items-center gap-3 transition-all duration-200 ${currentView === view ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-600 hover:bg-slate-100'}`}
@@ -242,8 +244,9 @@ const App: React.FC = () => {
             {!isSidebarCollapsed && <span className="whitespace-nowrap">{label}</span>}
         </button>
         {isSidebarCollapsed && (
-             <div className="absolute left-full ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+             <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-md shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[100] whitespace-nowrap">
                  {label}
+                 <div className="absolute top-1/2 right-full -translate-y-1/2 border-4 border-transparent border-r-slate-800"></div>
              </div>
         )}
     </div>
@@ -293,28 +296,35 @@ const App: React.FC = () => {
             </div>
         )}
         
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1 no-scrollbar">
+        {/* 
+            CRITICAL: Overflow logic. 
+            When minimized, we allow overflow-visible so tooltips can extend outside the container.
+            When expanded, we use overflow-y-auto to allow scrolling the list.
+        */}
+        <nav className={`flex-1 p-4 space-y-1 no-scrollbar ${isSidebarCollapsed ? 'overflow-visible' : 'overflow-y-auto'}`}>
           {/* Main Navigation */}
-          <div className="relative group">
+          <div className="relative group mb-1">
             <button onClick={() => { setCurrentView('about'); setActiveBrandId(null); setSelectedType(null); setSelectedAsset(null); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold flex items-center gap-3 transition-all duration-200 ${currentView === 'about' ? 'bg-wg-honorable text-white shadow-lg shadow-wg-honorable/20' : 'text-slate-500 hover:bg-slate-100'}`}>
                 <span className="text-lg w-6 text-center">ℹ️</span>
                 {!isSidebarCollapsed && <span>About</span>}
             </button>
             {isSidebarCollapsed && (
-                <div className="absolute left-full ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-md shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[100] whitespace-nowrap">
                     About
+                    <div className="absolute top-1/2 right-full -translate-y-1/2 border-4 border-transparent border-r-slate-800"></div>
                 </div>
             )}
           </div>
 
-          <div className="relative group">
+          <div className="relative group mb-1">
             <button onClick={() => { setCurrentView('browse'); setActiveBrandId(null); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold flex items-center gap-3 transition-all duration-200 ${currentView === 'browse' && !activeBrandId ? 'bg-wg-honorable text-white shadow-lg shadow-wg-honorable/20' : 'text-slate-500 hover:bg-slate-100'}`}>
                 <span className="text-lg w-6 text-center">📂</span>
                 {!isSidebarCollapsed && <span>All Assets</span>}
             </button>
             {isSidebarCollapsed && (
-                <div className="absolute left-full ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-md shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[100] whitespace-nowrap">
                     All Assets
+                    <div className="absolute top-1/2 right-full -translate-y-1/2 border-4 border-transparent border-r-slate-800"></div>
                 </div>
             )}
           </div>
@@ -356,8 +366,9 @@ const App: React.FC = () => {
             {isSidebarCollapsed ? (role === 'ADMIN' ? '🔓' : '🔒') : (role === 'ADMIN' ? 'Exit Admin Mode' : 'Admin Login')}
           </button>
           {isSidebarCollapsed && (
-             <div className="absolute left-full top-4 ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+             <div className="absolute left-full top-4 ml-3 px-3 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-md shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[100] whitespace-nowrap">
                  {role === 'ADMIN' ? 'Logout' : 'Admin Login'}
+                 <div className="absolute top-1/2 right-full -translate-y-1/2 border-4 border-transparent border-r-slate-800"></div>
              </div>
           )}
         </div>
@@ -379,15 +390,24 @@ const App: React.FC = () => {
                       <span className="text-slate-900 truncate">{activeBrandId ? data.brands.find(b => b.id === activeBrandId)?.name : 'All Assets'}</span>
                    </div>
                    
-                   {/* Multi Select Download Button */}
+                   {/* Multi Select Download Button + Clear Selection */}
                    {multiSelection.size > 0 && (
-                       <button 
-                         onClick={handleDownloadSelected}
-                         className="px-4 py-1.5 bg-wg-honorable text-white text-xs font-bold rounded-full shadow-lg shadow-wg-honorable/20 hover:bg-wg-royal transition-all animate-fade-in-up flex items-center gap-2"
-                       >
-                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                           Download Selected ({multiSelection.size})
-                       </button>
+                       <div className="flex items-center gap-2 animate-fade-in-up">
+                           <button 
+                             onClick={handleDownloadSelected}
+                             className="px-4 py-1.5 bg-wg-honorable text-white text-xs font-bold rounded-full shadow-lg shadow-wg-honorable/20 hover:bg-wg-royal transition-all flex items-center gap-2"
+                           >
+                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                               Download Selected ({multiSelection.size})
+                           </button>
+                           <button 
+                             onClick={() => setMultiSelection(new Set())}
+                             className="p-1.5 rounded-full text-slate-400 hover:text-wg-burgundy hover:bg-slate-200 transition-colors"
+                             title="Clear Selection"
+                           >
+                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                           </button>
+                       </div>
                    )}
                 </div>
              ) : (
