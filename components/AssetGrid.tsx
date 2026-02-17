@@ -1,30 +1,57 @@
 
 import React, { useState } from 'react';
 import { Asset, Brand, AssetType } from '../types';
-import { getThumbnailUrl } from '../services/assetService';
+import { getThumbnailUrl, getDownloadLink } from '../services/assetService';
 
 interface AssetCardProps {
   asset: Asset;
   brandName: string;
   icon: string;
   onSelect: (asset: Asset) => void;
+  onToggleSelection: (id: string) => void;
+  isChecked: boolean;
   isSelected?: boolean;
 }
 
 const AssetCard: React.FC<AssetCardProps> = ({ 
-  asset, brandName, icon, onSelect, isSelected
+  asset, brandName, icon, onSelect, isSelected, onToggleSelection, isChecked
 }) => {
   const [imgError, setImgError] = useState(false);
   const thumbnailUrl = getThumbnailUrl(asset.link);
+  const downloadUrl = getDownloadLink(asset.link);
 
   return (
     <div 
-      onClick={() => onSelect(asset)}
       className={`
         bg-white rounded-xl p-3 cursor-pointer transition-all duration-300 relative group border border-slate-200
         ${isSelected ? 'ring-2 ring-wg-honorable shadow-lg' : 'hover:-translate-y-1 hover:shadow-md'}
+        ${isChecked ? 'bg-wg-honorable/5 border-wg-honorable/30' : ''}
       `}
+      onClick={() => onSelect(asset)}
     >
+      {/* Selection Checkbox (Visible on hover or checked) */}
+      <div 
+        className={`absolute top-5 left-5 z-20 transition-opacity duration-200 ${isChecked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+        onClick={(e) => { e.stopPropagation(); onToggleSelection(asset.id); }}
+      >
+        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isChecked ? 'bg-wg-honorable border-wg-honorable' : 'bg-white border-slate-300 hover:border-wg-honorable'}`}>
+            {isChecked && <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+        </div>
+      </div>
+
+      {/* Direct Download Button (Visible on hover) */}
+      <a 
+         href={downloadUrl}
+         download={asset.title}
+         target="_blank"
+         rel="noopener noreferrer"
+         onClick={(e) => e.stopPropagation()}
+         className="absolute top-5 right-5 z-20 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-wg-honorable hover:text-white text-slate-500"
+         title="Download"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+      </a>
+
       {/* Image Container - Darker BG (slate-300) for contrast */}
       <div className="bg-slate-300 rounded-lg aspect-[4/3] w-full flex items-center justify-center p-6 mb-3 overflow-hidden">
         {thumbnailUrl && !imgError ? (
@@ -66,6 +93,8 @@ interface AssetGridProps {
   onSelectAsset: (asset: Asset) => void;
   selectedAssetId?: string | null;
   viewMode: 'grid' | 'list';
+  multiSelection: Set<string>;
+  onToggleSelection: (id: string) => void;
 }
 
 const AssetGrid: React.FC<AssetGridProps> = ({
@@ -74,7 +103,9 @@ const AssetGrid: React.FC<AssetGridProps> = ({
   assetTypes,
   onSelectAsset,
   selectedAssetId,
-  viewMode
+  viewMode,
+  multiSelection,
+  onToggleSelection
 }) => {
   
   if (assets.length === 0) {
@@ -93,11 +124,13 @@ const AssetGrid: React.FC<AssetGridProps> = ({
               <table className="w-full text-left border-collapse">
                   <thead>
                       <tr className="bg-slate-50 border-b border-slate-100">
+                          <th className="p-4 w-10"></th>
                           <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-16">Preview</th>
                           <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Title</th>
                           <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Entity</th>
                           <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</th>
                           <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
+                          <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
                       </tr>
                   </thead>
                   <tbody>
@@ -106,13 +139,23 @@ const AssetGrid: React.FC<AssetGridProps> = ({
                           const type = assetTypes.find(t => t.id === asset.typeId);
                           const thumb = getThumbnailUrl(asset.link);
                           const isSelected = selectedAssetId === asset.id;
+                          const isChecked = multiSelection.has(asset.id);
+                          const downloadUrl = getDownloadLink(asset.link);
 
                           return (
                               <tr 
                                 key={asset.id} 
                                 onClick={() => onSelectAsset(asset)}
-                                className={`cursor-pointer transition-colors border-b border-slate-50 last:border-0 ${isSelected ? 'bg-wg-honorable/5' : 'hover:bg-slate-50'}`}
+                                className={`cursor-pointer transition-colors border-b border-slate-50 last:border-0 group ${isSelected || isChecked ? 'bg-wg-honorable/5' : 'hover:bg-slate-50'}`}
                               >
+                                  <td className="p-3">
+                                      <div 
+                                        className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer ${isChecked ? 'bg-wg-honorable border-wg-honorable' : 'border-slate-300 bg-white hover:border-wg-honorable'}`}
+                                        onClick={(e) => { e.stopPropagation(); onToggleSelection(asset.id); }}
+                                      >
+                                          {isChecked && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                      </div>
+                                  </td>
                                   <td className="p-3">
                                       <div className="w-10 h-10 rounded bg-slate-200 flex items-center justify-center overflow-hidden border border-slate-300">
                                           {thumb ? (
@@ -132,6 +175,19 @@ const AssetGrid: React.FC<AssetGridProps> = ({
                                   </td>
                                   <td className="p-3 text-xs text-slate-400 font-mono">
                                       {new Date(asset.updatedAt).toLocaleDateString()}
+                                  </td>
+                                  <td className="p-3 text-right">
+                                     <a 
+                                        href={downloadUrl}
+                                        download={asset.title}
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="inline-flex p-2 text-slate-400 hover:text-wg-honorable hover:bg-slate-100 rounded-full transition-colors"
+                                        title="Download"
+                                     >
+                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                     </a>
                                   </td>
                               </tr>
                           )
@@ -155,6 +211,8 @@ const AssetGrid: React.FC<AssetGridProps> = ({
              icon={type?.icon || '📄'}
              onSelect={onSelectAsset}
              isSelected={selectedAssetId === asset.id}
+             isChecked={multiSelection.has(asset.id)}
+             onToggleSelection={onToggleSelection}
            />
          );
       })}
