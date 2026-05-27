@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Asset, Brand, AssetType, BrandType } from '../types';
 import { generateAssetMetadata } from '../services/geminiService';
@@ -185,71 +184,71 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   );
 
   return (
-    <div className="flex flex-col gap-8 pb-20">
+    <div className="flex flex-col gap-6 pb-20 max-w-4xl mx-auto">
       
       {/* Breadcrumb Navigation */}
-      <div className="flex items-center gap-2 text-sm font-bold text-slate-400">
-         <button onClick={onClose} className="hover:text-slate-600 transition-colors">Admin</button>
-         <span>/</span>
-         <span className="text-slate-900">
+      <div className="flex items-center gap-3 text-[14px] text-coinbase-muted font-medium px-2">
+         <button onClick={onClose} className="hover:text-coinbase-ink transition-colors">Admin</button>
+         <span className="text-coinbase-hairline">/</span>
+         <span className="text-coinbase-ink">
             {activeView === 'admin-upload' ? (editingAsset ? 'Edit Asset' : 'Upload Asset') :
              activeView === 'admin-brands' ? 'Manage Entities' : 'Manage Formats'}
          </span>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm max-w-4xl">
-        <div className="p-8">
+      <div className="bg-white rounded-xl border border-coinbase-hairline shadow-soft overflow-hidden">
+        <div className="p-8 lg:p-10">
           {activeView === 'admin-upload' ? (
-            <form onSubmit={handleSaveAsset} className="space-y-6">
+            <form onSubmit={handleSaveAsset} className="space-y-8">
               <div className="flex items-center justify-between mb-2">
-                 <h2 className="text-xl font-extrabold text-slate-900">{editingAsset ? 'Edit Asset' : 'New Asset Upload'}</h2>
+                 <h2 className="text-[24px] font-semibold text-coinbase-ink">{editingAsset ? 'Edit Asset' : 'New Asset Upload'}</h2>
               </div>
               
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Asset Title</label>
-                <input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-sm focus:border-wg-honorable" placeholder="e.g. Werkudara Logo Horizontal" />
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-coinbase-muted uppercase tracking-wide">Asset Title</label>
+                <input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-4 py-3 bg-coinbase-canvas border border-coinbase-hairline rounded-md outline-none text-[15px] focus:border-coinbase-primary transition-colors placeholder:text-coinbase-muted" placeholder="e.g. Logo Horizontal" />
               </div>
               
-              <div className="space-y-3">
-                <div className="flex items-center gap-4 border-b border-slate-100 pb-2">
-                  <button type="button" onClick={() => setUploadMode('link')} className={`text-[10px] font-black uppercase tracking-widest pb-2 border-b-2 transition-all ${uploadMode === 'link' ? 'border-wg-honorable text-wg-honorable' : 'border-transparent text-slate-400'}`}>Link URL</button>
-                  <button type="button" onClick={() => setUploadMode('file')} className={`text-[10px] font-black uppercase tracking-widest pb-2 border-b-2 transition-all ${uploadMode === 'file' ? 'border-wg-honorable text-wg-honorable' : 'border-transparent text-slate-400'}`}>Upload File (Max 5MB)</button>
+              <div className="space-y-4">
+                <div className="flex items-center gap-8 border-b border-coinbase-hairline pb-2">
+                  <button type="button" onClick={() => setUploadMode('link')} className={`text-[13px] font-semibold uppercase tracking-wide pb-2 border-b-2 transition-all -mb-[9px] ${uploadMode === 'link' ? 'border-coinbase-primary text-coinbase-ink' : 'border-transparent text-coinbase-muted hover:text-coinbase-ink'}`}>Link URL</button>
+                  <button type="button" onClick={() => setUploadMode('file')} className={`text-[13px] font-semibold uppercase tracking-wide pb-2 border-b-2 transition-all -mb-[9px] ${uploadMode === 'file' ? 'border-coinbase-primary text-coinbase-ink' : 'border-transparent text-coinbase-muted hover:text-coinbase-ink'}`}>Upload File (Max 5MB)</button>
                 </div>
                 
                 {uploadMode === 'link' ? (
-                  <input required value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} placeholder="https://drive.google.com/..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-xs" />
+                  <input required value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} placeholder="https://drive.google.com/..." className="w-full px-4 py-3 bg-coinbase-canvas border border-coinbase-hairline rounded-md outline-none text-[15px] focus:border-coinbase-primary transition-colors placeholder:text-coinbase-muted mt-2" />
                 ) : (
                   <div 
                     onClick={() => fileInputRef.current?.click()} 
-                    className="w-full h-32 border-2 border-dashed border-slate-200 rounded-lg flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer group"
+                    className="w-full h-40 border-2 border-dashed border-coinbase-hairline rounded-md flex flex-col items-center justify-center bg-coinbase-canvas hover:bg-coinbase-surface-soft transition-all cursor-pointer group mt-2"
                   >
                     <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-                    <svg className="w-8 h-8 text-slate-300 mb-2 group-hover:text-wg-honorable transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4 4m0 0L8 8m4-4v12" /></svg>
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                      {isUploading ? 'Converting...' : formData.link.startsWith('data:') ? '✅ File Loaded' : 'Click to Select File'}
+                    <svg className="w-8 h-8 text-coinbase-muted mb-3 group-hover:text-coinbase-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4 4m0 0L8 8m4-4v12" /></svg>
+                    <span className="text-[13px] font-semibold text-coinbase-muted uppercase tracking-wide group-hover:text-coinbase-primary transition-colors">
+                      {isUploading ? 'Converting...' : formData.link.startsWith('data:') ? 'File Loaded' : 'Click to Select File'}
                     </span>
                   </div>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Entity</label>
-                  <select value={formData.brandId} onChange={e => setFormData({...formData, brandId: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-xs">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[13px] font-semibold text-coinbase-muted uppercase tracking-wide">Entity</label>
+                  <select value={formData.brandId} onChange={e => setFormData({...formData, brandId: e.target.value})} className="w-full px-4 py-3 bg-coinbase-canvas border border-coinbase-hairline rounded-md outline-none text-[15px] focus:border-coinbase-primary transition-colors">
                     {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                   </select>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Format</label>
-                  <select value={formData.typeId} onChange={e => setFormData({...formData, typeId: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-xs">
+                <div className="space-y-2">
+                  <label className="text-[13px] font-semibold text-coinbase-muted uppercase tracking-wide">Format</label>
+                  <select value={formData.typeId} onChange={e => setFormData({...formData, typeId: e.target.value})} className="w-full px-4 py-3 bg-coinbase-canvas border border-coinbase-hairline rounded-md outline-none text-[15px] focus:border-coinbase-primary transition-colors">
                     {assetTypes.map(t => <option key={t.id} value={t.id}>{t.icon} {t.name}</option>)}
                   </select>
                 </div>
               </div>
 
-              <div className="space-y-1 relative">
-                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tags</label>
-                 <div className="flex gap-2 mb-2 relative">
+              <div className="space-y-2 relative">
+                 <label className="text-[13px] font-semibold text-coinbase-muted uppercase tracking-wide">Tags</label>
+                 <div className="flex gap-3 mb-3 relative">
                    <div className="flex-1 relative">
                      <input 
                        value={tagInput}
@@ -261,15 +260,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                        onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
                        onKeyDown={handleAddTagKey}
                        placeholder="Add a tag..."
-                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-xs"
+                       className="w-full px-4 py-3 bg-coinbase-canvas border border-coinbase-hairline rounded-md outline-none text-[15px] focus:border-coinbase-primary transition-colors placeholder:text-coinbase-muted"
                      />
                      {showTagSuggestions && tagInput && filteredTags.length > 0 && (
-                       <ul className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-32 overflow-y-auto z-50">
+                       <ul className="absolute top-full left-0 right-0 mt-2 bg-white border border-coinbase-hairline rounded-md max-h-40 overflow-y-auto z-50 py-2 shadow-soft">
                          {filteredTags.map(tag => (
                            <li 
                              key={tag}
                              onClick={() => addTag(tag)}
-                             className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-wg-honorable cursor-pointer border-b border-slate-50 last:border-0"
+                             className="px-4 py-2 text-[15px] font-medium text-coinbase-ink hover:bg-coinbase-surface-soft cursor-pointer"
                            >
                              #{tag}
                            </li>
@@ -277,108 +276,110 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                        </ul>
                      )}
                    </div>
-                   <button type="button" onClick={() => addTag(tagInput)} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-xs transition-colors">Add</button>
+                   <button type="button" onClick={() => addTag(tagInput)} className="px-6 py-3 bg-coinbase-surface-strong text-coinbase-ink rounded-pill text-[15px] font-semibold hover:bg-coinbase-hairline transition-colors">Add</button>
                  </div>
-                 <div className="flex flex-wrap gap-2">
+                 <div className="flex flex-wrap gap-2 pt-1">
                    {formData.tags.map(tag => (
-                     <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 bg-wg-sky/30 text-wg-honorable text-[10px] font-black uppercase rounded-lg">
+                     <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-coinbase-surface-strong text-coinbase-ink text-[12px] font-semibold uppercase tracking-wide rounded-pill">
                        #{tag}
-                       <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-wg-burgundy ml-1">×</button>
+                       <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-ship-red text-coinbase-muted transition-colors">✕</button>
                      </span>
                    ))}
                  </div>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Description</label>
-                  <button type="button" onClick={handleGeminiSuggest} disabled={isGenerating} className="text-[9px] font-black text-wg-ice hover:text-wg-honorable disabled:opacity-50 transition-all">✨ AI SUGGEST</button>
+                  <label className="text-[13px] font-semibold text-coinbase-muted uppercase tracking-wide">Description</label>
+                  <button type="button" onClick={handleGeminiSuggest} disabled={isGenerating} className="text-[12px] font-semibold text-coinbase-primary hover:text-coinbase-primary-active disabled:opacity-50 transition-colors uppercase tracking-wide flex items-center gap-1">
+                    ✨ AI Suggest
+                  </button>
                 </div>
-                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-xs resize-none" />
+                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={4} className="w-full px-4 py-3 bg-coinbase-canvas border border-coinbase-hairline rounded-md outline-none text-[15px] focus:border-coinbase-primary transition-colors resize-none placeholder:text-coinbase-muted" />
               </div>
 
-              <div className="pt-6 border-t border-slate-100 flex justify-end gap-3 shrink-0">
-                <button type="button" onClick={onClose} className="px-6 py-3 text-slate-400 font-black uppercase tracking-widest text-[10px] hover:text-slate-600">Cancel</button>
-                <button type="submit" disabled={isUploading} className="px-8 py-3 bg-wg-honorable text-white font-black uppercase tracking-widest text-[10px] rounded-lg hover:bg-wg-royal transition-all shadow-lg active:scale-95 disabled:opacity-50">
+              <div className="pt-8 flex justify-end gap-3 shrink-0">
+                <button type="button" onClick={onClose} className="px-6 py-3 bg-white border border-coinbase-hairline text-coinbase-ink rounded-pill text-[16px] font-semibold hover:bg-coinbase-surface-soft transition-colors">Cancel</button>
+                <button type="submit" disabled={isUploading} className="px-8 py-3 bg-coinbase-primary text-white rounded-pill text-[16px] font-semibold hover:bg-coinbase-primary-active transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-soft">
                   {editingAsset ? 'Update Asset' : 'Publish Asset'}
                 </button>
               </div>
             </form>
           ) : activeView === 'admin-brands' ? (
-            <div className="space-y-6">
-              <h2 className="text-xl font-extrabold text-slate-900">Manage Entities</h2>
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 flex gap-2">
-                <input value={newBrandName} onChange={e => setNewBrandName(e.target.value)} placeholder="New Entity Name" className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-lg text-xs font-bold" />
-                <button onClick={() => { if(newBrandName){ onAddBrand({id:'', name:newBrandName, type:newBrandType, sortOrder: brands.length}); setNewBrandName(''); } }} className="px-6 bg-wg-honorable text-white font-black uppercase text-[10px] rounded-lg">Add</button>
+            <div className="space-y-8">
+              <h2 className="text-[24px] font-semibold text-coinbase-ink">Manage Entities</h2>
+              <div className="bg-coinbase-surface-soft p-4 rounded-xl border border-coinbase-hairline flex gap-3">
+                <input value={newBrandName} onChange={e => setNewBrandName(e.target.value)} placeholder="New Entity Name" className="flex-1 px-4 py-3 bg-white border border-coinbase-hairline rounded-md text-[15px] outline-none focus:border-coinbase-primary transition-colors placeholder:text-coinbase-muted" />
+                <button onClick={() => { if(newBrandName){ onAddBrand({id:'', name:newBrandName, type:newBrandType, sortOrder: brands.length}); setNewBrandName(''); } }} className="px-8 py-3 bg-coinbase-primary text-white text-[15px] font-semibold rounded-pill hover:bg-coinbase-primary-active transition-colors">Add</button>
               </div>
-              <div className="space-y-2">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Draggable List</p>
+              <div className="space-y-3">
+                <p className="text-[12px] font-semibold text-coinbase-muted uppercase tracking-wide mb-3">Draggable List</p>
                 {brands.map((brand, index) => (
-                  <div key={brand.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index, 'brands')} className={`flex items-center justify-between p-4 bg-white border border-slate-100 rounded-lg cursor-move group transition-all ${draggedIndex === index ? 'opacity-40 scale-95' : 'hover:border-wg-honorable/30 hover:shadow-md'}`}>
+                  <div key={brand.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index, 'brands')} className={`flex items-center justify-between p-4 bg-white border border-coinbase-hairline rounded-xl cursor-move group transition-all ${draggedIndex === index ? 'opacity-50 scale-[0.99]' : 'hover:shadow-soft'}`}>
                     {editingItemId === brand.id ? (
-                       <div className="flex-1 flex gap-2 mr-2">
+                       <div className="flex-1 flex gap-3 mr-3">
                           <input 
                             value={editBuffer.name} 
                             onChange={(e) => setEditBuffer({...editBuffer, name: e.target.value})}
-                            className="flex-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-xs font-bold"
+                            className="flex-1 px-4 py-2 bg-coinbase-canvas border border-coinbase-hairline rounded-md text-[15px] outline-none focus:border-coinbase-primary"
                           />
-                          <button onClick={() => { onUpdateBrand(editBuffer); setEditingItemId(null); }} className="px-3 bg-wg-honorable text-white rounded text-[10px] font-bold">Save</button>
-                          <button onClick={() => setEditingItemId(null)} className="px-3 bg-slate-200 text-slate-500 rounded text-[10px] font-bold">Cancel</button>
+                          <button onClick={() => { onUpdateBrand(editBuffer); setEditingItemId(null); }} className="px-5 py-2 bg-coinbase-primary text-white rounded-pill text-[14px] font-semibold hover:bg-coinbase-primary-active transition-colors">Save</button>
+                          <button onClick={() => setEditingItemId(null)} className="px-5 py-2 bg-coinbase-surface-strong text-coinbase-ink rounded-pill text-[14px] font-semibold hover:bg-coinbase-hairline transition-colors">Cancel</button>
                        </div>
                     ) : (
                         <div className="flex items-center gap-4">
-                          <div className="text-slate-300 group-hover:text-wg-honorable"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 100 4h2a2 2 0 100-4H7zM11 2a2 2 0 100 4h2a2 2 0 100-4h-2zM7 8a2 2 0 100 4h2a2 2 0 100-4H7zM11 8a2 2 0 100 4h2a2 2 0 100-4h-2zM7 14a2 2 0 100 4h2a2 2 0 100-4H7zM11 14a2 2 0 100 4h2a2 2 0 100-4h-2z" /></svg></div>
-                          <span className="text-xs font-black text-slate-900">{brand.name}</span>
+                          <div className="text-coinbase-muted group-hover:text-coinbase-ink transition-colors cursor-grab"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg></div>
+                          <span className="text-[16px] font-medium text-coinbase-ink">{brand.name}</span>
                         </div>
                     )}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         {!editingItemId && (
-                            <button onClick={() => { setEditingItemId(brand.id); setEditBuffer(brand); }} className="p-2 text-slate-300 hover:text-wg-honorable transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                            <button onClick={() => { setEditingItemId(brand.id); setEditBuffer(brand); }} className="p-2 text-coinbase-muted hover:text-coinbase-primary hover:bg-coinbase-surface-soft transition-colors rounded-full"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
                         )}
-                        <button onClick={() => confirm(`Delete ${brand.name}?`) && onDeleteBrand(brand.id)} className="p-2 text-slate-300 hover:text-wg-burgundy transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                        <button onClick={() => confirm(`Delete ${brand.name}?`) && onDeleteBrand(brand.id)} className="p-2 text-coinbase-muted hover:text-ship-red hover:bg-[#fff5f5] transition-colors rounded-full"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
-               <h2 className="text-xl font-extrabold text-slate-900">Manage Formats</h2>
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 flex gap-2">
-                <input value={newTypeIcon} onChange={e => setNewTypeIcon(e.target.value)} className="w-16 px-2 py-3 bg-white border border-slate-200 rounded-lg text-center" />
-                <input value={newTypeName} onChange={e => setNewTypeName(e.target.value)} placeholder="New Format Name" className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-lg text-xs font-bold" />
-                <button onClick={() => { if(newTypeName){ onAddAssetType({id:'', name:newTypeName, icon:newTypeIcon, sortOrder: assetTypes.length}); setNewTypeName(''); } }} className="px-6 bg-wg-honorable text-white font-black uppercase text-[10px] rounded-lg">Add</button>
+            <div className="space-y-8">
+               <h2 className="text-[24px] font-semibold text-coinbase-ink">Manage Formats</h2>
+              <div className="bg-coinbase-surface-soft p-4 rounded-xl border border-coinbase-hairline flex gap-3">
+                <input value={newTypeIcon} onChange={e => setNewTypeIcon(e.target.value)} className="w-14 px-3 py-3 bg-white border border-coinbase-hairline rounded-md text-center text-[18px] outline-none focus:border-coinbase-primary transition-colors" />
+                <input value={newTypeName} onChange={e => setNewTypeName(e.target.value)} placeholder="New Format Name" className="flex-1 px-4 py-3 bg-white border border-coinbase-hairline rounded-md text-[15px] outline-none focus:border-coinbase-primary transition-colors placeholder:text-coinbase-muted" />
+                <button onClick={() => { if(newTypeName){ onAddAssetType({id:'', name:newTypeName, icon:newTypeIcon, sortOrder: assetTypes.length}); setNewTypeName(''); } }} className="px-8 py-3 bg-coinbase-primary text-white text-[15px] font-semibold rounded-pill hover:bg-coinbase-primary-active transition-colors">Add</button>
               </div>
-              <div className="space-y-2">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Draggable List</p>
+              <div className="space-y-3">
+                <p className="text-[12px] font-semibold text-coinbase-muted uppercase tracking-wide mb-3">Draggable List</p>
                 {assetTypes.map((type, index) => (
-                  <div key={type.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index, 'types')} className={`flex items-center justify-between p-4 bg-white border border-slate-100 rounded-lg cursor-move group transition-all ${draggedIndex === index ? 'opacity-40 scale-95' : 'hover:border-wg-honorable/30 hover:shadow-md'}`}>
+                  <div key={type.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index, 'types')} className={`flex items-center justify-between p-4 bg-white border border-coinbase-hairline rounded-xl cursor-move group transition-all ${draggedIndex === index ? 'opacity-50 scale-[0.99]' : 'hover:shadow-soft'}`}>
                     {editingItemId === type.id ? (
-                       <div className="flex-1 flex gap-2 mr-2">
+                       <div className="flex-1 flex gap-3 mr-3">
                           <input 
                             value={editBuffer.icon} 
                             onChange={(e) => setEditBuffer({...editBuffer, icon: e.target.value})}
-                            className="w-10 px-1 py-1 bg-slate-50 border border-slate-200 rounded text-center"
+                            className="w-14 px-3 py-2 bg-coinbase-canvas border border-coinbase-hairline rounded-md text-center text-[18px] outline-none focus:border-coinbase-primary"
                           />
                           <input 
                             value={editBuffer.name} 
                             onChange={(e) => setEditBuffer({...editBuffer, name: e.target.value})}
-                            className="flex-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-xs font-bold"
+                            className="flex-1 px-4 py-2 bg-coinbase-canvas border border-coinbase-hairline rounded-md text-[15px] outline-none focus:border-coinbase-primary"
                           />
-                          <button onClick={() => { onUpdateAssetType(editBuffer); setEditingItemId(null); }} className="px-3 bg-wg-honorable text-white rounded text-[10px] font-bold">Save</button>
-                          <button onClick={() => setEditingItemId(null)} className="px-3 bg-slate-200 text-slate-500 rounded text-[10px] font-bold">Cancel</button>
+                          <button onClick={() => { onUpdateAssetType(editBuffer); setEditingItemId(null); }} className="px-5 py-2 bg-coinbase-primary text-white rounded-pill text-[14px] font-semibold hover:bg-coinbase-primary-active transition-colors">Save</button>
+                          <button onClick={() => setEditingItemId(null)} className="px-5 py-2 bg-coinbase-surface-strong text-coinbase-ink rounded-pill text-[14px] font-semibold hover:bg-coinbase-hairline transition-colors">Cancel</button>
                        </div>
                     ) : (
                         <div className="flex items-center gap-4">
-                          <div className="text-slate-300 group-hover:text-wg-honorable"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 100 4h2a2 2 0 100-4H7zM11 2a2 2 0 100 4h2a2 2 0 100-4h-2zM7 8a2 2 0 100 4h2a2 2 0 100-4H7zM11 8a2 2 0 100 4h2a2 2 0 100-4h-2zM7 14a2 2 0 100 4h2a2 2 0 100-4H7zM11 14a2 2 0 100 4h2a2 2 0 100-4h-2z" /></svg></div>
-                          <div className="flex items-center gap-3"><span className="text-xl">{type.icon}</span><span className="text-xs font-black text-slate-900">{type.name}</span></div>
+                          <div className="text-coinbase-muted group-hover:text-coinbase-ink transition-colors cursor-grab"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg></div>
+                          <div className="flex items-center gap-3"><span className="text-[20px]">{type.icon}</span><span className="text-[16px] font-medium text-coinbase-ink">{type.name}</span></div>
                         </div>
                     )}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         {!editingItemId && (
-                            <button onClick={() => { setEditingItemId(type.id); setEditBuffer(type); }} className="p-2 text-slate-300 hover:text-wg-honorable transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                            <button onClick={() => { setEditingItemId(type.id); setEditBuffer(type); }} className="p-2 text-coinbase-muted hover:text-coinbase-primary hover:bg-coinbase-surface-soft transition-colors rounded-full"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
                         )}
-                        <button onClick={() => confirm(`Delete ${type.name}?`) && onDeleteAssetType(type.id)} className="p-2 text-slate-300 hover:text-wg-burgundy transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                        <button onClick={() => confirm(`Delete ${type.name}?`) && onDeleteAssetType(type.id)} className="p-2 text-coinbase-muted hover:text-ship-red hover:bg-[#fff5f5] transition-colors rounded-full"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                     </div>
                   </div>
                 ))}

@@ -20,40 +20,38 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose }) => {
     const success = await onLogin(email, password);
     
     if (!success) {
-      setError('Invalid credentials. Access denied.');
+      setError('Invalid credentials. Please try again.');
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-xl animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-200">
-        <div className="p-10">
-          <div className="flex flex-col items-center mb-10">
-            <div className="w-16 h-16 bg-wg-honorable rounded-full flex items-center justify-center shadow-xl shadow-wg-honorable/20 mb-6">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-coinbase-ink/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-[420px] rounded-xl shadow-soft border border-coinbase-hairline animate-in zoom-in-95 duration-200">
+        <div className="p-8 lg:p-10">
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-12 h-12 bg-coinbase-primary rounded-full flex items-center justify-center mb-4 text-white font-bold text-sm">
+              WG
             </div>
-            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Admin Access</h2>
-            <p className="text-slate-400 text-sm font-bold mt-2 uppercase tracking-widest text-center px-4">Werkudara Group Authentication</p>
+            <h2 className="text-[24px] font-semibold text-coinbase-ink tracking-[-0.01em]">Admin Access</h2>
+            <p className="text-coinbase-muted text-[15px] mt-1 font-medium">Werkudara Group Authentication</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+              <label className="text-[13px] font-semibold text-coinbase-muted uppercase tracking-wide">Email Address</label>
               <input 
                 type="email"
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="admin@werkudara.com"
-                className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-wg-honorable/10 focus:border-wg-honorable outline-none transition-all font-bold text-slate-900 placeholder:text-slate-300"
+                className="w-full px-4 py-3 bg-coinbase-canvas border border-coinbase-hairline rounded-md outline-none transition-all text-[16px] placeholder:text-coinbase-muted text-coinbase-ink focus:border-coinbase-primary focus:ring-2 focus:ring-coinbase-primary/10"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
+              <label className="text-[13px] font-semibold text-coinbase-muted uppercase tracking-wide">Password</label>
               <div className="relative">
                 <input 
                   type={showPassword ? 'text' : 'password'}
@@ -61,12 +59,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose }) => {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-wg-honorable/10 focus:border-wg-honorable outline-none transition-all font-bold text-slate-900 placeholder:text-slate-300 pr-14"
+                  className="w-full px-4 py-3 bg-coinbase-canvas border border-coinbase-hairline rounded-md outline-none transition-all text-[16px] placeholder:text-coinbase-muted text-coinbase-ink pr-10 focus:border-coinbase-primary focus:ring-2 focus:ring-coinbase-primary/10"
                 />
                 <button 
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-wg-honorable transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-coinbase-muted hover:text-coinbase-ink transition-colors rounded-md"
                 >
                   {showPassword ? (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +81,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose }) => {
             </div>
 
             {error && (
-              <div className="bg-wg-burgundy/5 border border-wg-burgundy/20 text-wg-burgundy px-4 py-3 rounded-xl text-xs font-black text-center uppercase tracking-widest animate-pulse">
+              <div className="text-ship-red text-[14px] font-medium mt-1 text-center bg-[#fff5f5] p-2 rounded-md border border-[#ffd6d6]">
                 {error}
               </div>
             )}
@@ -91,7 +89,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose }) => {
             <button 
               type="submit"
               disabled={isLoading}
-              className="w-full py-5 bg-wg-honorable text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl hover:bg-wg-royal shadow-xl shadow-wg-honorable/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+              className="w-full py-3 mt-4 bg-coinbase-primary text-white font-semibold text-[16px] rounded-pill hover:bg-coinbase-primary-active transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-soft"
             >
               {isLoading ? (
                 <>
@@ -99,17 +97,19 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLogin, onClose }) => {
                   Authenticating...
                 </>
               ) : (
-                'Sign In as Admin'
+                'Sign In'
               )}
             </button>
             
-            <button 
-              type="button"
-              onClick={onClose}
-              className="w-full text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-[0.3em]"
-            >
-              Cancel Access
-            </button>
+            <div className="text-center mt-6">
+              <button 
+                type="button"
+                onClick={onClose}
+                className="text-[15px] font-semibold text-coinbase-muted hover:text-coinbase-ink transition-colors p-2"
+              >
+                Cancel
+              </button>
+            </div>
           </form>
         </div>
       </div>
