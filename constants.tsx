@@ -63,7 +63,7 @@ export const INITIAL_ASSETS: Asset[] = [
     createdAt: '2024-01-15T10:00:00Z',
     updatedAt: '2024-01-15T10:00:00Z',
     tags: ['logo', 'branding', 'official'],
-    status: 'ACTIVE'
+    status: 'PUBLISHED'
   },
   {
     id: 'a2',
@@ -75,7 +75,7 @@ export const INITIAL_ASSETS: Asset[] = [
     createdAt: '2024-02-10T14:30:00Z',
     updatedAt: '2024-02-12T09:15:00Z',
     tags: ['guidelines', 'pdf', 'strategy'],
-    status: 'ACTIVE'
+    status: 'PUBLISHED'
   },
   {
     id: 'a3',
@@ -87,6 +87,6 @@ export const INITIAL_ASSETS: Asset[] = [
     createdAt: '2024-03-01T16:45:00Z',
     updatedAt: '2024-03-01T16:45:00Z',
     tags: ['video', 'teaser', 'launch'],
-    status: 'ACTIVE'
+    status: 'PUBLISHED'
   }
 ];

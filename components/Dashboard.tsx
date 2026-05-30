@@ -1,7 +1,6 @@
-
-import React, { useMemo } from 'react';
-import { Asset, Brand, AssetType } from '../types';
-import { getThumbnailUrl } from '../services/assetService';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Asset, Brand, AssetType, AssetRequest } from '../types';
+import * as service from '../services/assetService';
 
 interface DashboardProps {
   assets: Asset[];
@@ -11,107 +10,206 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ assets, brands, assetTypes, onNavigateToAsset }) => {
-  const stats = useMemo(() => {
-    const totalAssets = assets.length;
-    const totalBrands = brands.length;
-    
-    // Calculate total downloads from actual data (no more random mock)
-    const totalDownloads = assets.reduce((acc, curr) => acc + (curr.downloadCount || 0), 0);
-    
-    // Most downloaded (Popular)
-    const sortedByPop = [...assets].sort((a, b) => (b.downloadCount || 0) - (a.downloadCount || 0));
-    const mostPopular = sortedByPop[0];
+  const [requests, setRequests] = useState<AssetRequest[]>([]);
 
-    // New files this week
+  useEffect(() => {
+    service.fetchAssetRequests()
+      .then(data => setRequests(data))
+      .catch(err => console.error("Error loading requests on dashboard:", err));
+  }, []);
+
+  const stats = useMemo(() => {
+    // Only count PUBLISHED assets for the public dashboard stats
+    const publishedAssets = assets.filter(a => a.status === 'PUBLISHED');
+    const totalAssets = publishedAssets.length;
+    const totalBrands = brands.length;
+    const totalDownloads = publishedAssets.reduce((acc, curr) => acc + (curr.downloadCount || 0), 0);
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    const newFilesCount = assets.filter(a => new Date(a.createdAt) > oneWeekAgo).length;
-
-    return { totalAssets, totalBrands, totalDownloads, mostPopular, newFilesCount };
+    const newFilesCount = publishedAssets.filter(a => new Date(a.createdAt) > oneWeekAgo).length;
+    return { totalAssets, totalBrands, totalDownloads, newFilesCount };
   }, [assets, brands]);
 
+  // Get 5 latest uploaded published assets
+  const latestAssets = useMemo(() => {
+    return assets
+      .filter(a => a.status === 'PUBLISHED')
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5);
+  }, [assets]);
+
+  // Request status counts
+  const requestSummary = useMemo(() => {
+    const total = requests.length;
+    const pending = requests.filter(r => r.status === 'PENDING').length;
+    const inProgress = requests.filter(r => r.status === 'IN_PROGRESS').length;
+    const completed = requests.filter(r => r.status === 'COMPLETED').length;
+    const rejected = requests.filter(r => r.status === 'REJECTED').length;
+    return { total, pending, inProgress, completed, rejected };
+  }, [requests]);
+
+  // Latest 3 requests
+  const latestRequests = useMemo(() => {
+    return [...requests]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 3);
+  }, [requests]);
+
   return (
-    <div className="p-6 lg:p-10 animate-fade-in-up pb-20">
-      <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Dashboard Overview</h2>
-      <p className="text-slate-500 text-sm font-medium mb-8">Welcome back! Here is what's happening in the Brand Hub.</p>
+    <div className="p-10 lg:p-16 pb-24 max-w-[1000px] mx-auto space-y-12">
+      
+      {/* Header Area */}
+      <div className="flex items-center justify-between mb-8">
+         <div className="flex items-center gap-4">
+            <h2 className="text-[24px] font-medium tracking-[-0.01em] text-coinbase-ink">Overview Dashboard</h2>
+            <div className="w-[1px] h-6 bg-coinbase-hairline"></div>
+            <span className="text-[16px] font-medium text-coinbase-muted">Statistik & Aset Terbaru</span>
+         </div>
+      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
-          <div className="text-slate-400 mb-2"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>
-          <span className="text-3xl font-black text-slate-900">{stats.totalAssets}</span>
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total Assets</span>
+      {/* Stats Row */}
+      <div className="bg-white border border-coinbase-hairline rounded-xl p-10 grid grid-cols-2 md:grid-cols-4 gap-10 relative overflow-hidden shadow-soft">
+        <div className="relative z-10">
+          <div className="text-[40px] font-medium tracking-[-0.02em] text-coinbase-ink mb-2 tabular-nums">{stats.totalAssets}</div>
+          <div className="text-[14px] font-semibold text-coinbase-muted uppercase tracking-wide">Total Assets</div>
         </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
-          <div className="text-slate-400 mb-2"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg></div>
-          <span className="text-3xl font-black text-slate-900">{stats.totalBrands}</span>
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Active Entities</span>
+        <div className="relative z-10 md:border-l border-coinbase-hairline md:pl-10">
+          <div className="text-[40px] font-medium tracking-[-0.02em] text-coinbase-ink mb-2 tabular-nums">{stats.totalBrands}</div>
+          <div className="text-[14px] font-semibold text-coinbase-muted uppercase tracking-wide">Entities</div>
         </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
-          <div className="text-slate-400 mb-2"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg></div>
-          <span className="text-3xl font-black text-slate-900">{stats.totalDownloads.toLocaleString()}</span>
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total Downloads</span>
+        <div className="relative z-10 md:border-l border-coinbase-hairline md:pl-10">
+          <div className="text-[40px] font-medium tracking-[-0.02em] text-coinbase-ink mb-2 tabular-nums">{stats.totalDownloads}</div>
+          <div className="text-[14px] font-semibold text-coinbase-muted uppercase tracking-wide">Downloads</div>
         </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
-          <div className="text-wg-honorable mb-2"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
-          <span className="text-3xl font-black text-slate-900">{stats.newFilesCount}</span>
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">New Files This Week</span>
+        <div className="relative z-10 md:border-l border-coinbase-hairline md:pl-10">
+          <div className="text-[40px] font-medium tracking-[-0.02em] text-coinbase-primary mb-2 tabular-nums">{stats.newFilesCount}</div>
+          <div className="text-[14px] font-semibold text-coinbase-muted uppercase tracking-wide">New This Week</div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Most Popular */}
-        <div className="bg-white rounded-3xl border border-slate-100 p-8 shadow-sm">
-          <h3 className="text-lg font-extrabold text-slate-900 mb-6 flex items-center gap-2">
-            <span className="text-xl">🔥</span> Most Popular Asset
-          </h3>
-          {stats.mostPopular && stats.mostPopular.downloadCount && stats.mostPopular.downloadCount > 0 ? (
-            <div className="flex items-start gap-6 group cursor-pointer" onClick={() => onNavigateToAsset(stats.mostPopular)}>
-              <div className="w-24 h-24 bg-slate-100 rounded-xl overflow-hidden shrink-0 border border-slate-200">
-                {getThumbnailUrl(stats.mostPopular.link) ? (
-                  <img src={getThumbnailUrl(stats.mostPopular.link)!} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-2xl">📄</div>
-                )}
-              </div>
-              <div>
-                <div className="text-[10px] font-black text-wg-honorable uppercase tracking-widest mb-1">
-                  {brands.find(b => b.id === stats.mostPopular.brandId)?.name}
-                </div>
-                <h4 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-wg-honorable transition-colors">{stats.mostPopular.title}</h4>
-                <div className="flex gap-2 mb-2">
-                   {stats.mostPopular.tags.slice(0,3).map(t => (
-                     <span key={t} className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase">{t}</span>
-                   ))}
-                </div>
-                <div className="text-xs text-slate-400 font-bold">
-                  {stats.mostPopular.downloadCount} Downloads
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-slate-400 text-sm">No significant download activity yet.</p>
-          )}
-        </div>
+      {/* User Request Summary Section */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        
+        {/* Summary Request Cards */}
+        <div className="md:col-span-5 bg-white rounded-xl border border-coinbase-hairline shadow-soft p-6 space-y-6">
+          <div>
+            <h3 className="text-base font-bold text-coinbase-ink flex items-center gap-2">
+              📋 Summary Request Aset
+            </h3>
+            <p className="text-[12px] text-coinbase-muted mt-1">Status permintaan aset Anda saat ini</p>
+          </div>
 
-        {/* Quick Actions / Recent */}
-        <div className="bg-wg-honorable rounded-3xl p-8 shadow-xl shadow-wg-honorable/20 text-white relative overflow-hidden">
-          <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-          <h3 className="text-lg font-extrabold mb-4 relative z-10">Brand Hub Status</h3>
-          <p className="text-wg-sky text-sm font-medium mb-6 max-w-sm relative z-10 leading-relaxed">
-            All systems are operational. The library contains {stats.totalAssets} assets across {stats.totalBrands} entities. 
-            Keep your brand identity consistent by using the latest approved assets.
-          </p>
-          <div className="flex gap-3 relative z-10">
-            <div className="px-4 py-2 bg-white/10 rounded-lg backdrop-blur text-xs font-bold border border-white/20">
-              Last Updated: {new Date().toLocaleDateString()}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-coinbase-surface-soft p-4 rounded-xl border border-coinbase-hairline text-center">
+              <span className="text-[20px] font-bold text-coinbase-ink block">{requestSummary.total}</span>
+              <span className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider block mt-1">Total</span>
+            </div>
+            <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100 text-center">
+              <span className="text-[20px] font-bold text-amber-700 block">{requestSummary.pending}</span>
+              <span className="text-[11px] font-semibold text-amber-600 uppercase tracking-wider block mt-1">Menunggu</span>
+            </div>
+            <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 text-center">
+              <span className="text-[20px] font-bold text-blue-700 block">{requestSummary.inProgress}</span>
+              <span className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider block mt-1">Diproses</span>
+            </div>
+            <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 text-center">
+              <span className="text-[20px] font-bold text-emerald-700 block">{requestSummary.completed}</span>
+              <span className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider block mt-1">Selesai</span>
             </div>
           </div>
         </div>
+
+        {/* Latest Requests List */}
+        <div className="md:col-span-7 bg-white rounded-xl border border-coinbase-hairline shadow-soft p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-coinbase-hairline pb-3">
+            <h3 className="text-sm font-bold text-coinbase-ink">Request Terbaru</h3>
+            <span className="text-[11px] text-coinbase-muted font-semibold">Update Terakhir</span>
+          </div>
+
+          <div className="space-y-3">
+            {latestRequests.map(req => {
+              const statusLabel = 
+                req.status === 'PENDING' ? 'Menunggu' :
+                req.status === 'IN_PROGRESS' ? 'Diproses' :
+                req.status === 'COMPLETED' ? 'Selesai' : 'Ditolak';
+              
+              const statusClass = 
+                req.status === 'PENDING' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                req.status === 'IN_PROGRESS' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                req.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                'bg-red-50 text-red-700 border-red-200';
+
+              return (
+                <div key={req.id} className="flex items-center justify-between p-3 bg-coinbase-surface-soft/40 border border-coinbase-hairline rounded-lg text-xs gap-3">
+                  <div className="min-w-0">
+                    <p className="font-bold text-coinbase-ink truncate">{req.assetName}</p>
+                    <p className="text-[10px] text-coinbase-muted mt-0.5">
+                      Oleh {req.requesterName} • {new Date(req.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span className={`shrink-0 px-2 py-0.5 rounded-full border text-[10px] font-bold ${statusClass}`}>
+                    {statusLabel}
+                  </span>
+                </div>
+              );
+            })}
+            {latestRequests.length === 0 && (
+              <div className="text-center py-6 text-coinbase-muted text-[13px]">Belum ada request aset yang diajukan.</div>
+            )}
+          </div>
+        </div>
+
       </div>
+
+      {/* Latest Uploads Section */}
+      <div className="bg-white rounded-xl border border-coinbase-hairline shadow-soft p-8">
+        <h3 className="text-lg font-bold text-coinbase-ink mb-6">Aset yang Baru Diunggah</h3>
+        <div className="divide-y divide-coinbase-hairline">
+          {latestAssets.map(asset => {
+            const brand = brands.find(b => b.id === asset.brandId);
+            const type = assetTypes.find(t => t.id === asset.typeId);
+            return (
+              <div 
+                key={asset.id} 
+                className="py-4 flex items-center justify-between gap-4 hover:bg-coinbase-surface-soft/50 px-2 rounded-lg transition-colors cursor-pointer"
+                onClick={() => onNavigateToAsset(asset)}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-coinbase-surface-strong flex items-center justify-center text-lg shrink-0">
+                    {type?.icon || '📂'}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-semibold text-coinbase-ink text-[14px] truncate group-hover:text-coinbase-primary transition-colors">
+                      {asset.title}
+                    </h4>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className="text-[12px] text-coinbase-muted">{brand?.name}</span>
+                      <span className="text-coinbase-hairline text-[10px]">•</span>
+                      <span className="text-[12px] text-coinbase-muted">{type?.name}</span>
+                      <span className="text-coinbase-hairline text-[10px]">•</span>
+                      <span className="text-[11px] text-coinbase-muted font-mono">{new Date(asset.createdAt).toLocaleDateString()}</span>
+                      <span className="px-2 py-0.5 bg-[#f0fff4] text-[#22543d] border border-[#c6f6d5] rounded-full text-[10px] font-bold">
+                        Published
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button 
+                    className="px-4 py-1.5 text-xs font-semibold text-coinbase-primary hover:bg-coinbase-primary/10 rounded-pill transition-colors border border-coinbase-hairline"
+                  >
+                    Lihat Aset
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+          {latestAssets.length === 0 && (
+            <div className="text-center py-8 text-coinbase-muted text-sm">Belum ada aset yang diunggah.</div>
+          )}
+        </div>
+      </div>
+
     </div>
   );
 };

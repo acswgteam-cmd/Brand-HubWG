@@ -2,6 +2,8 @@
 export type UserRole = 'ADMIN' | 'VIEWER';
 export type BrandType = 'UNIT' | 'ENTITAS';
 
+export type AssetRequestStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'REJECTED';
+
 export interface Brand {
   id: string;
   name: string;
@@ -28,9 +30,34 @@ export interface Asset {
   createdAt: string;
   updatedAt: string;
   tags: string[];
-  status: 'ACTIVE' | 'ARCHIVED';
+  status: 'PUBLISHED' | 'DRAFT';
   sortOrder?: number;
   downloadCount?: number;
+  version?: number;
+  updateIntervalMonths?: number | null;
+  nextUpdateDue?: string | null;
+}
+
+export interface AssetVersion {
+  id: string;
+  assetId: string;
+  versionNumber: number;
+  changelog?: string;
+  createdAt: string;
+}
+
+export interface AssetRequest {
+  id: string;
+  requesterName: string;
+  requesterEmail?: string;
+  assetName: string;
+  description?: string;
+  brandId?: string;
+  assetTypeId?: string;
+  status: AssetRequestStatus;
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AboutContent {

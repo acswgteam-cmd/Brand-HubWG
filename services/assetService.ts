@@ -1,5 +1,5 @@
 
-import { Asset, Brand, AssetType, AboutContent } from '../types';
+import { Asset, Brand, AssetType, AboutContent, AssetVersion, AssetRequest } from '../types';
 import { supabase } from './supabaseClient';
 import { DEFAULT_ABOUT_CONTENT } from '../constants';
 
@@ -15,7 +15,32 @@ const mapAsset = (dbAsset: any): Asset => ({
   tags: dbAsset.tags || [],
   status: dbAsset.status,
   sortOrder: dbAsset.sort_order ?? 0,
-  downloadCount: dbAsset.download_count ?? 0
+  downloadCount: dbAsset.download_count ?? 0,
+  version: dbAsset.version ?? 1,
+  updateIntervalMonths: dbAsset.update_interval_months ?? null,
+  nextUpdateDue: dbAsset.next_update_due ?? null,
+});
+
+const mapAssetVersion = (db: any): AssetVersion => ({
+  id: db.id,
+  assetId: db.asset_id,
+  versionNumber: db.version_number,
+  changelog: db.changelog,
+  createdAt: db.created_at,
+});
+
+const mapAssetRequest = (db: any): AssetRequest => ({
+  id: db.id,
+  requesterName: db.requester_name,
+  requesterEmail: db.requester_email,
+  assetName: db.asset_name,
+  description: db.description,
+  brandId: db.brand_id,
+  assetTypeId: db.asset_type_id,
+  status: db.status,
+  adminNotes: db.admin_notes,
+  createdAt: db.created_at,
+  updatedAt: db.updated_at,
 });
 
 const mapBrand = (dbBrand: any): Brand => ({
@@ -115,6 +140,19 @@ export const upsertAsset = async (asset: Partial<Asset>) => {
     payload.sort_order = asset.sortOrder;
   }
 
+  // Include version if provided
+  if (asset.version !== undefined) {
+    payload.version = asset.version;
+  }
+
+  // Include update schedule fields if provided
+  if (asset.updateIntervalMonths !== undefined) {
+    payload.update_interval_months = asset.updateIntervalMonths;
+  }
+  if (asset.nextUpdateDue !== undefined) {
+    payload.next_update_due = asset.nextUpdateDue;
+  }
+
   const { data, error } = await supabase
     .from('assets')
     .upsert(payload)
@@ -136,6 +174,7 @@ export const upsertAssets = async (assets: Asset[]) => {
     tags: a.tags,
     status: a.status,
     sort_order: a.sortOrder ?? 0,
+    version: a.version ?? 1,
     updated_at: new Date().toISOString()
   }));
 
@@ -295,4 +334,88 @@ export const getFileType = (url: string) => {
   if (lowerUrl.match(/\.(cdr)$/)) return 'cdr'; // Added CDR support
   if (url.includes('drive.google.com')) return 'google-drive';
   return 'link';
+};
+
+// =========================================================================
+// Asset Versions
+// =========================================================================
+
+export const fetchAssetVersions = async (assetId: string): Promise<AssetVersion[]> => {
+  const { data, error } = await supabase
+    .from('asset_versions')
+    .select('*')
+    .eq('asset_id', assetId)
+    .order('version_number', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(mapAssetVersion);
+};
+
+export const createAssetVersion = async (assetId: string, versionNumber: number, changelog: string): Promise<AssetVersion> => {
+  const { data, error } = await supabase
+    .from('asset_versions')
+    .insert({ asset_id: assetId, version_number: versionNumber, changelog })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapAssetVersion(data);
+};
+
+// =========================================================================
+// Asset Requests
+// =========================================================================
+
+export const fetchAssetRequests = async (): Promise<AssetRequest[]> => {
+  const { data, error } = await supabase
+    .from('asset_requests')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(mapAssetRequest);
+};
+
+export const createAssetRequest = async (req: {
+  requesterName: string;
+  requesterEmail?: string;
+  assetName: string;
+  description?: string;
+  brandId?: string;
+  assetTypeId?: string;
+}): Promise<AssetRequest> => {
+  const { data, error } = await supabase
+    .from('asset_requests')
+    .insert({
+      requester_name: req.requesterName,
+      requester_email: req.requesterEmail || null,
+      asset_name: req.assetName,
+      description: req.description || null,
+      brand_id: req.brandId || null,
+      asset_type_id: req.assetTypeId || null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapAssetRequest(data);
+};
+
+export const updateAssetRequest = async (
+  id: string,
+  updates: { status?: AssetRequest['status']; adminNotes?: string }
+): Promise<AssetRequest> => {
+  const payload: any = { updated_at: new Date().toISOString() };
+  if (updates.status !== undefined) payload.status = updates.status;
+  if (updates.adminNotes !== undefined) payload.admin_notes = updates.adminNotes;
+
+  const { data, error } = await supabase
+    .from('asset_requests')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapAssetRequest(data);
+};
+
+export const deleteAssetRequest = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('asset_requests').delete().eq('id', id);
+  if (error) throw error;
 };
