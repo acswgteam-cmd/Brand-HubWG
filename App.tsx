@@ -22,7 +22,7 @@ const App: React.FC = () => {
   // Navigation & UI State
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [activeBrandId, setActiveBrandId] = useState<string | null>(null);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
   
   // Filtering & Selection
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,7 +118,7 @@ const App: React.FC = () => {
     return (
       <div key={brand.id} className="mb-2 group relative">
         <button 
-          onClick={() => { setActiveBrandId(brand.id); setSelectedType(null); setCurrentView('browse'); }} 
+          onClick={() => { setActiveBrandId(brand.id); setSelectedType(null); setCurrentView('browse'); if (window.innerWidth < 1024) setIsSidebarCollapsed(true); }} 
           className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 group flex items-center gap-3
             ${isActive && !selectedType ? 'bg-coinbase-surface-strong text-coinbase-primary' : 'text-coinbase-body hover:bg-coinbase-surface-strong hover:text-coinbase-ink'}`}
         >
@@ -146,7 +146,7 @@ const App: React.FC = () => {
         {isActive && availableTypes.length > 0 && !isSidebarCollapsed && (
           <div className="ml-10 mt-1 space-y-1">
             {availableTypes.map(type => (
-               <button key={type.id} onClick={() => { setSelectedType(type.id); setCurrentView('browse'); }} className={`w-full text-left px-3 py-2 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-2 ${selectedType === type.id ? 'text-coinbase-primary bg-coinbase-surface-strong' : 'text-coinbase-muted hover:text-coinbase-ink hover:bg-coinbase-surface-strong'}`}>
+               <button key={type.id} onClick={() => { setSelectedType(type.id); setCurrentView('browse'); if (window.innerWidth < 1024) setIsSidebarCollapsed(true); }} className={`w-full text-left px-3 py-2 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-2 ${selectedType === type.id ? 'text-coinbase-primary bg-coinbase-surface-strong' : 'text-coinbase-muted hover:text-coinbase-ink hover:bg-coinbase-surface-strong'}`}>
                  <span className="opacity-70">{type.icon}</span><span className="truncate">{type.name}</span>
                </button>
             ))}
@@ -166,13 +166,21 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen overflow-hidden relative bg-coinbase-canvas">
       
+      {/* Backdrop for Mobile */}
+      {!isSidebarCollapsed && (
+        <div 
+          className="fixed inset-0 bg-black/40 z-30 lg:hidden backdrop-blur-xs transition-opacity duration-300"
+          onClick={() => setIsSidebarCollapsed(true)}
+        />
+      )}
+
       {/* 1. Left Sidebar Navigation */}
       <aside 
-         className={`flex-shrink-0 bg-coinbase-canvas flex flex-col transition-all duration-300 ease-in-out z-30 fixed lg:static h-full border-r border-coinbase-hairline
-         ${isSidebarCollapsed ? 'w-[80px]' : 'w-72'}`}
+         className={`flex-shrink-0 bg-coinbase-canvas flex flex-col transition-all duration-300 ease-in-out z-40 lg:z-30 fixed lg:static h-full border-r border-coinbase-hairline
+         ${isSidebarCollapsed ? '-translate-x-full lg:translate-x-0 lg:w-[80px]' : 'translate-x-0 w-72 shadow-2xl lg:shadow-none'}`}
       >
         <div className={`p-6 flex items-center h-[72px] ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
-          <div className="flex items-center gap-3 cursor-pointer overflow-hidden" onClick={() => { setCurrentView('dashboard'); setActiveBrandId(null); setSelectedType(null); setSelectedAsset(null); }}>
+          <div className="flex items-center gap-3 cursor-pointer overflow-hidden" onClick={() => { setCurrentView('dashboard'); setActiveBrandId(null); setSelectedType(null); setSelectedAsset(null); if (window.innerWidth < 1024) setIsSidebarCollapsed(true); }}>
             <div className="w-8 h-8 bg-coinbase-primary rounded-full flex items-center justify-center shrink-0 text-white text-xs font-bold">
               WG
             </div>
@@ -184,9 +192,14 @@ const App: React.FC = () => {
           </div>
           
           {!isSidebarCollapsed && (
-             <button onClick={() => setIsSidebarCollapsed(true)} className="p-1.5 text-coinbase-muted hover:text-coinbase-ink hidden lg:block rounded-full hover:bg-coinbase-surface-strong transition-colors">
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-             </button>
+             <>
+               <button onClick={() => setIsSidebarCollapsed(true)} className="p-1.5 text-coinbase-muted hover:text-coinbase-ink hidden lg:block rounded-full hover:bg-coinbase-surface-strong transition-colors">
+                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+               </button>
+               <button onClick={() => setIsSidebarCollapsed(true)} className="p-1.5 text-coinbase-muted hover:text-coinbase-ink lg:hidden rounded-full hover:bg-coinbase-surface-strong transition-colors">
+                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+               </button>
+             </>
           )}
         </div>
 
@@ -202,7 +215,7 @@ const App: React.FC = () => {
         <nav className={`flex-1 p-4 space-y-1 no-scrollbar ${isSidebarCollapsed ? 'overflow-visible' : 'overflow-y-auto'}`}>
           {/* Main Navigation */}
           <div className="relative group mb-2">
-            <button onClick={() => { setCurrentView('dashboard'); setActiveBrandId(null); setSelectedType(null); setSelectedAsset(null); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-3 ${currentView === 'dashboard' ? 'bg-coinbase-surface-strong text-coinbase-primary' : 'text-coinbase-body hover:bg-coinbase-surface-strong hover:text-coinbase-ink'}`}>
+            <button onClick={() => { setCurrentView('dashboard'); setActiveBrandId(null); setSelectedType(null); setSelectedAsset(null); if (window.innerWidth < 1024) setIsSidebarCollapsed(true); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-3 ${currentView === 'dashboard' ? 'bg-coinbase-surface-strong text-coinbase-primary' : 'text-coinbase-body hover:bg-coinbase-surface-strong hover:text-coinbase-ink'}`}>
                 <span className="text-lg w-6 text-center opacity-70">📊</span>
                 {!isSidebarCollapsed && <span>Dashboard</span>}
             </button>
@@ -214,7 +227,7 @@ const App: React.FC = () => {
           </div>
 
           <div className="relative group mb-2">
-            <button onClick={() => { setCurrentView('browse'); setActiveBrandId(null); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-3 ${currentView === 'browse' && !activeBrandId ? 'bg-coinbase-surface-strong text-coinbase-primary' : 'text-coinbase-body hover:bg-coinbase-surface-strong hover:text-coinbase-ink'}`}>
+            <button onClick={() => { setCurrentView('browse'); setActiveBrandId(null); if (window.innerWidth < 1024) setIsSidebarCollapsed(true); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-3 ${currentView === 'browse' && !activeBrandId ? 'bg-coinbase-surface-strong text-coinbase-primary' : 'text-coinbase-body hover:bg-coinbase-surface-strong hover:text-coinbase-ink'}`}>
                 <span className="text-lg w-6 text-center opacity-70">📂</span>
                 {!isSidebarCollapsed && <span>All Assets</span>}
             </button>
@@ -226,7 +239,7 @@ const App: React.FC = () => {
           </div>
 
           <div className="relative group mb-2">
-            <button onClick={() => { setCurrentView('request-assets'); setActiveBrandId(null); setSelectedAsset(null); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-3 ${currentView === 'request-assets' ? 'bg-coinbase-surface-strong text-coinbase-primary' : 'text-coinbase-body hover:bg-coinbase-surface-strong hover:text-coinbase-ink'}`}>
+            <button onClick={() => { setCurrentView('request-assets'); setActiveBrandId(null); setSelectedAsset(null); if (window.innerWidth < 1024) setIsSidebarCollapsed(true); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-3 ${currentView === 'request-assets' ? 'bg-coinbase-surface-strong text-coinbase-primary' : 'text-coinbase-body hover:bg-coinbase-surface-strong hover:text-coinbase-ink'}`}>
                 <span className="text-lg w-6 text-center opacity-70">📋</span>
                 {!isSidebarCollapsed && <span>Request Aset</span>}
             </button>
@@ -246,8 +259,18 @@ const App: React.FC = () => {
       </aside>
 
       {/* 2. Main Content Area */}
-      <main className={`flex-1 flex flex-col min-w-0 overflow-hidden relative bg-coinbase-surface-soft transition-all duration-300 ${isSidebarCollapsed && window.innerWidth < 1024 ? 'ml-[80px]' : 'ml-0'}`}>
-        <header className="h-[72px] px-8 lg:px-12 flex items-center gap-6 shrink-0 transition-all justify-between bg-coinbase-canvas border-b border-coinbase-hairline">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-coinbase-surface-soft">
+        <header className="h-[72px] px-6 lg:px-12 flex items-center gap-4 shrink-0 transition-all justify-between bg-coinbase-canvas border-b border-coinbase-hairline">
+          
+          {/* Hamburger trigger for mobile */}
+          {isSidebarCollapsed && (
+            <button 
+              onClick={() => setIsSidebarCollapsed(false)} 
+              className="p-2 -ml-2 text-coinbase-muted hover:text-coinbase-ink lg:hidden rounded-full hover:bg-coinbase-surface-strong transition-colors shrink-0"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+          )}
           
           {/* Breadcrumb / Title */}
           <div className="flex-1 min-w-0 flex items-center">
