@@ -56,6 +56,15 @@ export interface AssetVersion {
   createdAt: string;
 }
 
+export interface AssetActivity {
+  id: string;
+  assetId: string;
+  actionType: 'CREATE' | 'REUPLOAD' | 'VERSION_UPDATE' | 'UPDATE_INFO';
+  description: string;
+  details: Record<string, any>;
+  createdAt: string;
+}
+
 export interface AssetRequest {
   id: string;
   requesterName: string;

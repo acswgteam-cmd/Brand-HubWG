@@ -11,6 +11,7 @@ interface AssetCardProps {
   isChecked: boolean;
   isSelected?: boolean;
   isAdmin?: boolean;
+  onSelectTimeline?: (asset: Asset) => void;
 }
 
 const StatusBadge: React.FC<{ status: Asset['status'] }> = ({ status }) => {
@@ -29,7 +30,7 @@ const StatusBadge: React.FC<{ status: Asset['status'] }> = ({ status }) => {
 };
 
 const AssetCard: React.FC<AssetCardProps> = ({ 
-  asset, brand, assetType, onSelect, isSelected, onToggleSelection, isChecked, isAdmin
+  asset, brand, assetType, onSelect, isSelected, onToggleSelection, isChecked, isAdmin, onSelectTimeline
 }) => {
   const [imgError, setImgError] = useState(false);
   const thumbnailUrl = getThumbnailUrl(asset.link);
@@ -59,6 +60,18 @@ const AssetCard: React.FC<AssetCardProps> = ({
         <div className="absolute top-3 right-3 z-20">
           <StatusBadge status={asset.status} />
         </div>
+      )}
+
+      {/* Timeline Shortcut Button (Admins only, visible on hover) */}
+      {isAdmin && (
+        <button 
+           type="button"
+           onClick={(e) => { e.stopPropagation(); onSelectTimeline?.(asset); }}
+           className="absolute bottom-[calc(50%+20px)] right-3 z-20 w-8 h-8 bg-white hover:bg-coinbase-surface-strong text-coinbase-ink rounded-full flex items-center justify-center border border-coinbase-hairline opacity-0 group-hover:opacity-100 scale-95 hover:scale-105 transition-all duration-200 shadow-soft"
+           title="Lihat Timeline Riwayat"
+        >
+          <span className="text-sm">🕒</span>
+        </button>
       )}
 
       {/* Direct Download Button (Visible on hover) */}
@@ -139,6 +152,7 @@ interface AssetGridProps {
   multiSelection: Set<string>;
   onToggleSelection: (id: string) => void;
   isAdmin?: boolean;
+  onSelectTimeline?: (asset: Asset) => void;
 }
 
 const AssetGrid: React.FC<AssetGridProps> = ({
@@ -150,7 +164,8 @@ const AssetGrid: React.FC<AssetGridProps> = ({
   viewMode,
   multiSelection,
   onToggleSelection,
-  isAdmin
+  isAdmin,
+  onSelectTimeline
 }) => {
   
   if (assets.length === 0) {
@@ -286,7 +301,17 @@ const AssetGrid: React.FC<AssetGridProps> = ({
                                       <StatusBadge status={asset.status} />
                                     </td>
                                   )}
-                                  <td className="p-4 text-right">
+                                  <td className="p-4 text-right flex items-center justify-end gap-1.5 h-[72px]">
+                                     {isAdmin && (
+                                       <button 
+                                          type="button"
+                                          onClick={(e) => { e.stopPropagation(); onSelectTimeline?.(asset); }}
+                                          className="p-2 text-coinbase-muted hover:text-coinbase-ink hover:bg-coinbase-surface-strong rounded-full transition-colors"
+                                          title="Lihat Timeline Riwayat"
+                                       >
+                                           <span className="text-sm">🕒</span>
+                                       </button>
+                                     )}
                                      <a 
                                         href={downloadUrl}
                                         download={asset.title}
@@ -324,6 +349,7 @@ const AssetGrid: React.FC<AssetGridProps> = ({
              isChecked={multiSelection.has(asset.id)}
              onToggleSelection={onToggleSelection}
              isAdmin={isAdmin}
+             onSelectTimeline={onSelectTimeline}
            />
          );
       })}

@@ -9,6 +9,7 @@ import {
   detectMetadataFromUrl,
   formatBytes,
 } from '../services/metadataService';
+import AssetTimelinePanel from './AssetTimelinePanel';
 
 interface AdminPanelProps {
   brands: Brand[];
@@ -69,6 +70,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editBuffer, setEditBuffer] = useState<any>(null);
+  const [rightSidebarTab, setRightSidebarTab] = useState<'preview' | 'timeline'>('preview');
 
   const [newBrandName, setNewBrandName] = useState('');
   const [newBrandType, setNewBrandType] = useState<BrandType>('UNIT');
@@ -90,6 +92,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   }, [assets, formData.tags]);
 
   useEffect(() => {
+    setRightSidebarTab('preview');
     if (editingAsset && activeView === 'admin-upload') {
       setFormData({
         title: editingAsset.title,
@@ -515,171 +518,207 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               </button>
             </div>
 
-            {/* Fully Functional Preview */}
-            <div className="space-y-3">
-              <h3 className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider">Preview</h3>
-              
-              <div className="rounded-xl overflow-hidden bg-[#e2e8f0] border border-coinbase-hairline flex items-center justify-center w-full h-[260px] relative">
-                {(() => {
-                  if (!formData.link) {
-                    return (
-                      <div className="text-center py-10 px-6 text-coinbase-muted flex flex-col items-center gap-2">
-                        <span className="text-3xl">📄</span>
-                        <span className="text-xs">No media provided. Upload a file or insert a link URL.</span>
-                      </div>
-                    );
-                  }
-
-                  const fileType = service.getFileType(formData.link);
-                  const previewUrl = service.getPreviewLink(formData.link);
-                  const thumbnailUrl = service.getThumbnailUrl(formData.link) || previewUrl;
-
-                  switch (fileType) {
-                    case 'image':
-                      return (
-                        <div className="p-6 w-full h-full flex items-center justify-center">
-                          <img src={thumbnailUrl} alt="Preview" className="max-w-full max-h-full object-contain rounded shadow-sm" />
-                        </div>
-                      );
-                    case 'video':
-                      return (
-                        <div className="p-4 w-full h-full flex items-center justify-center">
-                          <video controls src={previewUrl} className="max-w-full max-h-full bg-coinbase-ink rounded shadow-inner" />
-                        </div>
-                      );
-                    case 'pdf':
-                    case 'google-drive':
-                      return (
-                        <iframe 
-                          src={previewUrl} 
-                          className="w-full h-full bg-white rounded border-0" 
-                          title="Asset Preview"
-                        />
-                      );
-                    default:
-                      return (
-                        <div className="text-center py-8 px-6 text-coinbase-muted flex flex-col items-center gap-2">
-                          <span className="text-3xl">🔗</span>
-                          <span className="text-[13px] font-semibold text-coinbase-ink">Link Eksternal</span>
-                          <a href={formData.link} target="_blank" rel="noreferrer" className="text-[12px] text-coinbase-primary hover:underline break-all max-w-[240px]">{formData.link}</a>
-                        </div>
-                      );
-                  }
-                })()}
+            {/* Sidebar Tab Switcher (Only shown if editing existing asset) */}
+            {editingAsset && (
+              <div className="flex border-b border-coinbase-hairline">
+                <button
+                  type="button"
+                  onClick={() => setRightSidebarTab('preview')}
+                  className={`flex-1 pb-3 text-xs font-bold uppercase tracking-wider border-b-2 text-center transition-all ${
+                    rightSidebarTab === 'preview'
+                      ? 'border-coinbase-primary text-coinbase-ink'
+                      : 'border-transparent text-coinbase-muted hover:text-coinbase-ink'
+                  }`}
+                >
+                  👁️ Preview Berkas
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRightSidebarTab('timeline')}
+                  className={`flex-1 pb-3 text-xs font-bold uppercase tracking-wider border-b-2 text-center transition-all ${
+                    rightSidebarTab === 'timeline'
+                      ? 'border-coinbase-primary text-coinbase-ink'
+                      : 'border-transparent text-coinbase-muted hover:text-coinbase-ink'
+                  }`}
+                >
+                  🕒 Timeline Riwayat
+                </button>
               </div>
+            )}
 
-              {/* Dynamic Real Metadata display */}
-              <div className="pt-1 select-none">
-                <p className="text-[13px] font-bold text-coinbase-ink truncate">{formData.title || 'Untitled Asset'}</p>
-                <p className="text-[11px] text-coinbase-muted mt-0.5 uppercase tracking-wide font-medium">
-                  {assetTypes.find(t => t.id === formData.typeId)?.name || 'Format'} • {uploadMode === 'file' ? 'Local File' : 'Google Drive / Cloud Link'}
-                </p>
+            {rightSidebarTab === 'timeline' && editingAsset ? (
+              <div className="space-y-3">
+                <AssetTimelinePanel asset={editingAsset} compact={true} />
               </div>
+            ) : (
+              <>
+                {/* Fully Functional Preview */}
+                <div className="space-y-3">
+                  <h3 className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider">Preview</h3>
+                  
+                  <div className="rounded-xl overflow-hidden bg-[#e2e8f0] border border-coinbase-hairline flex items-center justify-center w-full h-[260px] relative">
+                    {(() => {
+                      if (!formData.link) {
+                        return (
+                          <div className="text-center py-10 px-6 text-coinbase-muted flex flex-col items-center gap-2">
+                            <span className="text-3xl">📄</span>
+                            <span className="text-xs">No media provided. Upload a file or insert a link URL.</span>
+                          </div>
+                        );
+                      }
 
-              {/* File Metadata Preview Card */}
-              {fileMetadata && (
-                <div className="mt-3 bg-[#0d0f12] rounded-xl p-4 space-y-3">
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">File Details</p>
-                  <div className="space-y-2.5">
-                    {fileMetadata.mimeType && (
-                      <div className="flex justify-between text-[13px]">
-                        <span className="text-gray-400">Type</span>
-                        <span className="text-white font-medium">
-                          {fileMetadata.mimeType.startsWith('image/') ? 'Image' :
-                           fileMetadata.mimeType.startsWith('video/') ? 'Video' :
-                           fileMetadata.mimeType.startsWith('audio/') ? 'Audio' :
-                           fileMetadata.mimeType.includes('pdf') ? 'PDF' : fileMetadata.mimeType.split('/')[1]?.toUpperCase() || 'File'}
-                        </span>
+                      const fileType = service.getFileType(formData.link);
+                      const previewUrl = service.getPreviewLink(formData.link);
+                      const thumbnailUrl = service.getThumbnailUrl(formData.link) || previewUrl;
+
+                      switch (fileType) {
+                        case 'image':
+                          return (
+                            <div className="p-6 w-full h-full flex items-center justify-center">
+                              <img src={thumbnailUrl} alt="Preview" className="max-w-full max-h-full object-contain rounded shadow-sm" />
+                            </div>
+                          );
+                        case 'video':
+                          return (
+                            <div className="p-4 w-full h-full flex items-center justify-center">
+                              <video controls src={previewUrl} className="max-w-full max-h-full bg-coinbase-ink rounded shadow-inner" />
+                            </div>
+                          );
+                        case 'pdf':
+                        case 'google-drive':
+                          return (
+                            <iframe 
+                              src={previewUrl} 
+                              className="w-full h-full bg-white rounded border-0" 
+                              title="Asset Preview"
+                            />
+                          );
+                        default:
+                          return (
+                            <div className="text-center py-8 px-6 text-coinbase-muted flex flex-col items-center gap-2">
+                              <span className="text-3xl">🔗</span>
+                              <span className="text-[13px] font-semibold text-coinbase-ink">Link Eksternal</span>
+                              <a href={formData.link} target="_blank" rel="noreferrer" className="text-[12px] text-coinbase-primary hover:underline break-all max-w-[240px]">{formData.link}</a>
+                            </div>
+                          );
+                      }
+                    })()}
+                  </div>
+
+                  {/* Dynamic Real Metadata display */}
+                  <div className="pt-1 select-none">
+                    <p className="text-[13px] font-bold text-coinbase-ink truncate">{formData.title || 'Untitled Asset'}</p>
+                    <p className="text-[11px] text-coinbase-muted mt-0.5 uppercase tracking-wide font-medium">
+                      {assetTypes.find(t => t.id === formData.typeId)?.name || 'Format'} • {uploadMode === 'file' ? 'Local File' : 'Google Drive / Cloud Link'}
+                    </p>
+                  </div>
+
+                  {/* File Metadata Preview Card */}
+                  {fileMetadata && (
+                    <div className="mt-3 bg-[#0d0f12] rounded-xl p-4 space-y-3">
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">File Details</p>
+                      <div className="space-y-2.5">
+                        {fileMetadata.mimeType && (
+                          <div className="flex justify-between text-[13px]">
+                            <span className="text-gray-400">Type</span>
+                            <span className="text-white font-medium">
+                              {fileMetadata.mimeType.startsWith('image/') ? 'Image' :
+                               fileMetadata.mimeType.startsWith('video/') ? 'Video' :
+                               fileMetadata.mimeType.startsWith('audio/') ? 'Audio' :
+                               fileMetadata.mimeType.includes('pdf') ? 'PDF' : fileMetadata.mimeType.split('/')[1]?.toUpperCase() || 'File'}
+                            </span>
+                          </div>
+                        )}
+                        {fileMetadata.size !== undefined && (
+                          <div className="flex justify-between text-[13px]">
+                            <span className="text-gray-400">Size</span>
+                            <span className="text-white font-medium">{formatBytes(fileMetadata.size)}</span>
+                          </div>
+                        )}
+                        {fileMetadata.width !== undefined && fileMetadata.height !== undefined && (
+                          <div className="flex justify-between text-[13px]">
+                            <span className="text-gray-400">Dimensions</span>
+                            <span className="text-white font-medium">{fileMetadata.width.toLocaleString()} × {fileMetadata.height.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {fileMetadata.durationSeconds !== undefined && (
+                          <div className="flex justify-between text-[13px]">
+                            <span className="text-gray-400">Duration</span>
+                            <span className="text-white font-medium">
+                              {(() => {
+                                const s = Math.floor(fileMetadata.durationSeconds!);
+                                const m = Math.floor(s / 60);
+                                const sec = s % 60;
+                                return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+                              })()}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-[13px]">
+                          <span className="text-gray-400">Source</span>
+                          <span className="text-white font-medium capitalize">
+                            {fileMetadata.source === 'direct' ? 'Direct Upload' :
+                             fileMetadata.source === 'google-drive' ? 'Google Drive' : 'External Link'}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                    {fileMetadata.size !== undefined && (
-                      <div className="flex justify-between text-[13px]">
-                        <span className="text-gray-400">Size</span>
-                        <span className="text-white font-medium">{formatBytes(fileMetadata.size)}</span>
-                      </div>
-                    )}
-                    {fileMetadata.width !== undefined && fileMetadata.height !== undefined && (
-                      <div className="flex justify-between text-[13px]">
-                        <span className="text-gray-400">Dimensions</span>
-                        <span className="text-white font-medium">{fileMetadata.width.toLocaleString()} × {fileMetadata.height.toLocaleString()}</span>
-                      </div>
-                    )}
-                    {fileMetadata.durationSeconds !== undefined && (
-                      <div className="flex justify-between text-[13px]">
-                        <span className="text-gray-400">Duration</span>
-                        <span className="text-white font-medium">
-                          {(() => {
-                            const s = Math.floor(fileMetadata.durationSeconds!);
-                            const m = Math.floor(s / 60);
-                            const sec = s % 60;
-                            return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
-                          })()}
-                        </span>
-                      </div>
-                    )}
+                    </div>
+                  )}
+                  {isFetchingMeta && (
+                    <div className="mt-3 bg-[#0d0f12] rounded-xl p-4 flex items-center gap-2">
+                      <div className="w-4 h-4 border border-gray-600 border-t-[#0052ff] rounded-full animate-spin" />
+                      <span className="text-[12px] text-gray-400">Fetching file details from Google Drive...</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Asset Summary */}
+                <div className="space-y-4 pt-2">
+                  <h3 className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider">Asset Summary</h3>
+                  
+                  <div className="space-y-3">
                     <div className="flex justify-between text-[13px]">
-                      <span className="text-gray-400">Source</span>
-                      <span className="text-white font-medium capitalize">
-                        {fileMetadata.source === 'direct' ? 'Direct Upload' :
-                         fileMetadata.source === 'google-drive' ? 'Google Drive' : 'External Link'}
+                      <span className="text-coinbase-muted font-medium">🏢 Business & Brands</span>
+                      <span className="font-semibold text-coinbase-ink truncate max-w-[200px]">
+                        {brands.find(b => b.id === formData.brandId)?.name || 'Not Selected'}
                       </span>
+                    </div>
+                    <div className="flex justify-between text-[13px]">
+                      <span className="text-coinbase-muted font-medium">🏷️ Format</span>
+                      <span className="font-semibold text-coinbase-ink">
+                        {assetTypes.find(t => t.id === formData.typeId)?.name || 'Not Selected'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[13px]">
+                      <span className="text-coinbase-muted font-medium">🏷️ Tags</span>
+                      <span className="font-semibold text-coinbase-ink truncate max-w-[200px]" title={formData.tags.join(', ')}>
+                        {formData.tags.join(', ') || '-'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[13px]">
+                      <span className="text-coinbase-muted font-medium">📅 Uploaded date</span>
+                      <span className="font-semibold text-coinbase-ink font-mono">
+                        {editingAsset ? new Date(editingAsset.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[13px]">
+                      <span className="text-coinbase-muted font-medium">🔖 Version</span>
+                      <span className="px-2 py-0.5 bg-coinbase-primary/10 text-coinbase-primary border border-coinbase-primary/20 rounded-full text-[11px] font-bold font-mono">
+                        v{formData.version}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-[13px]">
+                      <span className="text-coinbase-muted font-medium">🔒 Status</span>
+                      {formData.status === 'DRAFT' ? (
+                        <span className="px-2.5 py-0.5 bg-[#fef5e7] text-[#b7791f] border border-[#fbd38d] rounded-full text-[11px] font-bold">Draft</span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 bg-[#f0fff4] text-[#22543d] border border-[#c6f6d5] rounded-full text-[11px] font-bold">Published</span>
+                      )}
                     </div>
                   </div>
                 </div>
-              )}
-              {isFetchingMeta && (
-                <div className="mt-3 bg-[#0d0f12] rounded-xl p-4 flex items-center gap-2">
-                  <div className="w-4 h-4 border border-gray-600 border-t-[#0052ff] rounded-full animate-spin" />
-                  <span className="text-[12px] text-gray-400">Fetching file details from Google Drive...</span>
-                </div>
-              )}
-            </div>
-
-            {/* Asset Summary */}
-            <div className="space-y-4 pt-2">
-              <h3 className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider">Asset Summary</h3>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-coinbase-muted font-medium">🏢 Business & Brands</span>
-                  <span className="font-semibold text-coinbase-ink truncate max-w-[200px]">
-                    {brands.find(b => b.id === formData.brandId)?.name || 'Not Selected'}
-                  </span>
-                </div>
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-coinbase-muted font-medium">🏷️ Format</span>
-                  <span className="font-semibold text-coinbase-ink">
-                    {assetTypes.find(t => t.id === formData.typeId)?.name || 'Not Selected'}
-                  </span>
-                </div>
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-coinbase-muted font-medium">🏷️ Tags</span>
-                  <span className="font-semibold text-coinbase-ink truncate max-w-[200px]" title={formData.tags.join(', ')}>
-                    {formData.tags.join(', ') || '-'}
-                  </span>
-                </div>
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-coinbase-muted font-medium">📅 Uploaded date</span>
-                  <span className="font-semibold text-coinbase-ink font-mono">
-                    {editingAsset ? new Date(editingAsset.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-coinbase-muted font-medium">🔖 Version</span>
-                  <span className="px-2 py-0.5 bg-coinbase-primary/10 text-coinbase-primary border border-coinbase-primary/20 rounded-full text-[11px] font-bold font-mono">
-                    v{formData.version}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-[13px]">
-                  <span className="text-coinbase-muted font-medium">🔒 Status</span>
-                  {formData.status === 'DRAFT' ? (
-                    <span className="px-2.5 py-0.5 bg-[#fef5e7] text-[#b7791f] border border-[#fbd38d] rounded-full text-[11px] font-bold">Draft</span>
-                  ) : (
-                    <span className="px-2.5 py-0.5 bg-[#f0fff4] text-[#22543d] border border-[#c6f6d5] rounded-full text-[11px] font-bold">Published</span>
-                  )}
-                </div>
-              </div>
-            </div>
+              </>
+            )}
 
             {/* Tips Section */}
             <div className="bg-[#f7f8fa] border border-coinbase-hairline rounded-xl p-4 space-y-3">

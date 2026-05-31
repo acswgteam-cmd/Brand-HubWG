@@ -5,6 +5,7 @@ import { isSupabaseConfigured, configError } from './services/supabaseClient';
 import AdminPanel from './components/AdminPanel';
 import AssetGrid from './components/AssetGrid';
 import AdminRequestsPanel from './components/AdminRequestsPanel';
+import AssetTimelinePanel from './components/AssetTimelinePanel';
 
 type AdminViewType = 'dashboard' | 'admin-upload' | 'admin-brands' | 'admin-types' | 'all-assets' | 'admin-drafts' | 'admin-requests';
 
@@ -33,6 +34,7 @@ const AdminApp: React.FC = () => {
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [adminViewMode, setAdminViewMode] = useState<'grid' | 'list'>('list');
   const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
+  const [selectedTimelineAsset, setSelectedTimelineAsset] = useState<Asset | null>(null);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -111,6 +113,89 @@ const AdminApp: React.FC = () => {
           await service.createAssetVersion(saved.id, saved.version ?? 1, _changelog);
         } catch (e) {
           console.warn('Failed to save asset version (table may not exist yet):', e);
+        }
+      }
+
+      // Record Activity Log to asset_history table
+      if (editingAsset && saved.id) {
+        const changes: string[] = [];
+        const details: Record<string, any> = {};
+
+        if (editingAsset.link !== cleanAssetData.link) {
+          changes.push('mengunggah ulang berkas');
+          details.link = { old: editingAsset.link, new: cleanAssetData.link };
+        }
+        if (editingAsset.version !== cleanAssetData.version) {
+          changes.push(`memperbarui versi berkas ke v${cleanAssetData.version}`);
+          details.version = { 
+            old: editingAsset.version, 
+            new: cleanAssetData.version, 
+            changelog: _changelog || 'Tidak ada catatan perubahan.' 
+          };
+        }
+        if (editingAsset.title !== cleanAssetData.title) {
+          changes.push('mengubah judul');
+          details.title = { old: editingAsset.title, new: cleanAssetData.title };
+        }
+        if (editingAsset.description !== cleanAssetData.description) {
+          changes.push('mengubah deskripsi');
+          details.description = { old: editingAsset.description || '—', new: cleanAssetData.description || '—' };
+        }
+        if (JSON.stringify(editingAsset.tags) !== JSON.stringify(cleanAssetData.tags)) {
+          changes.push('mengubah tag');
+          details.tags = { old: editingAsset.tags || [], new: cleanAssetData.tags || [] };
+        }
+        if (editingAsset.brandId !== cleanAssetData.brandId) {
+          changes.push('mengubah entitas');
+          const oldBrand = data.brands.find(b => b.id === editingAsset.brandId)?.name || '—';
+          const newBrand = data.brands.find(b => b.id === cleanAssetData.brandId)?.name || '—';
+          details.brand = { old: oldBrand, new: newBrand };
+        }
+        if (editingAsset.typeId !== cleanAssetData.typeId) {
+          changes.push('mengubah format/tipe');
+          const oldType = data.assetTypes.find(t => t.id === editingAsset.typeId)?.name || '—';
+          const newType = data.assetTypes.find(t => t.id === cleanAssetData.typeId)?.name || '—';
+          details.type = { old: oldType, new: newType };
+        }
+        if (editingAsset.status !== cleanAssetData.status) {
+          changes.push(`mengubah status menjadi ${cleanAssetData.status}`);
+          details.status = { old: editingAsset.status, new: cleanAssetData.status };
+        }
+
+        if (changes.length > 0) {
+          let actionType: 'CREATE' | 'REUPLOAD' | 'VERSION_UPDATE' | 'UPDATE_INFO' = 'UPDATE_INFO';
+          if (editingAsset.version !== cleanAssetData.version) {
+            actionType = 'VERSION_UPDATE';
+          } else if (editingAsset.link !== cleanAssetData.link) {
+            actionType = 'REUPLOAD';
+          }
+
+          const desc = `Memperbarui aset: ${changes.join(', ')}.`;
+          try {
+            await service.createAssetHistoryEntry({
+              assetId: saved.id,
+              actionType,
+              description: desc,
+              details
+            });
+          } catch (e) {
+            console.warn('Failed to save asset activity log:', e);
+          }
+        }
+      } else if (!editingAsset && saved.id) {
+        try {
+          await service.createAssetHistoryEntry({
+            assetId: saved.id,
+            actionType: 'CREATE',
+            description: 'Aset pertama kali diunggah.',
+            details: {
+              title: saved.title,
+              version: saved.version ?? 1,
+              status: saved.status
+            }
+          });
+        } catch (e) {
+          console.warn('Failed to save initial asset upload log:', e);
         }
       }
 
@@ -798,6 +883,7 @@ const AdminApp: React.FC = () => {
                 multiSelection={new Set()}
                 onToggleSelection={() => {}}
                 isAdmin={true}
+                onSelectTimeline={(asset) => setSelectedTimelineAsset(asset)}
               />
             </div>
           ) : currentView === 'admin-requests' ? (
@@ -837,6 +923,16 @@ const AdminApp: React.FC = () => {
         </div>
       </main>
 
+      {selectedTimelineAsset && (
+        <div className="fixed inset-0 bg-[#0a0b0d]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl border border-coinbase-hairline w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+            <AssetTimelinePanel 
+              asset={selectedTimelineAsset} 
+              onClose={() => setSelectedTimelineAsset(null)} 
+            />
+          </div>
+        </div>
+      )}
 
     </div>
   );

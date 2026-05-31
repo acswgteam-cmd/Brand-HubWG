@@ -1,7 +1,16 @@
 
-import { Asset, Brand, AssetType, AboutContent, AssetVersion, AssetRequest } from '../types';
+import { Asset, Brand, AssetType, AboutContent, AssetVersion, AssetRequest, AssetActivity } from '../types';
 import { supabase } from './supabaseClient';
 import { DEFAULT_ABOUT_CONTENT } from '../constants';
+
+const mapAssetActivity = (db: any): AssetActivity => ({
+  id: db.id,
+  assetId: db.asset_id,
+  actionType: db.action_type,
+  description: db.description,
+  details: db.details || {},
+  createdAt: db.created_at,
+});
 
 const mapAsset = (dbAsset: any): Asset => ({
   id: dbAsset.id,
@@ -428,3 +437,44 @@ export const deleteAssetRequest = async (id: string): Promise<void> => {
   const { error } = await supabase.from('asset_requests').delete().eq('id', id);
   if (error) throw error;
 };
+
+// =========================================================================
+// Asset History / Timeline Logs
+// =========================================================================
+
+export const fetchAssetHistory = async (assetId: string): Promise<AssetActivity[]> => {
+  const { data, error } = await supabase
+    .from('asset_history')
+    .select('*')
+    .eq('asset_id', assetId)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('Failed to fetch asset history:', error);
+    return [];
+  }
+  return (data || []).map(mapAssetActivity);
+};
+
+export const createAssetHistoryEntry = async (entry: {
+  assetId: string;
+  actionType: 'CREATE' | 'REUPLOAD' | 'VERSION_UPDATE' | 'UPDATE_INFO';
+  description: string;
+  details?: Record<string, any>;
+}): Promise<AssetActivity> => {
+  const { data, error } = await supabase
+    .from('asset_history')
+    .insert({
+      asset_id: entry.assetId,
+      action_type: entry.actionType,
+      description: entry.description,
+      details: entry.details || {},
+    })
+    .select()
+    .single();
+  if (error) {
+    console.error('Failed to insert asset history entry:', error);
+    throw error;
+  }
+  return mapAssetActivity(data);
+};
+
