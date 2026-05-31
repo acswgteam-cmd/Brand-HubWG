@@ -19,6 +19,7 @@ const mapAsset = (dbAsset: any): Asset => ({
   version: dbAsset.version ?? 1,
   updateIntervalMonths: dbAsset.update_interval_months ?? null,
   nextUpdateDue: dbAsset.next_update_due ?? null,
+  fileMetadata: dbAsset.file_metadata ?? null,
 });
 
 const mapAssetVersion = (db: any): AssetVersion => ({
@@ -153,6 +154,11 @@ export const upsertAsset = async (asset: Partial<Asset>) => {
     payload.next_update_due = asset.nextUpdateDue;
   }
 
+  // Include file metadata if provided
+  if (asset.fileMetadata !== undefined) {
+    payload.file_metadata = asset.fileMetadata;
+  }
+
   const { data, error } = await supabase
     .from('assets')
     .upsert(payload)
@@ -208,6 +214,7 @@ export const createBrand = async (brand: Omit<Brand, 'id'>) => {
   const { data, error } = await supabase.from('brands').insert({
     name: brand.name,
     type: brand.type,
+    logo: brand.logo,
     sort_order: brand.sortOrder ?? 0
   }).select().single();
   if (error) throw error;
@@ -217,7 +224,8 @@ export const createBrand = async (brand: Omit<Brand, 'id'>) => {
 export const updateBrand = async (id: string, updates: Partial<Brand>) => {
   const payload: any = {
     name: updates.name,
-    type: updates.type
+    type: updates.type,
+    logo: updates.logo
   };
   if (updates.sortOrder !== undefined) payload.sort_order = updates.sortOrder;
 
@@ -231,6 +239,7 @@ export const updateBrands = async (brands: Brand[]) => {
     id: b.id,
     name: b.name,
     type: b.type,
+    logo: b.logo,
     sort_order: b.sortOrder ?? 0
   }));
   const { data, error } = await supabase.from('brands').upsert(payloads).select();

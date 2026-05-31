@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Asset, Brand, AssetType } from '../types';
+import { Asset, Brand, AssetType, AssetFileMetadata } from '../types';
 import { getPreviewLink, getFileType, getDownloadLink } from '../services/assetService';
 import VersionHistoryPanel from './VersionHistoryPanel';
+import {
+  formatBytes,
+  formatDuration,
+  formatMimeType,
+  extractGoogleDriveFileId,
+  fetchGoogleDriveMetadata,
+} from '../services/metadataService';
 
 interface AssetDetailsPanelProps {
   asset: Asset | null;
@@ -33,10 +40,29 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
   asset, brands, assetTypes, onClose, onDelete, isAdmin, onEdit
 }) => {
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [liveMetadata, setLiveMetadata] = useState<AssetFileMetadata | null>(null);
+  const [isFetchingMeta, setIsFetchingMeta] = useState(false);
 
   useEffect(() => {
     if (asset) {
       setShowVersionHistory(false);
+      setLiveMetadata(null);
+
+      // If asset already has stored metadata, use that
+      if (asset.fileMetadata) {
+        setLiveMetadata(asset.fileMetadata);
+        return;
+      }
+
+      // Lazy-fetch Google Drive metadata if not stored yet
+      const fileId = extractGoogleDriveFileId(asset.link);
+      if (fileId) {
+        setIsFetchingMeta(true);
+        fetchGoogleDriveMetadata(fileId).then(meta => {
+          setLiveMetadata(meta);
+          setIsFetchingMeta(false);
+        });
+      }
     }
   }, [asset?.id]);
 
@@ -246,6 +272,84 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
               </div>
             </div>
           </div>
+
+          {/* File Details Card — like Google Drive screenshot */}
+          {(liveMetadata || isFetchingMeta) && (
+            <div className="bg-[#0d0f12] rounded-xl p-5 space-y-4">
+              <h3 className="text-[12px] font-bold text-gray-400 uppercase tracking-wider">File details</h3>
+
+              {isFetchingMeta && !liveMetadata && (
+                <div className="flex items-center gap-2 py-2">
+                  <div className="w-4 h-4 border border-gray-600 border-t-[#0052ff] rounded-full animate-spin" />
+                  <span className="text-[12px] text-gray-500">Loading file details...</span>
+                </div>
+              )}
+
+              {liveMetadata && (
+                <div className="space-y-3.5">
+                  {/* Type */}
+                  {liveMetadata.mimeType && (
+                    <div>
+                      <p className="text-[13px] text-gray-500 mb-0.5">Type</p>
+                      <p className="text-[15px] text-white font-light">
+                        {liveMetadata.mimeType.startsWith('image/') ? 'Image' :
+                         liveMetadata.mimeType.startsWith('video/') ? 'Video' :
+                         liveMetadata.mimeType.startsWith('audio/') ? 'Audio' :
+                         liveMetadata.mimeType.includes('pdf') ? 'PDF Document' :
+                         formatMimeType(liveMetadata.mimeType)}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Size */}
+                  {liveMetadata.size !== undefined && (
+                    <div>
+                      <p className="text-[13px] text-gray-500 mb-0.5">Size</p>
+                      <p className="text-[15px] text-white font-light">{formatBytes(liveMetadata.size)}</p>
+                    </div>
+                  )}
+
+                  {/* Storage used (same as size for direct; labeled differently for GDrive) */}
+                  {liveMetadata.size !== undefined && (
+                    <div>
+                      <p className="text-[13px] text-gray-500 mb-0.5">Storage used</p>
+                      <p className="text-[15px] text-white font-light">{formatBytes(liveMetadata.size)}</p>
+                    </div>
+                  )}
+
+                  {/* Dimensions */}
+                  {liveMetadata.width !== undefined && liveMetadata.height !== undefined && (
+                    <div>
+                      <p className="text-[13px] text-gray-500 mb-0.5">Dimensions</p>
+                      <p className="text-[15px] text-white font-light">
+                        {liveMetadata.width.toLocaleString()} × {liveMetadata.height.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Duration */}
+                  {liveMetadata.durationSeconds !== undefined && (
+                    <div>
+                      <p className="text-[13px] text-gray-500 mb-0.5">Duration</p>
+                      <p className="text-[15px] text-white font-light">{formatDuration(liveMetadata.durationSeconds)}</p>
+                    </div>
+                  )}
+
+                  {/* Source badge */}
+                  <div className="pt-1 border-t border-white/10">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                      liveMetadata.source === 'direct'
+                        ? 'bg-[#0052ff]/20 text-[#4d9fff]'
+                        : 'bg-white/10 text-gray-300'
+                    }`}>
+                      {liveMetadata.source === 'direct' ? '☁️ Direct Upload' :
+                       liveMetadata.source === 'google-drive' ? '📁 Google Drive' : '🔗 External Link'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Tags pills */}
           {asset.tags.length > 0 && (

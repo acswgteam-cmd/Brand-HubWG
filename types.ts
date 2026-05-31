@@ -20,6 +20,15 @@ export interface AssetType {
   sortOrder?: number;
 }
 
+export interface AssetFileMetadata {
+  size?: number;            // bytes
+  mimeType?: string;        // e.g. "image/png", "video/mp4"
+  width?: number;           // pixels — for image/video
+  height?: number;          // pixels — for image/video
+  durationSeconds?: number; // for video/audio
+  source: 'direct' | 'google-drive' | 'unknown';
+}
+
 export interface Asset {
   id: string;
   title: string;
@@ -36,6 +45,7 @@ export interface Asset {
   version?: number;
   updateIntervalMonths?: number | null;
   nextUpdateDue?: string | null;
+  fileMetadata?: AssetFileMetadata | null;
 }
 
 export interface AssetVersion {

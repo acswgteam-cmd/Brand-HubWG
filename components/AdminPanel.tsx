@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Asset, Brand, AssetType, BrandType } from '../types';
+import { Asset, Brand, AssetType, BrandType, AssetFileMetadata } from '../types';
 import { generateAssetMetadata } from '../services/geminiService';
 import * as service from '../services/assetService';
+import {
+  extractLocalFileMetadata,
+  extractGoogleDriveFileId,
+  fetchGoogleDriveMetadata,
+  detectMetadataFromUrl,
+  formatBytes,
+} from '../services/metadataService';
 
 interface AdminPanelProps {
   brands: Brand[];
@@ -65,11 +72,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const [newBrandName, setNewBrandName] = useState('');
   const [newBrandType, setNewBrandType] = useState<BrandType>('UNIT');
+  const [newBrandLogo, setNewBrandLogo] = useState('');
   const [newTypeName, setNewTypeName] = useState('');
   const [newTypeIcon, setNewTypeIcon] = useState('📁');
   
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isFetchingMeta, setIsFetchingMeta] = useState(false);
+  const [fileMetadata, setFileMetadata] = useState<AssetFileMetadata | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Extract all unique tags in the system to present as suggestion pills
@@ -95,6 +105,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         updateIntervalMonths: editingAsset.updateIntervalMonths ?? null,
         nextUpdateDue: editingAsset.nextUpdateDue ?? null,
       });
+      setFileMetadata(editingAsset.fileMetadata ?? null);
       if (editingAsset.link.startsWith('data:')) {
         setUploadMode('file');
       } else {
@@ -116,6 +127,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             updateIntervalMonths: null,
             nextUpdateDue: null,
         });
+        setFileMetadata(null);
     }
   }, [editingAsset, activeView]);
 
@@ -148,6 +160,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       return;
     }
     setIsUploading(true);
+
+    // Extract real metadata BEFORE converting to base64
+    const meta = await extractLocalFileMetadata(file);
+    setFileMetadata(meta);
     
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -157,6 +173,40 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       if (!formData.title) setFormData(prev => ({ ...prev, title: file.name.split('.')[0] }));
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleBrandLogoChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Ukuran gambar maksimal 2MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      if (isEdit) {
+        setEditBuffer((prev: any) => ({ ...prev, logo: base64 }));
+      } else {
+        setNewBrandLogo(base64);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Fetch Google Drive metadata when user finishes typing a GDrive URL
+  const handleLinkBlur = async (url: string) => {
+    const fileId = extractGoogleDriveFileId(url);
+    if (!fileId) {
+      // Best-effort detection from URL extension
+      const detected = detectMetadataFromUrl(url);
+      if (detected.mimeType) setFileMetadata(detected);
+      return;
+    }
+    setIsFetchingMeta(true);
+    const meta = await fetchGoogleDriveMetadata(fileId);
+    setFileMetadata(meta);
+    setIsFetchingMeta(false);
   };
 
   const handleDragStart = (index: number) => setDraggedIndex(index);
@@ -208,6 +258,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       ...formData,
       status: statusVal,
       id: editingAsset?.id,
+      fileMetadata: fileMetadata ?? undefined,
       // Pass changelog for version tracking via parent
       // @ts-ignore — changelog passed as extra field for parent to handle
       _changelog: formData.changelog,
@@ -259,7 +310,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
                 
                 {uploadMode === 'link' ? (
-                  <input required value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} placeholder="https://drive.google.com/..." className="w-full px-4 py-2.5 bg-coinbase-canvas border border-coinbase-hairline rounded-lg outline-none text-[14px] focus:ring-1 focus:ring-coinbase-primary focus:border-coinbase-primary transition-all placeholder:text-coinbase-muted mt-1" />
+                  <div className="relative mt-1">
+                    <input 
+                      required 
+                      value={formData.link} 
+                      onChange={e => setFormData({...formData, link: e.target.value})}
+                      onBlur={e => handleLinkBlur(e.target.value)}
+                      placeholder="https://drive.google.com/..." 
+                      className="w-full px-4 py-2.5 bg-coinbase-canvas border border-coinbase-hairline rounded-lg outline-none text-[14px] focus:ring-1 focus:ring-coinbase-primary focus:border-coinbase-primary transition-all placeholder:text-coinbase-muted" 
+                    />
+                    {isFetchingMeta && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-[11px] text-coinbase-muted">
+                        <div className="w-3 h-3 border border-coinbase-muted border-t-coinbase-primary rounded-full animate-spin" />
+                        Fetching metadata...
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div 
                     onClick={() => fileInputRef.current?.click()} 
@@ -509,6 +575,64 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                   {assetTypes.find(t => t.id === formData.typeId)?.name || 'Format'} • {uploadMode === 'file' ? 'Local File' : 'Google Drive / Cloud Link'}
                 </p>
               </div>
+
+              {/* File Metadata Preview Card */}
+              {fileMetadata && (
+                <div className="mt-3 bg-[#0d0f12] rounded-xl p-4 space-y-3">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">File Details</p>
+                  <div className="space-y-2.5">
+                    {fileMetadata.mimeType && (
+                      <div className="flex justify-between text-[13px]">
+                        <span className="text-gray-400">Type</span>
+                        <span className="text-white font-medium">
+                          {fileMetadata.mimeType.startsWith('image/') ? 'Image' :
+                           fileMetadata.mimeType.startsWith('video/') ? 'Video' :
+                           fileMetadata.mimeType.startsWith('audio/') ? 'Audio' :
+                           fileMetadata.mimeType.includes('pdf') ? 'PDF' : fileMetadata.mimeType.split('/')[1]?.toUpperCase() || 'File'}
+                        </span>
+                      </div>
+                    )}
+                    {fileMetadata.size !== undefined && (
+                      <div className="flex justify-between text-[13px]">
+                        <span className="text-gray-400">Size</span>
+                        <span className="text-white font-medium">{formatBytes(fileMetadata.size)}</span>
+                      </div>
+                    )}
+                    {fileMetadata.width !== undefined && fileMetadata.height !== undefined && (
+                      <div className="flex justify-between text-[13px]">
+                        <span className="text-gray-400">Dimensions</span>
+                        <span className="text-white font-medium">{fileMetadata.width.toLocaleString()} × {fileMetadata.height.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {fileMetadata.durationSeconds !== undefined && (
+                      <div className="flex justify-between text-[13px]">
+                        <span className="text-gray-400">Duration</span>
+                        <span className="text-white font-medium">
+                          {(() => {
+                            const s = Math.floor(fileMetadata.durationSeconds!);
+                            const m = Math.floor(s / 60);
+                            const sec = s % 60;
+                            return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+                          })()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-[13px]">
+                      <span className="text-gray-400">Source</span>
+                      <span className="text-white font-medium capitalize">
+                        {fileMetadata.source === 'direct' ? 'Direct Upload' :
+                         fileMetadata.source === 'google-drive' ? 'Google Drive' : 'External Link'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {isFetchingMeta && (
+                <div className="mt-3 bg-[#0d0f12] rounded-xl p-4 flex items-center gap-2">
+                  <div className="w-4 h-4 border border-gray-600 border-t-[#0052ff] rounded-full animate-spin" />
+                  <span className="text-[12px] text-gray-400">Fetching file details from Google Drive...</span>
+                </div>
+              )}
             </div>
 
             {/* Asset Summary */}
@@ -582,36 +706,116 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         <div className="bg-white rounded-xl border border-coinbase-hairline shadow-soft overflow-hidden">
           <div className="p-8 lg:p-10 space-y-8">
             <h2 className="text-[24px] font-semibold text-coinbase-ink">Manage Entities</h2>
-            <div className="bg-coinbase-surface-soft p-4 rounded-xl border border-coinbase-hairline flex gap-3">
-              <input value={newBrandName} onChange={e => setNewBrandName(e.target.value)} placeholder="New Entity Name" className="flex-1 px-4 py-3 bg-white border border-coinbase-hairline rounded-md text-[15px] outline-none focus:border-coinbase-primary transition-colors placeholder:text-coinbase-muted" />
-              <button onClick={() => { if(newBrandName){ onAddBrand({id:'', name:newBrandName, type:newBrandType, sortOrder: brands.length}); setNewBrandName(''); } }} className="px-8 py-3 bg-coinbase-primary text-white text-[15px] font-semibold rounded-pill hover:bg-coinbase-primary-active transition-colors">Add</button>
+            <div className="bg-coinbase-surface-soft p-5 rounded-xl border border-coinbase-hairline flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input value={newBrandName} onChange={e => setNewBrandName(e.target.value)} placeholder="New Entity Name" className="flex-1 px-4 py-3 bg-white border border-coinbase-hairline rounded-md text-[15px] outline-none focus:border-coinbase-primary transition-colors placeholder:text-coinbase-muted" />
+                <select value={newBrandType} onChange={e => setNewBrandType(e.target.value as BrandType)} className="px-4 py-3 bg-white border border-coinbase-hairline rounded-md text-[15px] outline-none focus:border-coinbase-primary transition-colors font-medium">
+                  <option value="UNIT">Unit Bisnis</option>
+                  <option value="ENTITAS">Entitas</option>
+                </select>
+                <button onClick={() => { if(newBrandName){ onAddBrand({id:'', name:newBrandName, type:newBrandType, logo:newBrandLogo, sortOrder: brands.length}); setNewBrandName(''); setNewBrandLogo(''); } }} className="px-8 py-3 bg-coinbase-primary text-white text-[15px] font-semibold rounded-pill hover:bg-coinbase-primary-active transition-colors shrink-0">Add Entity</button>
+              </div>
+
+              {/* Upload logo/thumbnail brand */}
+              <div className="border-t border-coinbase-hairline pt-3 flex flex-col gap-2">
+                <label className="text-[12px] font-semibold text-coinbase-muted uppercase tracking-wider">Custom Thumbnail / Logo (Opsional)</label>
+                <div className="flex items-center gap-4">
+                  <input type="file" id="new-brand-logo-file" className="hidden" accept="image/*" onChange={(e) => handleBrandLogoChange(e, false)} />
+                  <button type="button" onClick={() => document.getElementById('new-brand-logo-file')?.click()} className="px-4 py-2 bg-white border border-coinbase-hairline text-coinbase-ink hover:bg-coinbase-surface-soft text-[13px] font-semibold rounded-lg transition-colors">
+                    Upload Gambar
+                  </button>
+                  {newBrandLogo ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-10 rounded border border-coinbase-hairline overflow-hidden bg-white">
+                        <img src={newBrandLogo} className="w-full h-full object-cover" alt="New Brand Logo" />
+                      </div>
+                      <button type="button" onClick={() => setNewBrandLogo('')} className="text-xs text-red-500 font-semibold hover:underline">Hapus</button>
+                    </div>
+                  ) : (
+                    <span className="text-[12px] text-coinbase-muted font-medium italic">Default: Mengambil dari salah satu aset entitas</span>
+                  )}
+                </div>
+                <p className="text-[11px] text-[#0052ff] font-medium mt-1">
+                  💡 Arahan ukuran: Gunakan gambar dengan resolusi minimal <strong>400x300 piksel (Rasio 4:3)</strong> untuk tampilan kartu yang optimal. Ukuran berkas maksimal 2MB.
+                </p>
+              </div>
             </div>
+
             <div className="space-y-3">
               <p className="text-[12px] font-semibold text-coinbase-muted uppercase tracking-wide mb-3">Draggable List</p>
               {brands.map((brand, index) => (
-                <div key={brand.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index, 'brands')} className={`flex items-center justify-between p-4 bg-white border border-coinbase-hairline rounded-xl cursor-move group transition-all ${draggedIndex === index ? 'opacity-50 scale-[0.99]' : 'hover:shadow-soft'}`}>
+                <div key={brand.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index, 'brands')} className={`flex flex-col justify-center p-4 bg-white border border-coinbase-hairline rounded-xl cursor-move group transition-all ${draggedIndex === index ? 'opacity-50 scale-[0.99]' : 'hover:shadow-soft'}`}>
                   {editingItemId === brand.id ? (
-                     <div className="flex-1 flex gap-3 mr-3">
-                        <input 
-                          value={editBuffer.name} 
-                          onChange={(e) => setEditBuffer({...editBuffer, name: e.target.value})}
-                          className="flex-1 px-4 py-2 bg-coinbase-canvas border border-coinbase-hairline rounded-md text-[15px] outline-none focus:border-coinbase-primary"
-                        />
-                        <button onClick={() => { onUpdateBrand(editBuffer); setEditingItemId(null); }} className="px-5 py-2 bg-coinbase-primary text-white rounded-pill text-[14px] font-semibold hover:bg-coinbase-primary-active transition-colors">Save</button>
-                        <button onClick={() => setEditingItemId(null)} className="px-5 py-2 bg-coinbase-surface-strong text-coinbase-ink rounded-pill text-[14px] font-semibold hover:bg-coinbase-hairline transition-colors">Cancel</button>
+                     <div className="w-full flex flex-col gap-3">
+                        <div className="flex gap-3">
+                          <input 
+                            value={editBuffer.name} 
+                            onChange={(e) => setEditBuffer({...editBuffer, name: e.target.value})}
+                            className="flex-1 px-4 py-2 bg-coinbase-canvas border border-coinbase-hairline rounded-md text-[15px] outline-none focus:border-coinbase-primary"
+                          />
+                          <select 
+                            value={editBuffer.type} 
+                            onChange={(e) => setEditBuffer({...editBuffer, type: e.target.value as BrandType})}
+                            className="px-3 py-2 bg-coinbase-canvas border border-coinbase-hairline rounded-md text-[14px] outline-none focus:border-coinbase-primary font-medium"
+                          >
+                            <option value="UNIT">Unit Bisnis</option>
+                            <option value="ENTITAS">Entitas</option>
+                          </select>
+                        </div>
+
+                        {/* Edit thumbnail uploader */}
+                        <div className="flex flex-col gap-2 pt-2 border-t border-coinbase-hairline">
+                          <label className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider">Custom Thumbnail / Logo (Opsional)</label>
+                          <div className="flex items-center gap-4">
+                            <input type="file" id={`edit-brand-logo-file-${brand.id}`} className="hidden" accept="image/*" onChange={(e) => handleBrandLogoChange(e, true)} />
+                            <button type="button" onClick={() => document.getElementById(`edit-brand-logo-file-${brand.id}`)?.click()} className="px-3 py-1.5 bg-white border border-coinbase-hairline text-coinbase-ink hover:bg-coinbase-surface-soft text-[12px] font-semibold rounded-lg transition-colors">
+                              Ganti Gambar
+                            </button>
+                            {editBuffer.logo ? (
+                              <div className="flex items-center gap-3">
+                                <div className="w-12 h-10 rounded border border-coinbase-hairline overflow-hidden bg-white">
+                                  <img src={editBuffer.logo} className="w-full h-full object-cover" alt="Edit Brand Logo" />
+                                </div>
+                                <button type="button" onClick={() => setEditBuffer({...editBuffer, logo: ''})} className="text-xs text-red-500 font-semibold hover:underline">Hapus</button>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-coinbase-muted font-medium italic">Default: Mengambil dari salah satu aset entitas</span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-[#0052ff] font-medium">
+                            💡 Arahan ukuran: Minimal <strong>400x300 piksel (Rasio 4:3)</strong> untuk tampilan kartu yang optimal. Ukuran berkas maksimal 2MB.
+                          </p>
+                        </div>
+
+                        <div className="flex gap-2 justify-end pt-2">
+                          <button onClick={() => { onUpdateBrand(editBuffer); setEditingItemId(null); }} className="px-5 py-2 bg-coinbase-primary text-white rounded-pill text-[14px] font-semibold hover:bg-coinbase-primary-active transition-colors font-semibold">Save</button>
+                          <button onClick={() => setEditingItemId(null)} className="px-5 py-2 bg-coinbase-surface-strong text-coinbase-ink rounded-pill text-[14px] font-semibold hover:bg-coinbase-hairline transition-colors">Cancel</button>
+                        </div>
                      </div>
                   ) : (
-                      <div className="flex items-center gap-4">
-                        <div className="text-coinbase-muted group-hover:text-coinbase-ink transition-colors cursor-grab"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg></div>
-                        <span className="text-[16px] font-medium text-coinbase-ink">{brand.name}</span>
+                      <div className="w-full flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="text-coinbase-muted group-hover:text-coinbase-ink transition-colors cursor-grab"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg></div>
+                          {brand.logo ? (
+                            <div className="w-8 h-8 rounded border border-coinbase-hairline overflow-hidden bg-white flex items-center justify-center shrink-0">
+                              <img src={brand.logo} className="w-full h-full object-cover" alt="Brand Logo" />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-coinbase-surface-strong text-coinbase-muted flex items-center justify-center text-xs shrink-0 font-semibold border border-coinbase-hairline">
+                              {brand.name.charAt(0)}
+                            </div>
+                          )}
+                          <span className="text-[16px] font-medium text-coinbase-ink">{brand.name}</span>
+                          <span className="px-2 py-0.5 bg-[#f0f2f5] rounded text-[10px] text-coinbase-muted uppercase font-bold tracking-wider">{brand.type}</span>
+                        </div>
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {!editingItemId && (
+                                <button onClick={() => { setEditingItemId(brand.id); setEditBuffer(brand); }} className="p-2 text-coinbase-muted hover:text-coinbase-primary hover:bg-coinbase-surface-soft transition-colors rounded-full"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                            )}
+                            <button onClick={() => confirm(`Delete ${brand.name}?`) && onDeleteBrand(brand.id)} className="p-2 text-coinbase-muted hover:text-ship-red hover:bg-[#fff5f5] transition-colors rounded-full"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                        </div>
                       </div>
                   )}
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {!editingItemId && (
-                          <button onClick={() => { setEditingItemId(brand.id); setEditBuffer(brand); }} className="p-2 text-coinbase-muted hover:text-coinbase-primary hover:bg-coinbase-surface-soft transition-colors rounded-full"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                      )}
-                      <button onClick={() => confirm(`Delete ${brand.name}?`) && onDeleteBrand(brand.id)} className="p-2 text-coinbase-muted hover:text-ship-red hover:bg-[#fff5f5] transition-colors rounded-full"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
-                  </div>
                 </div>
               ))}
             </div>

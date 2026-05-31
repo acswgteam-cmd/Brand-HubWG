@@ -413,7 +413,7 @@ const App: React.FC = () => {
                       ) || brandAssets[0];
 
                       // Use getThumbnailUrl to support Google Drive thumbnails without breaking images
-                      const previewUrl = logoAsset ? (service.getThumbnailUrl(logoAsset.link) || service.getPreviewLink(logoAsset.link)) : null;
+                      const previewUrl = brand.logo || (logoAsset ? (service.getThumbnailUrl(logoAsset.link) || service.getPreviewLink(logoAsset.link)) : null);
                       
                       // Get custom visual styling fallback
                       const getBrandVisual = (name: string) => {
