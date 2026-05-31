@@ -166,7 +166,60 @@ const AssetGrid: React.FC<AssetGridProps> = ({
   if (viewMode === 'list') {
       return (
           <div className="bg-coinbase-canvas rounded-xl border border-coinbase-hairline overflow-hidden mb-20">
-              <table className="w-full text-left border-collapse">
+              {/* Mobile card list */}
+              <div className="divide-y divide-coinbase-hairline md:hidden">
+                {assets.map(asset => {
+                  const brand = brands.find(b => b.id === asset.brandId);
+                  const type = assetTypes.find(t => t.id === asset.typeId);
+                  const thumb = getThumbnailUrl(asset.link);
+                  const isSelected = selectedAssetId === asset.id;
+                  const isChecked = multiSelection.has(asset.id);
+                  const downloadUrl = getDownloadLink(asset.link);
+
+                  return (
+                    <div
+                      key={asset.id}
+                      onClick={() => onSelectAsset(asset)}
+                      className={`p-3 flex items-center gap-3 cursor-pointer transition-colors ${isSelected || isChecked ? 'bg-coinbase-surface-strong' : 'hover:bg-coinbase-surface-soft'}`}
+                    >
+                      <div
+                        className={`w-4 h-4 rounded-sm border flex items-center justify-center shrink-0 ${isChecked ? 'bg-coinbase-primary border-coinbase-primary text-white' : 'border-coinbase-muted bg-white text-transparent'}`}
+                        onClick={(e) => { e.stopPropagation(); onToggleSelection(asset.id); }}
+                      >
+                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      </div>
+                      <div className="w-10 h-10 rounded-lg bg-coinbase-surface-strong flex items-center justify-center overflow-hidden border border-coinbase-hairline shrink-0">
+                        {thumb ? (
+                          <img src={thumb} className="w-full h-full object-cover" loading="lazy" />
+                        ) : (
+                          <span className="text-[15px] opacity-70">{type?.icon}</span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className={`text-[14px] font-semibold truncate ${isSelected ? 'text-coinbase-primary' : 'text-coinbase-ink'}`}>{asset.title}</div>
+                        <div className="text-[12px] text-coinbase-muted mt-0.5 flex items-center gap-1 flex-wrap">
+                          <span>{brand?.name || '—'}</span>
+                          <span className="text-coinbase-hairline">•</span>
+                          <span className="flex items-center gap-0.5"><span className="opacity-70">{type?.icon}</span>{type?.name}</span>
+                        </div>
+                      </div>
+                      <a
+                        href={downloadUrl}
+                        download={asset.title}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="shrink-0 p-2 text-coinbase-muted hover:text-coinbase-ink hover:bg-coinbase-surface-strong rounded-full transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                      </a>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop table */}
+              <table className="w-full text-left border-collapse hidden md:table">
                   <thead>
                       <tr className="bg-coinbase-surface-soft border-b border-coinbase-hairline">
                           <th className="p-4 w-12"></th>

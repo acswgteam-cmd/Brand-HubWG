@@ -52,9 +52,14 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
   return (
     <div className="h-full flex flex-col bg-coinbase-canvas relative overflow-hidden">
       
+      {/* Drag handle — visible on mobile bottom sheet */}
+      <div className="flex justify-center pt-3 pb-1 lg:hidden shrink-0">
+        <div className="w-10 h-1 bg-coinbase-hairline rounded-full" />
+      </div>
+
       {/* Header */}
-      <div className="px-6 py-5 border-b border-coinbase-hairline flex justify-between items-center bg-coinbase-canvas shrink-0 z-10">
-        <h2 className="text-[15px] font-semibold text-coinbase-ink truncate max-w-[260px]">
+      <div className="px-6 py-4 lg:py-5 border-b border-coinbase-hairline flex justify-between items-center bg-coinbase-canvas shrink-0 z-10">
+        <h2 className="text-[14px] lg:text-[15px] font-semibold text-coinbase-ink truncate max-w-[240px] lg:max-w-[260px]">
           {asset.title}
         </h2>
         <button onClick={onClose} className="p-2 hover:bg-coinbase-surface-strong rounded-full transition-colors text-coinbase-muted hover:text-coinbase-ink">
@@ -65,7 +70,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
       <div className="flex-1 overflow-y-auto no-scrollbar">
         
         {/* Preview Container */}
-        <div className="bg-[#e2e8f0] flex items-center justify-center h-[320px] border-b border-coinbase-hairline">
+        <div className="bg-[#e2e8f0] flex items-center justify-center h-[220px] lg:h-[320px] border-b border-coinbase-hairline">
           {(() => {
             switch (fileType) {
               case 'image':

@@ -23,6 +23,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [activeBrandId, setActiveBrandId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   
   // Filtering & Selection
   const [searchQuery, setSearchQuery] = useState('');
@@ -260,7 +261,7 @@ const App: React.FC = () => {
 
       {/* 2. Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-coinbase-surface-soft">
-        <header className="h-[72px] px-6 lg:px-12 flex items-center gap-4 shrink-0 transition-all justify-between bg-coinbase-canvas border-b border-coinbase-hairline">
+        <header className="h-[60px] lg:h-[72px] px-4 lg:px-12 flex items-center gap-3 shrink-0 transition-all justify-between bg-coinbase-canvas border-b border-coinbase-hairline">
           
           {/* Hamburger trigger for mobile */}
           {isSidebarCollapsed && (
@@ -309,20 +310,28 @@ const App: React.FC = () => {
              )}
           </div>
 
-          <div className="flex items-center gap-4">
-             {/* Search */}
+          <div className="flex items-center gap-2">
+             {/* Search — desktop only */}
              <div className="relative w-48 lg:w-72 group hidden md:block">
                 <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-coinbase-muted group-focus-within:text-coinbase-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 <input type="text" placeholder="Search..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); if(currentView === 'dashboard' && e.target.value) setCurrentView('browse'); }} className="w-full pl-10 pr-4 py-2.5 bg-coinbase-surface-strong rounded-pill text-[15px] outline-none transition-all placeholder:text-coinbase-muted focus:ring-2 focus:ring-coinbase-primary/20 focus:bg-white" />
              </div>
 
+             {/* Search icon — mobile only */}
+             <button
+               onClick={() => setShowMobileSearch(v => !v)}
+               className="p-2 text-coinbase-muted hover:text-coinbase-ink rounded-full hover:bg-coinbase-surface-strong transition-colors md:hidden"
+             >
+               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+             </button>
+
              {/* View Toggle */}
              {currentView === 'browse' && (
                 <div className="flex bg-coinbase-surface-strong rounded-pill p-1 gap-1">
-                    <button onClick={() => setViewMode('grid')} className={`p-2 rounded-full transition-all ${viewMode === 'grid' ? 'bg-white shadow-soft text-coinbase-ink' : 'text-coinbase-muted hover:text-coinbase-ink'}`} title="Grid View">
+                    <button onClick={() => setViewMode('grid')} className={`p-1.5 lg:p-2 rounded-full transition-all ${viewMode === 'grid' ? 'bg-white shadow-soft text-coinbase-ink' : 'text-coinbase-muted hover:text-coinbase-ink'}`} title="Grid View">
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                     </button>
-                    <button onClick={() => setViewMode('list')} className={`p-2 rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-soft text-coinbase-ink' : 'text-coinbase-muted hover:text-coinbase-ink'}`} title="List View">
+                    <button onClick={() => setViewMode('list')} className={`p-1.5 lg:p-2 rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-soft text-coinbase-ink' : 'text-coinbase-muted hover:text-coinbase-ink'}`} title="List View">
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" /></svg>
                     </button>
                 </div>
@@ -330,7 +339,24 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-8 lg:px-12 pb-24">
+        {/* Mobile Search Bar — slides down when toggled */}
+        {showMobileSearch && (
+          <div className="px-4 py-3 bg-coinbase-canvas border-b border-coinbase-hairline md:hidden shrink-0">
+            <div className="relative group">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-coinbase-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <input
+                autoFocus
+                type="text"
+                placeholder="Cari aset..."
+                value={searchQuery}
+                onChange={e => { setSearchQuery(e.target.value); if(currentView === 'dashboard' && e.target.value) setCurrentView('browse'); }}
+                className="w-full pl-9 pr-4 py-2.5 bg-coinbase-surface-strong rounded-pill text-[14px] outline-none focus:ring-2 focus:ring-coinbase-primary/20 focus:bg-white placeholder:text-coinbase-muted"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 overflow-y-auto px-4 lg:px-12 pb-24">
           {currentView === 'dashboard' ? (
             <Dashboard 
               assets={data.assets} 
@@ -344,12 +370,12 @@ const App: React.FC = () => {
               assetTypes={data.assetTypes}
             />
           ) : (
-            <div className="flex flex-col gap-8 pt-10">
+            <div className="flex flex-col gap-6 pt-6 lg:pt-10">
                
                {/* Business & Brands Section */}
                <div className="border-b border-coinbase-hairline pb-8">
-                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-[20px] font-bold text-coinbase-ink tracking-tight">Business & Brands</h2>
+                  <div className="flex items-center justify-between mb-4 lg:mb-6">
+                     <h2 className="text-[16px] lg:text-[20px] font-bold text-coinbase-ink tracking-tight">Business & Brands</h2>
                     
                     {activeBrandId ? (
                       <button 
@@ -421,9 +447,9 @@ const App: React.FC = () => {
                         <div 
                           key={brand.id}
                           onClick={() => { setActiveBrandId(brand.id); setSelectedType(null); }}
-                          className={`cursor-pointer rounded-xl border transition-all overflow-hidden flex flex-col group ${isActive ? 'border-coinbase-primary ring-2 ring-coinbase-primary/10 shadow-soft' : 'border-coinbase-hairline hover:border-coinbase-muted hover:shadow-soft'} ${showAllBrandsGrid ? 'w-full' : 'w-60 shrink-0 snap-start'}`}
+                          className={`cursor-pointer rounded-xl border transition-all overflow-hidden flex flex-col group ${isActive ? 'border-coinbase-primary ring-2 ring-coinbase-primary/10 shadow-soft' : 'border-coinbase-hairline hover:border-coinbase-muted hover:shadow-soft'} ${showAllBrandsGrid ? 'w-full' : 'w-40 sm:w-60 shrink-0 snap-start'}`}
                         >
-                          <div className="h-28 bg-[#f7f7f7] flex items-center justify-center relative overflow-hidden">
+                          <div className="h-24 sm:h-28 bg-[#f7f7f7] flex items-center justify-center relative overflow-hidden">
                             {previewUrl ? (
                               <img 
                                 src={previewUrl} 
@@ -432,17 +458,17 @@ const App: React.FC = () => {
                               />
                             ) : (
                               <div className={`w-full h-full ${visual.bg} flex items-center justify-center`}>
-                                <span className="text-3xl text-white font-black tracking-wider uppercase opacity-85 group-hover:scale-110 transition-transform duration-300">
+                                <span className="text-2xl sm:text-3xl text-white font-black tracking-wider uppercase opacity-85 group-hover:scale-110 transition-transform duration-300">
                                   {brand.name.charAt(0)}
                                 </span>
                               </div>
                             )}
                           </div>
-                          <div className="p-4 bg-white flex-1 flex flex-col justify-between">
-                            <h4 className="font-semibold text-coinbase-ink text-[14px] leading-snug group-hover:text-coinbase-primary transition-colors truncate" title={brand.name}>
+                          <div className="p-3 sm:p-4 bg-white flex-1 flex flex-col justify-between">
+                            <h4 className="font-semibold text-coinbase-ink text-[12px] sm:text-[14px] leading-snug group-hover:text-coinbase-primary transition-colors truncate" title={brand.name}>
                               {brand.name}
                             </h4>
-                            <span className="text-[11px] text-coinbase-muted font-mono mt-1 block">{assetCount} assets</span>
+                            <span className="text-[10px] sm:text-[11px] text-coinbase-muted font-mono mt-1 block">{assetCount} assets</span>
                           </div>
                         </div>
                       );
@@ -453,11 +479,11 @@ const App: React.FC = () => {
                {/* Filters */}
                <div className="flex flex-col gap-6">
                  <div>
-                   <h1 className="text-[36px] font-normal tracking-[-0.01em] text-coinbase-ink mb-2">
+                   <h1 className="text-[24px] lg:text-[36px] font-normal tracking-[-0.01em] text-coinbase-ink mb-2">
                      {activeBrandId ? data.brands.find(b => b.id === activeBrandId)?.name : (searchQuery ? `"${searchQuery}"` : 'Library Assets')}
                    </h1>
-                   <div className="flex items-center gap-3">
-                       <span className="text-[18px] text-coinbase-muted font-mono">{filteredAssets.length} results</span>
+                   <div className="flex items-center gap-3 flex-wrap">
+                       <span className="text-[14px] lg:text-[18px] text-coinbase-muted font-mono">{filteredAssets.length} results</span>
                        {selectedType && (
                          <span className="px-3 py-1 bg-coinbase-surface-strong text-coinbase-ink rounded-pill text-[13px] font-semibold flex items-center gap-2">
                             {data.assetTypes.find(t => t.id === selectedType)?.name} 
@@ -495,12 +521,12 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* 3. Right Sidebar Details Panel */}
+      {/* 3. Right Sidebar Details Panel — desktop only */}
       <aside 
-        className={`flex-shrink-0 bg-coinbase-canvas border-l border-coinbase-hairline transition-all duration-300 ease-out overflow-hidden z-20 ${selectedAsset ? 'w-[420px]' : 'w-0'}`}
+        className={`flex-shrink-0 bg-coinbase-canvas border-l border-coinbase-hairline transition-all duration-300 ease-out overflow-hidden z-20 hidden lg:block ${selectedAsset ? 'lg:w-[400px] xl:w-[420px]' : 'lg:w-0'}`}
       >
          {selectedAsset && (
-            <div className="w-[420px] h-full">
+            <div className="w-[400px] xl:w-[420px] h-full">
               <AssetDetailsPanel 
                 asset={selectedAsset}
                 brands={data.brands}
@@ -514,6 +540,28 @@ const App: React.FC = () => {
             </div>
          )}
       </aside>
+
+      {/* 3b. Asset Details Panel — Mobile Full-Screen Modal */}
+      {selectedAsset && (
+        <div className="fixed inset-0 z-50 lg:hidden flex flex-col">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setSelectedAsset(null)}
+          />
+          <div className="relative mt-auto bg-coinbase-canvas rounded-t-2xl max-h-[92dvh] flex flex-col overflow-hidden shadow-2xl">
+            <AssetDetailsPanel 
+              asset={selectedAsset}
+              brands={data.brands}
+              assetTypes={data.assetTypes}
+              onClose={() => setSelectedAsset(null)}
+              onUpdate={() => {}}
+              onDelete={() => {}}
+              isAdmin={false}
+              onEdit={undefined}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

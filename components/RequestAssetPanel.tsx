@@ -84,7 +84,7 @@ const RequestAssetPanel: React.FC<RequestAssetPanelProps> = ({ brands, assetType
   return (
     <div className="h-full flex flex-col bg-coinbase-canvas overflow-hidden">
       {/* Header */}
-      <div className="px-8 pt-10 pb-6 shrink-0">
+      <div className="px-4 lg:px-8 pt-6 lg:pt-10 pb-4 lg:pb-6 shrink-0">
         <div className="flex items-center gap-3 mb-1">
           <div className="w-9 h-9 rounded-xl bg-coinbase-primary/10 text-coinbase-primary flex items-center justify-center text-lg">
             📋
@@ -97,8 +97,8 @@ const RequestAssetPanel: React.FC<RequestAssetPanelProps> = ({ brands, assetType
       </div>
 
       {/* Content Grid */}
-      <div className="flex-1 overflow-y-auto px-8 pb-8 no-scrollbar">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="flex-1 overflow-y-auto px-4 lg:px-8 pb-8 no-scrollbar">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           
           {/* Left Column: Form */}
           <div className="lg:col-span-5 space-y-5">
@@ -257,7 +257,7 @@ const RequestAssetPanel: React.FC<RequestAssetPanelProps> = ({ brands, assetType
                 <p className="text-[13px] font-medium">Belum ada request{filterStatus !== 'ALL' ? ` dengan status ini` : ''}.</p>
               </div>
             ) : (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1 no-scrollbar">
+              <div className="space-y-3 max-h-[400px] lg:max-h-[600px] overflow-y-auto pr-1 no-scrollbar">
                 {filteredRequests.map(req => {
                   const cfg = STATUS_CONFIG[req.status];
                   return (
