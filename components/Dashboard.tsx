@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { NavArrowRight, Page } from 'iconoir-react';
 import { Asset, Brand, AssetType, AssetRequest } from '../types';
 import * as service from '../services/assetService';
+import { getEmojiIcon } from './IconHelper';
 
 interface DashboardProps {
   assets: Asset[];
@@ -92,7 +94,7 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, brands, assetTypes, onNav
         <div className="md:col-span-5 bg-white rounded-xl border border-coinbase-hairline shadow-soft p-6 space-y-6">
           <div>
             <h3 className="text-base font-bold text-coinbase-ink flex items-center gap-2">
-              📋 Summary Request Aset
+              {getEmojiIcon('mail', "w-5 h-5 text-coinbase-muted")} Summary Request Aset
             </h3>
             <p className="text-[12px] text-coinbase-muted mt-1">Status permintaan aset Anda saat ini</p>
           </div>
@@ -173,8 +175,8 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, brands, assetTypes, onNav
                 onClick={() => onNavigateToAsset(asset)}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-lg bg-coinbase-surface-strong flex items-center justify-center text-lg shrink-0">
-                    {type?.icon || '📂'}
+                  <div className="w-10 h-10 rounded-lg bg-coinbase-surface-strong flex items-center justify-center shrink-0">
+                    {type?.icon ? getEmojiIcon(type.icon, "w-5 h-5 text-coinbase-muted") : <Page className="w-5 h-5 text-coinbase-muted" />}
                   </div>
                   <div className="min-w-0">
                     <h4 className="font-semibold text-coinbase-ink text-[14px] truncate group-hover:text-coinbase-primary transition-colors">
@@ -199,7 +201,7 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, brands, assetTypes, onNav
                     Lihat Aset
                   </button>
                   <button className="sm:hidden p-2 rounded-full text-coinbase-primary hover:bg-coinbase-primary/10 transition-colors">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    <NavArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>

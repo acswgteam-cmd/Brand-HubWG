@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Clock, Xmark } from 'iconoir-react';
 import { Asset, AssetVersion } from '../types';
 import * as service from '../services/assetService';
 
@@ -89,9 +90,7 @@ const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({ asset, compac
                         ? 'bg-coinbase-primary border-coinbase-primary text-white'
                         : 'bg-white border-coinbase-hairline text-coinbase-muted'
                     }`}>
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
+                      <Clock className="w-3.5 h-3.5" strokeWidth={2.5} />
                     </div>
 
                     <div className="flex-1 min-w-0 pb-1">
@@ -140,9 +139,7 @@ const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({ asset, compac
         </div>
         {onClose && (
           <button onClick={onClose} className="p-2 hover:bg-coinbase-surface-strong rounded-full transition-colors text-coinbase-muted hover:text-coinbase-ink">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <Xmark className="w-5 h-5" />
           </button>
         )}
       </div>
@@ -166,9 +163,7 @@ const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({ asset, compac
                         ? 'bg-coinbase-primary border-coinbase-primary text-white'
                         : 'bg-white border-coinbase-hairline text-coinbase-muted'
                     }`}>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
+                      <Clock className="w-4 h-4" />
                     </div>
 
                     <div className={`flex-1 rounded-xl border p-4 ${isCurrent ? 'bg-coinbase-primary/5 border-coinbase-primary/20' : 'bg-white border-coinbase-hairline'}`}>

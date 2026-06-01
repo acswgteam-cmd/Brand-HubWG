@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Xmark, Clock, Calendar } from 'iconoir-react';
 import { Asset, AssetActivity, AssetVersion } from '../types';
+import { getEmojiIcon } from './IconHelper';
 import * as service from '../services/assetService';
 
 interface AssetTimelinePanelProps {
@@ -217,7 +219,7 @@ const AssetTimelinePanel: React.FC<AssetTimelinePanelProps> = ({ asset, onClose,
         <div className="px-6 py-5 border-b border-coinbase-hairline flex justify-between items-center shrink-0">
           <div>
             <h2 className="text-[16px] font-bold text-coinbase-ink flex items-center gap-1.5">
-              <span>🕒</span> Timeline Riwayat Aset
+              <Clock className="w-4.5 h-4.5 text-coinbase-muted" /> Timeline Riwayat Aset
             </h2>
             <p className="text-[12px] text-coinbase-muted mt-0.5 truncate max-w-[280px]">
               {asset.title}
@@ -228,9 +230,7 @@ const AssetTimelinePanel: React.FC<AssetTimelinePanelProps> = ({ asset, onClose,
               onClick={onClose}
               className="p-2 hover:bg-coinbase-surface-strong rounded-full transition-colors text-coinbase-muted hover:text-coinbase-ink"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <Xmark className="w-5 h-5" />
             </button>
           )}
         </div>
@@ -238,8 +238,8 @@ const AssetTimelinePanel: React.FC<AssetTimelinePanelProps> = ({ asset, onClose,
 
       <div className={`flex-1 overflow-y-auto ${compact ? 'py-1' : 'px-6 py-6'} no-scrollbar`}>
         {activities.length === 0 ? (
-          <div className="text-center py-12 text-coinbase-muted">
-            <span className="text-4xl block mb-2">🕒</span>
+          <div className="text-center py-12 text-coinbase-muted flex flex-col items-center justify-center">
+            <Clock className="w-12 h-12 mb-2 text-coinbase-muted opacity-40" />
             <p className="text-[13px] font-medium">Belum ada riwayat aktivitas yang tercatat.</p>
           </div>
         ) : (
@@ -261,7 +261,7 @@ const AssetTimelinePanel: React.FC<AssetTimelinePanelProps> = ({ asset, onClose,
                     <div
                       className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center shrink-0 z-10 shadow-soft transition-all duration-300 ${bgColor}`}
                     >
-                      <span className="text-base select-none">{icon}</span>
+                      {getEmojiIcon(icon, "w-4 h-4")}
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -277,8 +277,8 @@ const AssetTimelinePanel: React.FC<AssetTimelinePanelProps> = ({ asset, onClose,
                             </span>
                           </div>
                           
-                          <p className="text-[11.5px] text-coinbase-muted font-medium flex items-center gap-1">
-                            <span>📅</span>
+                          <p className="text-[11.5px] text-coinbase-muted font-medium flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-coinbase-muted" />
                             <span>
                               {dateObj.toLocaleDateString('id-ID', {
                                 day: 'numeric',

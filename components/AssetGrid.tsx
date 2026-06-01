@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { Check, Download, Clock, Page } from 'iconoir-react';
 import { Asset, Brand, AssetType } from '../types';
-import { getThumbnailUrl, getDownloadLink } from '../services/assetService';
+import { getEmojiIcon } from './IconHelper';
+import { getThumbnailUrl, getDownloadLink, getFileType } from '../services/assetService';
 
 interface AssetCardProps {
   asset: Asset;
@@ -33,8 +35,9 @@ const AssetCard: React.FC<AssetCardProps> = ({
   asset, brand, assetType, onSelect, isSelected, onToggleSelection, isChecked, isAdmin, onSelectTimeline
 }) => {
   const [imgError, setImgError] = useState(false);
-  const thumbnailUrl = getThumbnailUrl(asset.link);
+  const thumbnailUrl = asset.customThumbnail || getThumbnailUrl(asset.link);
   const downloadUrl = getDownloadLink(asset.link);
+  const fileType = getFileType(asset.link);
 
   return (
     <div 
@@ -51,7 +54,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
         onClick={(e) => { e.stopPropagation(); onToggleSelection(asset.id); }}
       >
         <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${isChecked ? 'bg-coinbase-primary border-coinbase-primary text-white' : 'bg-white border-coinbase-muted text-transparent hover:border-coinbase-ink'}`}>
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+            <Check className="w-3.5 h-3.5" />
         </div>
       </div>
 
@@ -69,8 +72,8 @@ const AssetCard: React.FC<AssetCardProps> = ({
            onClick={(e) => { e.stopPropagation(); onSelectTimeline?.(asset); }}
            className="absolute bottom-[calc(50%+20px)] right-3 z-20 w-8 h-8 bg-white hover:bg-coinbase-surface-strong text-coinbase-ink rounded-full flex items-center justify-center border border-coinbase-hairline opacity-0 group-hover:opacity-100 scale-95 hover:scale-105 transition-all duration-200 shadow-soft"
            title="Lihat Timeline Riwayat"
-        >
-          <span className="text-sm">🕒</span>
+         >
+          <Clock className="w-4 h-4 text-coinbase-muted" />
         </button>
       )}
 
@@ -84,12 +87,27 @@ const AssetCard: React.FC<AssetCardProps> = ({
          className="absolute bottom-[calc(50%-20px)] right-3 z-20 w-8 h-8 bg-coinbase-primary hover:bg-coinbase-primary-active text-white rounded-full flex items-center justify-center border border-transparent opacity-0 group-hover:opacity-100 scale-95 hover:scale-105 transition-all duration-200 shadow-soft"
          title="Download"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        <Download className="w-4 h-4" />
       </a>
 
       {/* Image Container */}
       <div className="bg-[#e2e8f0] aspect-[4/3] w-full flex items-center justify-center p-6 overflow-hidden border-b border-coinbase-hairline">
-        {thumbnailUrl && !imgError ? (
+        {fileType === 'video' ? (
+          <video 
+            src={`${asset.link}#t=0.1`} 
+            preload="metadata" 
+            muted 
+            playsInline 
+            className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-[1.03]" 
+          />
+        ) : fileType === 'pdf' ? (
+          <iframe
+            src={`${asset.link}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
+            className="w-full h-full border-0 pointer-events-none select-none overflow-hidden"
+            scrolling="no"
+            title={asset.title}
+          />
+        ) : thumbnailUrl && !imgError ? (
           <img 
             src={thumbnailUrl} 
             alt={asset.title} 
@@ -98,7 +116,9 @@ const AssetCard: React.FC<AssetCardProps> = ({
             loading="lazy" 
           />
         ) : (
-          <div className="text-3xl opacity-40 text-coinbase-muted transition-transform group-hover:scale-[1.03]">{assetType?.icon || '📄'}</div>
+          <div className="opacity-40 transition-transform group-hover:scale-[1.03]">
+            {(assetType?.icon && getEmojiIcon(assetType.icon, "w-10 h-10 text-coinbase-muted")) || <Page className="w-10 h-10 text-coinbase-muted" />}
+          </div>
         )}
       </div>
 
@@ -113,8 +133,8 @@ const AssetCard: React.FC<AssetCardProps> = ({
         <div className="flex items-center gap-2 text-[12px]">
           <span className="text-coinbase-muted font-medium truncate">{brand?.name || '—'}</span>
           <span className="text-coinbase-hairline">•</span>
-          <span className="flex items-center gap-1 text-coinbase-muted font-medium">
-            <span className="opacity-70">{assetType?.icon}</span>
+          <span className="flex items-center gap-1.5 text-coinbase-muted font-medium">
+            {assetType?.icon && getEmojiIcon(assetType.icon, "w-3.5 h-3.5 opacity-70")}
             <span>{assetType?.name || '—'}</span>
           </span>
         </div>
@@ -186,10 +206,11 @@ const AssetGrid: React.FC<AssetGridProps> = ({
                 {assets.map(asset => {
                   const brand = brands.find(b => b.id === asset.brandId);
                   const type = assetTypes.find(t => t.id === asset.typeId);
-                  const thumb = getThumbnailUrl(asset.link);
+                  const thumb = asset.customThumbnail || getThumbnailUrl(asset.link);
                   const isSelected = selectedAssetId === asset.id;
                   const isChecked = multiSelection.has(asset.id);
                   const downloadUrl = getDownloadLink(asset.link);
+                  const fileType = getFileType(asset.link);
 
                   return (
                     <div
@@ -201,21 +222,30 @@ const AssetGrid: React.FC<AssetGridProps> = ({
                         className={`w-4 h-4 rounded-sm border flex items-center justify-center shrink-0 ${isChecked ? 'bg-coinbase-primary border-coinbase-primary text-white' : 'border-coinbase-muted bg-white text-transparent'}`}
                         onClick={(e) => { e.stopPropagation(); onToggleSelection(asset.id); }}
                       >
-                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                        <Check className="w-2.5 h-2.5" />
                       </div>
                       <div className="w-10 h-10 rounded-lg bg-coinbase-surface-strong flex items-center justify-center overflow-hidden border border-coinbase-hairline shrink-0">
-                        {thumb ? (
+                        {fileType === 'video' ? (
+                          <video src={`${asset.link}#t=0.1`} preload="metadata" muted playsInline className="w-full h-full object-cover" />
+                        ) : fileType === 'pdf' ? (
+                          <iframe src={`${asset.link}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`} className="w-full h-full border-0 pointer-events-none select-none overflow-hidden" scrolling="no" />
+                        ) : thumb ? (
                           <img src={thumb} className="w-full h-full object-cover" loading="lazy" />
                         ) : (
-                          <span className="text-[15px] opacity-70">{type?.icon}</span>
+                          <span className="text-[15px] opacity-70">
+                            {type?.icon ? getEmojiIcon(type.icon, "w-5 h-5 text-coinbase-muted") : <Page className="w-5 h-5 text-coinbase-muted" />}
+                          </span>
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className={`text-[14px] font-semibold truncate ${isSelected ? 'text-coinbase-primary' : 'text-coinbase-ink'}`}>{asset.title}</div>
                         <div className="text-[12px] text-coinbase-muted mt-0.5 flex items-center gap-1 flex-wrap">
-                          <span>{brand?.name || '—'}</span>
-                          <span className="text-coinbase-hairline">•</span>
-                          <span className="flex items-center gap-0.5"><span className="opacity-70">{type?.icon}</span>{type?.name}</span>
+                           <span>{brand?.name || '—'}</span>
+                           <span className="text-coinbase-hairline">•</span>
+                           <span className="flex items-center gap-1.5">
+                             {type?.icon && getEmojiIcon(type.icon, "w-3.5 h-3.5 opacity-70")}
+                             <span>{type?.name}</span>
+                           </span>
                         </div>
                       </div>
                       <a
@@ -226,7 +256,7 @@ const AssetGrid: React.FC<AssetGridProps> = ({
                         onClick={(e) => e.stopPropagation()}
                         className="shrink-0 p-2 text-coinbase-muted hover:text-coinbase-ink hover:bg-coinbase-surface-strong rounded-full transition-colors"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        <Download className="w-4 h-4" />
                       </a>
                     </div>
                   );
@@ -251,10 +281,11 @@ const AssetGrid: React.FC<AssetGridProps> = ({
                       {assets.map(asset => {
                           const brand = brands.find(b => b.id === asset.brandId);
                           const type = assetTypes.find(t => t.id === asset.typeId);
-                          const thumb = getThumbnailUrl(asset.link);
+                          const thumb = asset.customThumbnail || getThumbnailUrl(asset.link);
                           const isSelected = selectedAssetId === asset.id;
                           const isChecked = multiSelection.has(asset.id);
                           const downloadUrl = getDownloadLink(asset.link);
+                          const fileType = getFileType(asset.link);
 
                           return (
                               <tr 
@@ -267,15 +298,21 @@ const AssetGrid: React.FC<AssetGridProps> = ({
                                         className={`w-4 h-4 rounded-sm border flex items-center justify-center cursor-pointer ${isChecked ? 'bg-coinbase-primary border-coinbase-primary text-white' : 'border-coinbase-muted bg-white text-transparent hover:border-coinbase-ink'}`}
                                         onClick={(e) => { e.stopPropagation(); onToggleSelection(asset.id); }}
                                       >
-                                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                                          <Check className="w-2.5 h-2.5" />
                                       </div>
                                   </td>
                                   <td className="p-4">
-                                      <div className="w-10 h-10 rounded-full bg-coinbase-surface-strong flex items-center justify-center overflow-hidden border border-coinbase-hairline">
-                                          {thumb ? (
+                                      <div className="w-10 h-10 rounded-lg bg-coinbase-surface-strong flex items-center justify-center overflow-hidden border border-coinbase-hairline">
+                                          {fileType === 'video' ? (
+                                              <video src={`${asset.link}#t=0.1`} preload="metadata" muted playsInline className="w-full h-full object-cover" />
+                                          ) : fileType === 'pdf' ? (
+                                              <iframe src={`${asset.link}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`} className="w-full h-full border-0 pointer-events-none select-none overflow-hidden" scrolling="no" />
+                                          ) : thumb ? (
                                               <img src={thumb} className="w-full h-full object-cover" loading="lazy" />
                                           ) : (
-                                              <span className="text-[15px] opacity-70">{type?.icon}</span>
+                                              <span className="text-[15px] opacity-70">
+                                                {type?.icon ? getEmojiIcon(type.icon, "w-5 h-5 text-coinbase-muted") : <Page className="w-5 h-5 text-coinbase-muted" />}
+                                              </span>
                                           )}
                                       </div>
                                   </td>
@@ -290,7 +327,8 @@ const AssetGrid: React.FC<AssetGridProps> = ({
                                   <td className="p-4 text-[14px] text-coinbase-ink font-medium">{brand?.name || '—'}</td>
                                   <td className="p-4 text-[14px] text-coinbase-ink font-medium">
                                       <span className="flex items-center gap-1.5">
-                                        <span className="opacity-70">{type?.icon}</span>{type?.name}
+                                        {type?.icon && getEmojiIcon(type.icon, "w-4 h-4 opacity-70")}
+                                        <span>{type?.name}</span>
                                       </span>
                                   </td>
                                   <td className="p-4 text-[13px] text-coinbase-muted font-mono">
@@ -309,7 +347,7 @@ const AssetGrid: React.FC<AssetGridProps> = ({
                                           className="p-2 text-coinbase-muted hover:text-coinbase-ink hover:bg-coinbase-surface-strong rounded-full transition-colors"
                                           title="Lihat Timeline Riwayat"
                                        >
-                                           <span className="text-sm">🕒</span>
+                                           <Clock className="w-4 h-4" />
                                        </button>
                                      )}
                                      <a 
@@ -321,7 +359,7 @@ const AssetGrid: React.FC<AssetGridProps> = ({
                                         className="inline-flex p-2 text-coinbase-muted hover:text-coinbase-ink hover:bg-coinbase-surface-strong rounded-full transition-colors"
                                         title="Download"
                                      >
-                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                         <Download className="w-5 h-5" />
                                      </a>
                                   </td>
                               </tr>

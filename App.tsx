@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { FastArrowLeft, Xmark, FastArrowRight, Menu, Download, Search, ViewGrid, List } from 'iconoir-react';
 import { Asset, Brand, AssetType } from './types';
 import * as service from './services/assetService';
 import { isSupabaseConfigured, configError } from './services/supabaseClient';
@@ -6,6 +7,7 @@ import AssetGrid from './components/AssetGrid';
 import AssetDetailsPanel from './components/AssetDetailsPanel';
 import Dashboard from './components/Dashboard';
 import RequestAssetPanel from './components/RequestAssetPanel';
+import { getEmojiIcon } from './components/IconHelper';
 
 // Expanded View Types for Routing
 type ViewType = 'dashboard' | 'browse' | 'request-assets';
@@ -148,7 +150,8 @@ const App: React.FC = () => {
           <div className="ml-10 mt-1 space-y-1">
             {availableTypes.map(type => (
                <button key={type.id} onClick={() => { setSelectedType(type.id); setCurrentView('browse'); if (window.innerWidth < 1024) setIsSidebarCollapsed(true); }} className={`w-full text-left px-3 py-2 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-2 ${selectedType === type.id ? 'text-coinbase-primary bg-coinbase-surface-strong' : 'text-coinbase-muted hover:text-coinbase-ink hover:bg-coinbase-surface-strong'}`}>
-                 <span className="opacity-70">{type.icon}</span><span className="truncate">{type.name}</span>
+                 {getEmojiIcon(type.icon, "w-4 h-4 opacity-70")}
+                 <span className="truncate">{type.name}</span>
                </button>
             ))}
           </div>
@@ -195,10 +198,10 @@ const App: React.FC = () => {
           {!isSidebarCollapsed && (
              <>
                <button onClick={() => setIsSidebarCollapsed(true)} className="p-1.5 text-coinbase-muted hover:text-coinbase-ink hidden lg:block rounded-full hover:bg-coinbase-surface-strong transition-colors">
-                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                 <FastArrowLeft className="w-4 h-4" />
                </button>
                <button onClick={() => setIsSidebarCollapsed(true)} className="p-1.5 text-coinbase-muted hover:text-coinbase-ink lg:hidden rounded-full hover:bg-coinbase-surface-strong transition-colors">
-                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                 <Xmark className="w-5 h-5" />
                </button>
              </>
           )}
@@ -208,7 +211,7 @@ const App: React.FC = () => {
         {isSidebarCollapsed && (
             <div className="flex justify-center py-4">
                 <button onClick={() => setIsSidebarCollapsed(false)} className="p-2 rounded-full text-coinbase-muted hover:text-coinbase-ink hover:bg-coinbase-surface-strong transition-colors">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                    <FastArrowRight className="w-4 h-4" />
                 </button>
             </div>
         )}
@@ -217,7 +220,7 @@ const App: React.FC = () => {
           {/* Main Navigation */}
           <div className="relative group mb-2">
             <button onClick={() => { setCurrentView('dashboard'); setActiveBrandId(null); setSelectedType(null); setSelectedAsset(null); if (window.innerWidth < 1024) setIsSidebarCollapsed(true); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-3 ${currentView === 'dashboard' ? 'bg-coinbase-surface-strong text-coinbase-primary' : 'text-coinbase-body hover:bg-coinbase-surface-strong hover:text-coinbase-ink'}`}>
-                <span className="text-lg w-6 text-center opacity-70">📊</span>
+                <span className="w-6 flex items-center justify-center shrink-0">{getEmojiIcon('presentation', 'w-5 h-5 opacity-80')}</span>
                 {!isSidebarCollapsed && <span>Dashboard</span>}
             </button>
             {isSidebarCollapsed && (
@@ -229,7 +232,7 @@ const App: React.FC = () => {
 
           <div className="relative group mb-2">
             <button onClick={() => { setCurrentView('browse'); setActiveBrandId(null); if (window.innerWidth < 1024) setIsSidebarCollapsed(true); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-3 ${currentView === 'browse' && !activeBrandId ? 'bg-coinbase-surface-strong text-coinbase-primary' : 'text-coinbase-body hover:bg-coinbase-surface-strong hover:text-coinbase-ink'}`}>
-                <span className="text-lg w-6 text-center opacity-70">📂</span>
+                <span className="w-6 flex items-center justify-center shrink-0">{getEmojiIcon('folder', 'w-5 h-5 opacity-80')}</span>
                 {!isSidebarCollapsed && <span>All Assets</span>}
             </button>
             {isSidebarCollapsed && (
@@ -241,7 +244,7 @@ const App: React.FC = () => {
 
           <div className="relative group mb-2">
             <button onClick={() => { setCurrentView('request-assets'); setActiveBrandId(null); setSelectedAsset(null); if (window.innerWidth < 1024) setIsSidebarCollapsed(true); }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-3 ${currentView === 'request-assets' ? 'bg-coinbase-surface-strong text-coinbase-primary' : 'text-coinbase-body hover:bg-coinbase-surface-strong hover:text-coinbase-ink'}`}>
-                <span className="text-lg w-6 text-center opacity-70">📋</span>
+                <span className="w-6 flex items-center justify-center shrink-0">{getEmojiIcon('mail', 'w-5 h-5 opacity-80')}</span>
                 {!isSidebarCollapsed && <span>Request Aset</span>}
             </button>
             {isSidebarCollapsed && (
@@ -269,7 +272,7 @@ const App: React.FC = () => {
               onClick={() => setIsSidebarCollapsed(false)} 
               className="p-2 -ml-2 text-coinbase-muted hover:text-coinbase-ink lg:hidden rounded-full hover:bg-coinbase-surface-strong transition-colors shrink-0"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+              <Menu className="w-6 h-6" />
             </button>
           )}
           
@@ -294,7 +297,7 @@ const App: React.FC = () => {
                              onClick={handleDownloadSelected}
                              className="px-4 py-2 bg-coinbase-primary text-white text-[13px] font-semibold rounded-pill hover:bg-coinbase-primary-active transition-colors flex items-center gap-2"
                            >
-                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                               <Download className="w-4 h-4" />
                                Download ({multiSelection.size})
                            </button>
                            <button 
@@ -302,7 +305,7 @@ const App: React.FC = () => {
                              className="p-2 rounded-full text-coinbase-muted hover:text-coinbase-ink hover:bg-coinbase-surface-strong transition-colors"
                              title="Clear Selection"
                            >
-                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                             <Xmark className="w-4 h-4" />
                            </button>
                        </div>
                    )}
@@ -313,7 +316,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-2">
              {/* Search — desktop only */}
              <div className="relative w-48 lg:w-72 group hidden md:block">
-                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-coinbase-muted group-focus-within:text-coinbase-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-coinbase-muted group-focus-within:text-coinbase-primary transition-colors" />
                 <input type="text" placeholder="Search..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); if(currentView === 'dashboard' && e.target.value) setCurrentView('browse'); }} className="w-full pl-10 pr-4 py-2.5 bg-coinbase-surface-strong rounded-pill text-[15px] outline-none transition-all placeholder:text-coinbase-muted focus:ring-2 focus:ring-coinbase-primary/20 focus:bg-white" />
              </div>
 
@@ -322,17 +325,17 @@ const App: React.FC = () => {
                onClick={() => setShowMobileSearch(v => !v)}
                className="p-2 text-coinbase-muted hover:text-coinbase-ink rounded-full hover:bg-coinbase-surface-strong transition-colors md:hidden"
              >
-               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+               <Search className="w-5 h-5" />
              </button>
 
              {/* View Toggle */}
              {currentView === 'browse' && (
                 <div className="flex bg-coinbase-surface-strong rounded-pill p-1 gap-1">
                     <button onClick={() => setViewMode('grid')} className={`p-1.5 lg:p-2 rounded-full transition-all ${viewMode === 'grid' ? 'bg-white shadow-soft text-coinbase-ink' : 'text-coinbase-muted hover:text-coinbase-ink'}`} title="Grid View">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                        <ViewGrid className="w-4 h-4" />
                     </button>
                     <button onClick={() => setViewMode('list')} className={`p-1.5 lg:p-2 rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-soft text-coinbase-ink' : 'text-coinbase-muted hover:text-coinbase-ink'}`} title="List View">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" /></svg>
+                        <List className="w-4 h-4" />
                     </button>
                 </div>
              )}
@@ -343,7 +346,7 @@ const App: React.FC = () => {
         {showMobileSearch && (
           <div className="px-4 py-3 bg-coinbase-canvas border-b border-coinbase-hairline md:hidden shrink-0">
             <div className="relative group">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-coinbase-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-coinbase-muted" />
               <input
                 autoFocus
                 type="text"
@@ -500,7 +503,8 @@ const App: React.FC = () => {
                     </button>
                     {data.assetTypes.map(type => (
                       <button key={type.id} onClick={() => setSelectedType(type.id)} className={`px-4 py-2.5 rounded-pill text-[15px] font-medium transition-all flex items-center gap-2 ${selectedType === type.id ? 'bg-coinbase-ink text-white' : 'bg-coinbase-canvas text-coinbase-body hover:bg-coinbase-surface-strong hover:text-coinbase-ink border border-coinbase-hairline'}`}>
-                        <span className="opacity-70">{type.icon}</span> {type.name}
+                        {getEmojiIcon(type.icon, "w-4 h-4 opacity-70")}
+                        <span>{type.name}</span>
                       </button>
                     ))}
                  </div>

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { Trash, Clock, TransitionRight, CheckCircle, XmarkCircle, Mail, ChatBubble } from 'iconoir-react';
 import { AssetRequest, Brand, AssetType } from '../types';
+import { getEmojiIcon } from './IconHelper';
 
 interface AdminRequestsPanelProps {
   requests: AssetRequest[];
@@ -78,7 +80,7 @@ const AdminRequestsPanel: React.FC<AdminRequestsPanelProps> = ({
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xl">{cfg.icon}</span>
+                {getEmojiIcon(cfg.icon, `w-5 h-5 shrink-0 ${filterStatus === s ? cfg.color : 'text-coinbase-muted'}`)}
                 <span className={`text-[11px] font-bold uppercase tracking-wider ${filterStatus === s ? cfg.color : 'text-coinbase-muted'}`}>{cfg.label}</span>
               </div>
               <p className={`text-3xl font-black ${filterStatus === s ? cfg.color : 'text-coinbase-ink'}`}>{count}</p>
@@ -111,7 +113,14 @@ const AdminRequestsPanel: React.FC<AdminRequestsPanelProps> = ({
                     : 'bg-white border-coinbase-hairline text-coinbase-body hover:bg-coinbase-surface-strong'
                 }`}
               >
-                {s === 'ALL' ? `Semua (${requests.length})` : `${STATUS_CONFIG[s].icon} ${STATUS_CONFIG[s].label}`}
+                {s === 'ALL' ? (
+                  `Semua (${requests.length})`
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    {getEmojiIcon(STATUS_CONFIG[s].icon, "w-3.5 h-3.5")}
+                    <span>{STATUS_CONFIG[s].label}</span>
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -119,8 +128,8 @@ const AdminRequestsPanel: React.FC<AdminRequestsPanelProps> = ({
 
         {/* Request List */}
         {filteredRequests.length === 0 ? (
-          <div className="text-center py-16 text-coinbase-muted">
-            <div className="text-5xl mb-3">📭</div>
+          <div className="text-center py-16 text-coinbase-muted flex flex-col items-center justify-center">
+            <Mail className="w-12 h-12 mb-3 text-coinbase-muted opacity-40" />
             <p className="text-[14px] font-medium">
               {filterStatus === 'ALL' ? 'Belum ada request yang masuk.' : `Tidak ada request dengan status ${STATUS_CONFIG[filterStatus]?.label}.`}
             </p>
@@ -139,8 +148,8 @@ const AdminRequestsPanel: React.FC<AdminRequestsPanelProps> = ({
                 <div key={req.id} className="p-5">
                   <div className="flex items-start gap-4">
                     {/* Status indicator */}
-                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center text-lg shrink-0 ${cfg.bg} ${cfg.border}`}>
-                      {cfg.icon}
+                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${cfg.bg} ${cfg.border}`}>
+                      {getEmojiIcon(cfg.icon, `w-5 h-5 ${cfg.color}`)}
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -163,15 +172,16 @@ const AdminRequestsPanel: React.FC<AdminRequestsPanelProps> = ({
                               </>
                             )}
                             {assetType && (
-                              <span className="px-2 py-0.5 bg-coinbase-surface-strong text-coinbase-ink text-[11px] font-semibold rounded-full">
-                                {assetType.icon} {assetType.name}
+                              <span className="px-2 py-0.5 bg-coinbase-surface-strong text-coinbase-ink text-[11px] font-semibold rounded-full flex items-center gap-1">
+                                {assetType.icon && getEmojiIcon(assetType.icon, "w-3 h-3 opacity-70")}
+                                {assetType.name}
                               </span>
                             )}
                           </div>
                         </div>
 
                         <span className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border ${cfg.bg} ${cfg.border} ${cfg.color}`}>
-                          {cfg.icon} {cfg.label}
+                          {getEmojiIcon(cfg.icon, "w-3.5 h-3.5")} {cfg.label}
                         </span>
                       </div>
 
@@ -199,8 +209,9 @@ const AdminRequestsPanel: React.FC<AdminRequestsPanelProps> = ({
                             ? 'bg-red-50 border-red-200 text-red-800'
                             : 'bg-emerald-50 border-emerald-200 text-emerald-800'
                         }`}>
-                          <span className="font-bold text-[11px] uppercase tracking-wide block mb-1">
-                            {req.status === 'REJECTED' ? '💬 Alasan Penolakan' : '💬 Catatan Admin'}
+                          <span className="font-bold text-[11px] uppercase tracking-wide flex items-center gap-1 mb-1">
+                            <ChatBubble className="w-3.5 h-3.5" />
+                            {req.status === 'REJECTED' ? 'Alasan Penolakan' : 'Catatan Admin'}
                           </span>
                           {req.adminNotes}
                         </div>
@@ -243,36 +254,36 @@ const AdminRequestsPanel: React.FC<AdminRequestsPanelProps> = ({
                             <button
                               onClick={() => handleStatusChange(req.id, 'PENDING')}
                               disabled={isProcessing}
-                              className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-50 transition-colors disabled:opacity-50 flex items-center gap-1"
+                              className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-50 transition-colors disabled:opacity-50 flex items-center gap-1.5"
                             >
-                              🕐 Set Pending
+                              <Clock className="w-3.5 h-3.5" /> Set Pending
                             </button>
                           )}
                           {req.status !== 'IN_PROGRESS' && (
                             <button
                               onClick={() => handleStatusChange(req.id, 'IN_PROGRESS')}
                               disabled={isProcessing}
-                              className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border border-blue-300 text-blue-700 hover:bg-blue-50 transition-colors disabled:opacity-50 flex items-center gap-1"
+                              className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border border-blue-300 text-blue-700 hover:bg-blue-50 transition-colors disabled:opacity-50 flex items-center gap-1.5"
                             >
-                              🔄 Proses
+                              <TransitionRight className="w-3.5 h-3.5" /> Proses
                             </button>
                           )}
                           {req.status !== 'COMPLETED' && (
                             <button
                               onClick={() => handleStatusChange(req.id, 'COMPLETED')}
                               disabled={isProcessing}
-                              className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50 transition-colors disabled:opacity-50 flex items-center gap-1"
+                              className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50 transition-colors disabled:opacity-50 flex items-center gap-1.5"
                             >
-                              ✅ Selesai
+                              <CheckCircle className="w-3.5 h-3.5" /> Selesai
                             </button>
                           )}
                           {req.status !== 'REJECTED' && (
                             <button
                               onClick={() => setRejectingId(req.id)}
                               disabled={isProcessing}
-                              className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 flex items-center gap-1"
+                              className="px-3 py-1.5 text-[12px] font-semibold rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 flex items-center gap-1.5"
                             >
-                              ❌ Tolak
+                              <XmarkCircle className="w-3.5 h-3.5" /> Tolak
                             </button>
                           )}
                           <div className="flex-1" />
@@ -281,9 +292,7 @@ const AdminRequestsPanel: React.FC<AdminRequestsPanelProps> = ({
                             className="p-1.5 rounded-lg text-coinbase-muted hover:text-red-500 hover:bg-red-50 transition-colors"
                             title="Hapus Request"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            <Trash className="w-4 h-4" />
                           </button>
                         </div>
                       )}

@@ -2,6 +2,7 @@
 import { Asset, Brand, AssetType, AboutContent, AssetVersion, AssetRequest, AssetActivity } from '../types';
 import { supabase } from './supabaseClient';
 import { DEFAULT_ABOUT_CONTENT } from '../constants';
+import { extractGoogleDriveFileId } from './metadataService';
 
 const mapAssetActivity = (db: any): AssetActivity => ({
   id: db.id,
@@ -29,6 +30,7 @@ const mapAsset = (dbAsset: any): Asset => ({
   updateIntervalMonths: dbAsset.update_interval_months ?? null,
   nextUpdateDue: dbAsset.next_update_due ?? null,
   fileMetadata: dbAsset.file_metadata ?? null,
+  customThumbnail: dbAsset.custom_thumbnail ?? null,
 });
 
 const mapAssetVersion = (db: any): AssetVersion => ({
@@ -168,6 +170,11 @@ export const upsertAsset = async (asset: Partial<Asset>) => {
     payload.file_metadata = asset.fileMetadata;
   }
 
+  // Include custom thumbnail if provided
+  if (asset.customThumbnail !== undefined) {
+    payload.custom_thumbnail = asset.customThumbnail;
+  }
+
   const { data, error } = await supabase
     .from('assets')
     .upsert(payload)
@@ -190,6 +197,7 @@ export const upsertAssets = async (assets: Asset[]) => {
     status: a.status,
     sort_order: a.sortOrder ?? 0,
     version: a.version ?? 1,
+    custom_thumbnail: a.customThumbnail ?? null,
     updated_at: new Date().toISOString()
   }));
 
@@ -303,9 +311,9 @@ export const deleteAssetType = async (id: string) => {
 export const getPreviewLink = (url: string) => {
   if (!url) return '';
   if (url.includes('drive.google.com')) {
-    const fileIdMatch = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
-    if (fileIdMatch && fileIdMatch[1]) {
-      return `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`;
+    const fileId = extractGoogleDriveFileId(url);
+    if (fileId) {
+      return `https://drive.google.com/file/d/${fileId}/preview`;
     }
   }
   return url;
@@ -315,9 +323,9 @@ export const getDownloadLink = (url: string) => {
   if (!url) return '';
   if (url.startsWith('data:')) return url;
   if (url.includes('drive.google.com')) {
-    const fileIdMatch = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
-    if (fileIdMatch && fileIdMatch[1]) {
-      return `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+    const fileId = extractGoogleDriveFileId(url);
+    if (fileId) {
+      return `https://drive.google.com/uc?export=download&id=${fileId}`;
     }
   }
   return url;
@@ -326,12 +334,13 @@ export const getDownloadLink = (url: string) => {
 export const getThumbnailUrl = (url: string) => {
   if (!url) return null;
   if (url.startsWith('data:image/')) return url;
-  const lowerUrl = url.toLowerCase();
+  const cleanUrl = url.split('?')[0];
+  const lowerUrl = cleanUrl.toLowerCase();
   if (lowerUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/)) return url;
   if (url.includes('drive.google.com')) {
-    const fileIdMatch = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
-    if (fileIdMatch && fileIdMatch[1]) {
-      return `https://drive.google.com/thumbnail?id=${fileIdMatch[1]}&sz=w800`;
+    const fileId = extractGoogleDriveFileId(url);
+    if (fileId) {
+      return `https://lh3.googleusercontent.com/d/${fileId}=w800`;
     }
   }
   return null;
@@ -345,9 +354,10 @@ export const getFileType = (url: string) => {
     if (url.startsWith('data:application/pdf')) return 'pdf';
     return 'file';
   }
-  const lowerUrl = url.toLowerCase();
+  const cleanUrl = url.split('?')[0];
+  const lowerUrl = cleanUrl.toLowerCase();
   if (lowerUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/)) return 'image';
-  if (lowerUrl.match(/\.(mp4|webm|ogg)$/)) return 'video';
+  if (lowerUrl.match(/\.(mp4|webm|ogg|mov|m4v|avi|mkv)$/)) return 'video';
   if (lowerUrl.match(/\.(pdf)$/)) return 'pdf';
   if (lowerUrl.match(/\.(cdr)$/)) return 'cdr'; // Added CDR support
   if (url.includes('drive.google.com')) return 'google-drive';

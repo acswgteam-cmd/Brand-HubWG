@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Page, PageEdit, CheckCircle, WarningTriangle, Mail, ChatBubble, Clock, TransitionRight, XmarkCircle, Upload } from 'iconoir-react';
 import { AssetRequest, Brand, AssetType } from '../types';
 import * as service from '../services/assetService';
+import { getEmojiIcon } from './IconHelper';
 
 interface RequestAssetPanelProps {
   brands: Brand[];
@@ -86,8 +88,8 @@ const RequestAssetPanel: React.FC<RequestAssetPanelProps> = ({ brands, assetType
       {/* Header */}
       <div className="px-4 lg:px-8 pt-6 lg:pt-10 pb-4 lg:pb-6 shrink-0">
         <div className="flex items-center gap-3 mb-1">
-          <div className="w-9 h-9 rounded-xl bg-coinbase-primary/10 text-coinbase-primary flex items-center justify-center text-lg">
-            📋
+          <div className="w-9 h-9 rounded-xl bg-coinbase-primary/10 text-coinbase-primary flex items-center justify-center">
+            <Page className="w-5 h-5" />
           </div>
           <div>
             <h1 className="text-[22px] font-bold text-coinbase-ink tracking-tight">Request Aset</h1>
@@ -104,20 +106,22 @@ const RequestAssetPanel: React.FC<RequestAssetPanelProps> = ({ brands, assetType
           <div className="lg:col-span-5 space-y-5">
             {successMsg && (
               <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-3 animate-fade-in shrink-0">
-                <span className="text-emerald-600 text-lg shrink-0">✅</span>
+                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                 <p className="text-[13px] text-emerald-800 font-medium">{successMsg}</p>
               </div>
             )}
 
             {errorMsg && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-[13px] text-red-700 flex items-center gap-2">
-                <span>⚠️</span> {errorMsg}
+                <WarningTriangle className="w-4 h-4 text-red-600 shrink-0" /> {errorMsg}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="bg-white rounded-xl border border-coinbase-hairline shadow-soft p-6 space-y-5">
-                <h2 className="text-[15px] font-bold text-coinbase-ink border-b border-coinbase-hairline pb-2">✏️ Buat Request</h2>
+                <h2 className="text-[15px] font-bold text-coinbase-ink border-b border-coinbase-hairline pb-2 flex items-center gap-1.5">
+                  <PageEdit className="w-4 h-4 text-coinbase-muted" /> Buat Request
+                </h2>
 
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider">
@@ -211,7 +215,7 @@ const RequestAssetPanel: React.FC<RequestAssetPanelProps> = ({ brands, assetType
                   </>
                 ) : (
                   <>
-                    <span>📤</span> Kirim Request
+                    <Upload className="w-4 h-4" /> Kirim Request
                   </>
                 )}
               </button>
@@ -222,7 +226,7 @@ const RequestAssetPanel: React.FC<RequestAssetPanelProps> = ({ brands, assetType
           <div className="lg:col-span-7 space-y-5 bg-coinbase-surface-soft rounded-xl p-6 border border-coinbase-hairline">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-coinbase-hairline pb-4">
               <h2 className="text-[15px] font-bold text-coinbase-ink flex items-center gap-2">
-                📋 Riwayat Request <span className="text-[12px] bg-coinbase-surface-strong px-2 py-0.5 rounded-full text-coinbase-body font-semibold">{requests.length}</span>
+                <Page className="w-4 h-4 text-coinbase-muted" /> Riwayat Request <span className="text-[12px] bg-coinbase-surface-strong px-2 py-0.5 rounded-full text-coinbase-body font-semibold">{requests.length}</span>
               </h2>
               
               {/* Status Filter */}
@@ -237,11 +241,14 @@ const RequestAssetPanel: React.FC<RequestAssetPanelProps> = ({ brands, assetType
                         : 'bg-white text-coinbase-body border-coinbase-hairline hover:bg-coinbase-surface-strong'
                     }`}
                   >
-                    {s === 'ALL' ? 'Semua' :
-                     s === 'PENDING' ? '🕐 Menunggu' :
-                     s === 'IN_PROGRESS' ? '🔄 Proses' :
-                     s === 'COMPLETED' ? '✅ Selesai' :
-                     '❌ Ditolak'}
+                    {s === 'ALL' ? (
+                      'Semua'
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        {getEmojiIcon(STATUS_CONFIG[s].icon, "w-3 h-3")}
+                        <span>{STATUS_CONFIG[s].label}</span>
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -252,8 +259,8 @@ const RequestAssetPanel: React.FC<RequestAssetPanelProps> = ({ brands, assetType
                 <div className="w-7 h-7 border-2 border-coinbase-surface-strong border-t-coinbase-primary rounded-full animate-spin" />
               </div>
             ) : filteredRequests.length === 0 ? (
-              <div className="text-center py-16 text-coinbase-muted bg-white rounded-xl border border-coinbase-hairline">
-                <div className="text-4xl mb-3">📭</div>
+              <div className="text-center py-16 text-coinbase-muted bg-white rounded-xl border border-coinbase-hairline flex flex-col items-center justify-center">
+                <Mail className="w-12 h-12 mb-3 text-coinbase-muted opacity-40" />
                 <p className="text-[13px] font-medium">Belum ada request{filterStatus !== 'ALL' ? ` dengan status ini` : ''}.</p>
               </div>
             ) : (
@@ -275,7 +282,7 @@ const RequestAssetPanel: React.FC<RequestAssetPanelProps> = ({ brands, assetType
                           </p>
                         </div>
                         <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${cfg.bg} ${cfg.color}`}>
-                          <span>{cfg.icon}</span> {cfg.label}
+                          {getEmojiIcon(cfg.icon, "w-3 h-3")} {cfg.label}
                         </span>
                       </div>
 
@@ -287,7 +294,7 @@ const RequestAssetPanel: React.FC<RequestAssetPanelProps> = ({ brands, assetType
 
                       {req.status === 'REJECTED' && req.adminNotes && (
                         <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-start gap-2">
-                          <span className="text-red-500 text-sm shrink-0">💬</span>
+                          <ChatBubble className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
                           <div>
                             <p className="text-[10px] font-bold text-red-600 uppercase tracking-wide">Alasan Penolakan</p>
                             <p className="text-[12px] text-red-800 font-medium">{req.adminNotes}</p>
@@ -297,7 +304,7 @@ const RequestAssetPanel: React.FC<RequestAssetPanelProps> = ({ brands, assetType
 
                       {req.status === 'COMPLETED' && req.adminNotes && (
                         <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 flex items-start gap-2">
-                          <span className="text-emerald-500 text-sm shrink-0">💬</span>
+                          <ChatBubble className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                           <div>
                             <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wide">Catatan Admin</p>
                             <p className="text-[12px] text-emerald-900 font-medium">{req.adminNotes}</p>

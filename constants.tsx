@@ -43,13 +43,13 @@ export const INITIAL_BRANDS: Brand[] = [
 ];
 
 export const INITIAL_ASSET_TYPES: AssetType[] = [
-  { id: 't1', name: 'Logos', icon: '🎨' },
-  { id: 't2', name: 'Supergraphics', icon: '🖼️' },
-  { id: 't3', name: 'Design templates', icon: '📐' },
-  { id: 't4', name: 'PowerPoint templates', icon: '📊' },
-  { id: 't5', name: 'Videos', icon: '🎥' },
-  { id: 't6', name: 'Company profiles', icon: '📖' },
-  { id: 't7', name: 'Digital channels', icon: '🌐' },
+  { id: 't1', name: 'Logos', icon: 'palette' },
+  { id: 't2', name: 'Supergraphics', icon: 'image' },
+  { id: 't3', name: 'Design templates', icon: 'ruler' },
+  { id: 't4', name: 'PowerPoint templates', icon: 'presentation' },
+  { id: 't5', name: 'Videos', icon: 'video' },
+  { id: 't6', name: 'Company profiles', icon: 'book' },
+  { id: 't7', name: 'Digital channels', icon: 'internet' },
 ];
 
 export const INITIAL_ASSETS: Asset[] = [

@@ -46,6 +46,7 @@ export interface Asset {
   updateIntervalMonths?: number | null;
   nextUpdateDue?: string | null;
   fileMetadata?: AssetFileMetadata | null;
+  customThumbnail?: string | null;
 }
 
 export interface AssetVersion {

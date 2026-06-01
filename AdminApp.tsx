@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { EyeClosed, Eye, ViewGrid, List } from 'iconoir-react';
 import { Asset, Brand, AssetType, AssetRequest } from './types';
 import * as service from './services/assetService';
 import { isSupabaseConfigured, configError } from './services/supabaseClient';
@@ -6,6 +7,8 @@ import AdminPanel from './components/AdminPanel';
 import AssetGrid from './components/AssetGrid';
 import AdminRequestsPanel from './components/AdminRequestsPanel';
 import AssetTimelinePanel from './components/AssetTimelinePanel';
+
+import { getEmojiIcon } from './components/IconHelper';
 
 type AdminViewType = 'dashboard' | 'admin-upload' | 'admin-brands' | 'admin-types' | 'all-assets' | 'admin-drafts' | 'admin-requests';
 
@@ -325,14 +328,9 @@ const AdminApp: React.FC = () => {
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-white transition-colors rounded-md"
                   >
                     {showPassword ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
-                      </svg>
+                      <EyeClosed className="w-5 h-5" />
                     ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
+                      <Eye className="w-5 h-5" />
                     )}
                   </button>
                 </div>
@@ -402,7 +400,7 @@ const AdminApp: React.FC = () => {
             onClick={() => { setCurrentView('dashboard'); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[14px] font-medium transition-colors ${currentView === 'dashboard' ? 'bg-[#0052ff] text-white' : 'text-gray-400 hover:bg-[#16181c] hover:text-white'}`}
           >
-            <span className="text-lg">📊</span>
+            {getEmojiIcon('presentation', 'w-5 h-5 opacity-80 shrink-0')}
             <span>Ringkasan Dashboard</span>
           </button>
 
@@ -410,7 +408,7 @@ const AdminApp: React.FC = () => {
             onClick={() => { setCurrentView('all-assets'); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[14px] font-medium transition-colors ${currentView === 'all-assets' ? 'bg-[#0052ff] text-white' : 'text-gray-400 hover:bg-[#16181c] hover:text-white'}`}
           >
-            <span className="text-lg">📂</span>
+            {getEmojiIcon('folder', 'w-5 h-5 opacity-80 shrink-0')}
             <span>Semua Aset</span>
           </button>
 
@@ -419,7 +417,7 @@ const AdminApp: React.FC = () => {
             className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-[14px] font-medium transition-colors ${currentView === 'admin-drafts' ? 'bg-[#0052ff] text-white' : 'text-gray-400 hover:bg-[#16181c] hover:text-white'}`}
           >
             <div className="flex items-center gap-3">
-              <span className="text-lg">📝</span>
+              {getEmojiIcon('edit', 'w-5 h-5 opacity-80 shrink-0')}
               <span>Aset Draft</span>
             </div>
             {data.assets.filter(a => a.status === 'DRAFT').length > 0 && (
@@ -434,7 +432,7 @@ const AdminApp: React.FC = () => {
             className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-[14px] font-medium transition-colors ${currentView === 'admin-requests' ? 'bg-[#0052ff] text-white' : 'text-gray-400 hover:bg-[#16181c] hover:text-white'}`}
           >
             <div className="flex items-center gap-3">
-              <span className="text-lg">📋</span>
+              {getEmojiIcon('mail', 'w-5 h-5 opacity-80 shrink-0')}
               <span>Kelola Request</span>
             </div>
             {assetRequests.filter(r => r.status === 'PENDING').length > 0 && (
@@ -451,7 +449,7 @@ const AdminApp: React.FC = () => {
             onClick={() => { setCurrentView('admin-upload'); setEditingAsset(null); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[14px] font-medium transition-colors ${currentView === 'admin-upload' && !editingAsset ? 'bg-[#0052ff] text-white' : 'text-gray-400 hover:bg-[#16181c] hover:text-white'}`}
           >
-            <span className="text-lg">➕</span>
+            {getEmojiIcon('plus', 'w-5 h-5 opacity-80 shrink-0')}
             <span>Upload Aset Baru</span>
           </button>
 
@@ -459,7 +457,7 @@ const AdminApp: React.FC = () => {
             onClick={() => { setCurrentView('admin-brands'); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[14px] font-medium transition-colors ${currentView === 'admin-brands' ? 'bg-[#0052ff] text-white' : 'text-gray-400 hover:bg-[#16181c] hover:text-white'}`}
           >
-            <span className="text-lg">🏢</span>
+            {getEmojiIcon('building', 'w-5 h-5 opacity-80 shrink-0')}
             <span>Kelola Entitas (Brands)</span>
           </button>
 
@@ -467,7 +465,7 @@ const AdminApp: React.FC = () => {
             onClick={() => { setCurrentView('admin-types'); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[14px] font-medium transition-colors ${currentView === 'admin-types' ? 'bg-[#0052ff] text-white' : 'text-gray-400 hover:bg-[#16181c] hover:text-white'}`}
           >
-            <span className="text-lg">🏷️</span>
+            {getEmojiIcon('label', 'w-5 h-5 opacity-80 shrink-0')}
             <span>Kelola Tipe/Format</span>
           </button>
         </nav>
@@ -479,14 +477,14 @@ const AdminApp: React.FC = () => {
             target="_blank"
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#16181c] hover:bg-[#22252c] text-white text-[13px] font-semibold transition-colors border border-[#2d3139]"
           >
-            <span>👁️</span>
+            {getEmojiIcon('eye', 'w-4 h-4 shrink-0')}
             <span>Lihat Hub Publik</span>
           </a>
           <button 
             onClick={handleLogout}
             className="w-full py-2.5 px-4 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 text-[13px] font-semibold transition-colors flex items-center justify-center gap-2"
           >
-            <span>🔓</span>
+            {getEmojiIcon('lock', 'w-4 h-4 shrink-0 text-red-500')}
             <span>Keluar (Logout)</span>
           </button>
         </div>
@@ -522,28 +520,36 @@ const AdminApp: React.FC = () => {
               {/* Quick Stats Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="bg-white p-6 rounded-xl border border-coinbase-hairline shadow-soft flex items-center gap-5">
-                  <div className="w-12 h-12 rounded-full bg-[#0052ff]/10 text-[#0052ff] flex items-center justify-center text-2xl">📂</div>
+                  <div className="w-12 h-12 rounded-full bg-[#0052ff]/10 text-[#0052ff] flex items-center justify-center">
+                    {getEmojiIcon('folder', 'w-6 h-6 text-[#0052ff]')}
+                  </div>
                   <div>
                     <h3 className="text-sm font-semibold text-coinbase-muted uppercase tracking-wider">Total Aset</h3>
                     <p className="text-3xl font-bold text-coinbase-ink mt-1">{data.assets.length}</p>
                   </div>
                 </div>
                 <div className="bg-white p-6 rounded-xl border border-coinbase-hairline shadow-soft flex items-center gap-5">
-                  <div className="w-12 h-12 rounded-full bg-purple-500/10 text-purple-600 flex items-center justify-center text-2xl">🏢</div>
+                  <div className="w-12 h-12 rounded-full bg-purple-500/10 text-purple-600 flex items-center justify-center">
+                    {getEmojiIcon('building', 'w-6 h-6 text-purple-600')}
+                  </div>
                   <div>
                     <h3 className="text-sm font-semibold text-coinbase-muted uppercase tracking-wider">Entitas</h3>
                     <p className="text-3xl font-bold text-coinbase-ink mt-1">{data.brands.length}</p>
                   </div>
                 </div>
                 <div className="bg-white p-6 rounded-xl border border-coinbase-hairline shadow-soft flex items-center gap-5">
-                  <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center text-2xl">🏷️</div>
+                  <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                    {getEmojiIcon('label', 'w-6 h-6 text-amber-600')}
+                  </div>
                   <div>
                     <h3 className="text-sm font-semibold text-coinbase-muted uppercase tracking-wider">Format File</h3>
                     <p className="text-3xl font-bold text-coinbase-ink mt-1">{data.assetTypes.length}</p>
                   </div>
                 </div>
                 <div className="bg-white p-6 rounded-xl border border-coinbase-hairline shadow-soft flex items-center gap-5 relative overflow-hidden">
-                  <div className="w-12 h-12 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center text-2xl">📋</div>
+                  <div className="w-12 h-12 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                    {getEmojiIcon('mail', 'w-6 h-6 text-blue-600')}
+                  </div>
                   <div>
                     <h3 className="text-sm font-semibold text-coinbase-muted uppercase tracking-wider">Pending Request</h3>
                     <div className="flex items-center gap-2 mt-1">
@@ -560,7 +566,6 @@ const AdminApp: React.FC = () => {
 
               {/* Action Welcome Area */}
               <div className="bg-gradient-to-r from-[#0052ff] to-[#003ecc] p-8 rounded-xl text-white shadow-soft relative overflow-hidden">
-                <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none text-9xl select-none translate-y-6 translate-x-6">⚙️</div>
                 <div className="relative z-10 max-w-xl">
                   <h2 className="text-2xl font-bold mb-2">Halo Administrator, selamat bekerja!</h2>
                   <p className="text-white/80 font-light mb-6 text-sm">
@@ -571,7 +576,7 @@ const AdminApp: React.FC = () => {
                       + Upload Aset Baru
                     </button>
                     <button onClick={() => setCurrentView('admin-requests')} className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold transition-colors flex items-center gap-2">
-                      📋 Kelola Request Aset
+                      {getEmojiIcon('mail', 'w-4 h-4 text-white')} Kelola Request Aset
                       {assetRequests.filter(r => r.status === 'PENDING').length > 0 && (
                         <span className="w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
                           {assetRequests.filter(r => r.status === 'PENDING').length}
@@ -589,7 +594,7 @@ const AdminApp: React.FC = () => {
                 <div className="bg-white rounded-xl border border-coinbase-hairline shadow-soft p-6 space-y-4">
                   <div className="flex items-center justify-between border-b border-coinbase-hairline pb-3">
                     <h3 className="text-[15px] font-bold text-coinbase-ink flex items-center gap-2">
-                      📋 Summary Request Aset
+                      {getEmojiIcon('mail', 'w-5 h-5 text-coinbase-muted')} Summary Request Aset
                     </h3>
                     <button 
                       onClick={() => setCurrentView('admin-requests')}
@@ -658,7 +663,7 @@ const AdminApp: React.FC = () => {
                     <div className="bg-white rounded-xl border border-coinbase-hairline shadow-soft p-6 space-y-4">
                       <div className="flex items-center justify-between border-b border-coinbase-hairline pb-3">
                         <h3 className="text-[15px] font-bold text-coinbase-ink flex items-center gap-2">
-                          🔔 Jadwal Pembaruan Aset
+                          {getEmojiIcon('bell', 'w-5 h-5 text-coinbase-muted')} Jadwal Pembaruan Aset
                         </h3>
                         <span className="text-[11px] text-coinbase-muted font-semibold">
                           {tracked.length} Aset Terjadwal
@@ -666,17 +671,23 @@ const AdminApp: React.FC = () => {
                       </div>
 
                       <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                        <div className="bg-red-50 border border-red-100 rounded-lg p-2.5">
+                        <div className="bg-red-50 border border-red-100 rounded-lg p-2.5 flex flex-col items-center justify-center">
                           <span className="text-[18px] font-bold text-red-600 block">{superUrgent}</span>
-                          <span className="text-[9px] font-bold text-red-500 uppercase tracking-wide block mt-0.5">🚨 ≤3 Hari</span>
+                          <span className="text-[9px] font-bold text-red-500 uppercase tracking-wide mt-0.5 flex items-center gap-1">
+                            {getEmojiIcon('warning', 'w-3 h-3 text-red-500')} ≤3 Hari
+                          </span>
                         </div>
-                        <div className="bg-orange-50 border border-orange-100 rounded-lg p-2.5">
+                        <div className="bg-orange-50 border border-orange-100 rounded-lg p-2.5 flex flex-col items-center justify-center">
                           <span className="text-[18px] font-bold text-orange-600 block">{urgent}</span>
-                          <span className="text-[9px] font-bold text-orange-500 uppercase tracking-wide block mt-0.5">⚠️ ≤15 Hari</span>
+                          <span className="text-[9px] font-bold text-orange-500 uppercase tracking-wide mt-0.5 flex items-center gap-1">
+                            {getEmojiIcon('warning', 'w-3 h-3 text-orange-500')} ≤15 Hari
+                          </span>
                         </div>
-                        <div className="bg-amber-50 border border-amber-100 rounded-lg p-2.5">
+                        <div className="bg-amber-50 border border-amber-100 rounded-lg p-2.5 flex flex-col items-center justify-center">
                           <span className="text-[18px] font-bold text-amber-600 block">{warning}</span>
-                          <span className="text-[9px] font-bold text-amber-500 uppercase tracking-wide block mt-0.5">📅 ≤30 Hari</span>
+                          <span className="text-[9px] font-bold text-amber-500 uppercase tracking-wide mt-0.5 flex items-center gap-1">
+                            {getEmojiIcon('calendar', 'w-3 h-3 text-amber-500')} ≤30 Hari
+                          </span>
                         </div>
                       </div>
 
@@ -701,8 +712,8 @@ const AdminApp: React.FC = () => {
                     return (
                     <div key={asset.id} className="py-4 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-lg bg-coinbase-surface-strong flex items-center justify-center text-lg shrink-0">
-                          {type?.icon || '📂'}
+                        <div className="w-10 h-10 rounded-lg bg-coinbase-surface-strong flex items-center justify-center shrink-0">
+                          {type?.icon ? getEmojiIcon(type.icon, "w-5 h-5 text-coinbase-muted") : getEmojiIcon('📁', "w-5 h-5 text-coinbase-muted")}
                         </div>
                         <div className="min-w-0">
                           <h4 className="font-semibold text-coinbase-ink text-[14px] truncate">{asset.title}</h4>
@@ -756,7 +767,7 @@ const AdminApp: React.FC = () => {
                 return (
                   <div className="bg-white rounded-xl border border-amber-200 shadow-soft p-6">
                     <div className="flex items-center gap-2 mb-4">
-                      <span className="text-xl">🔔</span>
+                      {getEmojiIcon('bell', 'w-6 h-6 text-amber-500')}
                       <h3 className="text-lg font-bold text-coinbase-ink">Aset Mendekati Jadwal Pembaruan</h3>
                       <span className="ml-auto px-2.5 py-0.5 bg-amber-100 text-amber-700 border border-amber-200 text-[11px] font-bold rounded-full">{dueSoon.length} Aset</span>
                     </div>
@@ -766,11 +777,15 @@ const AdminApp: React.FC = () => {
                         const diffDays = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
                         const brand = data.brands.find(b => b.id === asset.brandId);
                         const urgencyColor = diffDays <= 3 ? 'text-red-600' : diffDays <= 5 ? 'text-orange-600' : diffDays <= 15 ? 'text-amber-600' : 'text-yellow-600';
-                        const urgencyIcon = diffDays <= 3 ? '🚨' : diffDays <= 5 ? '⚠️' : diffDays <= 15 ? '🔔' : '📅';
+                        const urgencyIcon = 
+                          diffDays <= 3 ? getEmojiIcon('warning', 'w-5 h-5 text-red-500 shrink-0') : 
+                          diffDays <= 5 ? getEmojiIcon('warning', 'w-5 h-5 text-orange-500 shrink-0') : 
+                          diffDays <= 15 ? getEmojiIcon('bell', 'w-5 h-5 text-amber-500 shrink-0') : 
+                          getEmojiIcon('calendar', 'w-5 h-5 text-yellow-500 shrink-0');
                         return (
                           <div key={asset.id} className="py-3 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3 min-w-0">
-                              <span className="text-xl shrink-0">{urgencyIcon}</span>
+                              {urgencyIcon}
                               <div className="min-w-0">
                                 <p className="font-semibold text-coinbase-ink text-[14px] truncate">{asset.title}</p>
                                 <p className="text-[12px] text-coinbase-muted">{brand?.name} • v{asset.version ?? 1}</p>
@@ -825,10 +840,10 @@ const AdminApp: React.FC = () => {
                   {/* Grid/List Toggle */}
                   <div className="flex bg-coinbase-surface-strong rounded-pill p-1 gap-1">
                       <button onClick={() => setAdminViewMode('grid')} className={`p-2 rounded-full transition-all ${adminViewMode === 'grid' ? 'bg-white shadow-soft text-coinbase-ink' : 'text-coinbase-muted hover:text-coinbase-ink'}`} title="Grid View">
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                          <ViewGrid className="w-4 h-4" />
                       </button>
                       <button onClick={() => setAdminViewMode('list')} className={`p-2 rounded-full transition-all ${adminViewMode === 'list' ? 'bg-white shadow-soft text-coinbase-ink' : 'text-coinbase-muted hover:text-coinbase-ink'}`} title="List View">
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" /></svg>
+                          <List className="w-4 h-4" />
                       </button>
                   </div>
 

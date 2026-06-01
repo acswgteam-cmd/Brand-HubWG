@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { Xmark, Download, OpenNewWindow, Clock, EditPencil, Trash, Building, Label, Bookmark, Calendar, Lock, WarningTriangle, Cloud, Folder, Link, PageEdit } from 'iconoir-react';
 import { Asset, Brand, AssetType, AssetFileMetadata } from '../types';
+import { getEmojiIcon } from './IconHelper';
 import { getPreviewLink, getFileType, getDownloadLink } from '../services/assetService';
 import VersionHistoryPanel from './VersionHistoryPanel';
 import {
@@ -89,7 +91,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
           {asset.title}
         </h2>
         <button onClick={onClose} className="p-2 hover:bg-coinbase-surface-strong rounded-full transition-colors text-coinbase-muted hover:text-coinbase-ink">
-           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+           <Xmark className="w-5 h-5" />
         </button>
       </div>
 
@@ -123,15 +125,15 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
               case 'cdr':
                 return (
                   <div className="text-center p-8 w-full flex flex-col items-center justify-center">
-                    <div className="text-5xl mb-3 text-coinbase-muted">✏️</div>
+                    <PageEdit className="w-12 h-12 mb-3 text-coinbase-muted" />
                     <h3 className="text-[15px] font-semibold text-coinbase-ink">CorelDraw File</h3>
                     <p className="text-[13px] text-coinbase-body max-w-[200px] mt-2">Browser preview not available. Download to view.</p>
                   </div>
                 );
               default:
                 return (
-                  <div className="text-center p-8">
-                    <div className="text-4xl mb-3 opacity-50 text-coinbase-muted">🔗</div>
+                  <div className="text-center p-8 flex flex-col items-center justify-center">
+                    <Link className="w-12 h-12 mb-3 opacity-50 text-coinbase-muted" />
                     <p className="text-[13px] font-semibold text-coinbase-ink mb-2">External Link</p>
                     <a href={asset.link} target="_blank" rel="noreferrer" className="text-[12px] text-coinbase-primary hover:underline break-all max-w-[200px] inline-block">{asset.link}</a>
                   </div>
@@ -159,7 +161,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
               rel="noopener noreferrer"
               className="flex-1 py-2.5 px-4 bg-coinbase-primary text-white rounded-pill text-[14px] font-semibold hover:bg-coinbase-primary-active transition-colors text-center flex items-center justify-center gap-2"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              <Download className="w-4 h-4" />
               Download
             </a>
             <a 
@@ -169,7 +171,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
               className="px-4 py-2.5 border border-coinbase-hairline text-coinbase-ink rounded-pill hover:bg-coinbase-surface-soft transition-colors flex items-center justify-center"
               title="Open External Link"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+              <OpenNewWindow className="w-4 h-4" />
             </a>
           </div>
 
@@ -179,24 +181,32 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
             
             <div className="space-y-2.5">
               <div className="flex justify-between items-center text-[13px]">
-                <span className="text-coinbase-muted font-medium">🏢 Business & Brands</span>
+                <span className="text-coinbase-muted font-medium flex items-center gap-1.5">
+                  <Building className="w-4 h-4 text-coinbase-muted" /> Business & Brands
+                </span>
                 <span className="font-semibold text-coinbase-ink truncate max-w-[160px]">{brand?.name || '—'}</span>
               </div>
               <div className="flex justify-between items-center text-[13px]">
-                <span className="text-coinbase-muted font-medium">🏷️ Format</span>
-                <span className="font-semibold text-coinbase-ink flex items-center gap-1">
-                  <span className="opacity-70">{assetType?.icon}</span>
+                <span className="text-coinbase-muted font-medium flex items-center gap-1.5">
+                  <Label className="w-4 h-4 text-coinbase-muted" /> Format
+                </span>
+                <span className="font-semibold text-coinbase-ink flex items-center gap-1.5">
+                  {assetType?.icon && getEmojiIcon(assetType.icon, "w-3.5 h-3.5 opacity-70")}
                   {assetType?.name || '—'}
                 </span>
               </div>
               <div className="flex justify-between items-start text-[13px]">
-                <span className="text-coinbase-muted font-medium shrink-0">🔖 Tags</span>
+                <span className="text-coinbase-muted font-medium shrink-0 flex items-center gap-1.5">
+                  <Bookmark className="w-4 h-4 text-coinbase-muted" /> Tags
+                </span>
                 <span className="font-semibold text-coinbase-ink text-right max-w-[180px] truncate" title={asset.tags.join(', ')}>
                   {asset.tags.length > 0 ? asset.tags.join(', ') : '—'}
                 </span>
               </div>
               <div className="flex justify-between items-center text-[13px]">
-                <span className="text-coinbase-muted font-medium">📅 Uploaded date</span>
+                <span className="text-coinbase-muted font-medium flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4 text-coinbase-muted" /> Uploaded date
+                </span>
                 <span className="font-semibold text-coinbase-ink font-mono">
                   {new Date(asset.createdAt).toLocaleDateString()}
                 </span>
@@ -214,9 +224,10 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
                 amber:  'bg-amber-50 border-amber-300 text-amber-800',
                 yellow: 'bg-yellow-50 border-yellow-300 text-yellow-800',
               };
+              const warningColor = diffDays <= 3 ? 'text-red-600' : diffDays <= 5 ? 'text-orange-600' : 'text-amber-600';
               return (
                 <div className={`rounded-xl border px-4 py-3 flex items-start gap-3 ${urgencyStyles[urgency]}`}>
-                  <span className="text-xl shrink-0">{diffDays <= 3 ? '🚨' : diffDays <= 5 ? '⚠️' : '🔔'}</span>
+                  <WarningTriangle className={`w-5 h-5 shrink-0 mt-0.5 ${warningColor}`} />
                   <div>
                     <p className="text-[12px] font-bold uppercase tracking-wide mb-0.5">Jadwal Pembaruan Mendekat</p>
                     <p className="text-[13px]">
@@ -249,9 +260,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-coinbase-primary flex items-center justify-center shrink-0">
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                    <Clock className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -267,7 +276,9 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
             )}
           </div>
               <div className="flex justify-between items-center text-[13px]">
-                <span className="text-coinbase-muted font-medium">🔒 Status</span>
+                <span className="text-coinbase-muted font-medium flex items-center gap-1.5">
+                  <Lock className="w-4 h-4 text-coinbase-muted" /> Status
+                </span>
                 <StatusBadge status={asset.status} />
               </div>
             </div>
@@ -342,8 +353,19 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
                         ? 'bg-[#0052ff]/20 text-[#4d9fff]'
                         : 'bg-white/10 text-gray-300'
                     }`}>
-                      {liveMetadata.source === 'direct' ? '☁️ Direct Upload' :
-                       liveMetadata.source === 'google-drive' ? '📁 Google Drive' : '🔗 External Link'}
+                      {liveMetadata.source === 'direct' ? (
+                        <>
+                          <Cloud className="w-3.5 h-3.5" /> Direct Upload
+                        </>
+                      ) : liveMetadata.source === 'google-drive' ? (
+                        <>
+                          <Folder className="w-3.5 h-3.5" /> Google Drive
+                        </>
+                      ) : (
+                        <>
+                          <Link className="w-3.5 h-3.5" /> External Link
+                        </>
+                      )}
                     </span>
                   </div>
                 </div>
@@ -383,7 +405,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
             onClick={onEdit} 
             className="flex-1 py-2.5 px-4 bg-white border border-coinbase-hairline text-coinbase-ink rounded-pill text-[14px] font-semibold hover:shadow-soft transition-all flex items-center justify-center gap-2"
           >
-            <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+            <EditPencil className="w-4 h-4 opacity-70" />
             Edit Asset
           </button>
           <button 
@@ -391,7 +413,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
             className="px-4 py-2.5 bg-white border border-[#cf202f] text-[#cf202f] rounded-pill hover:bg-[#fff5f5] transition-colors flex items-center justify-center" 
             title="Delete Asset"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            <Trash className="w-4 h-4" />
           </button>
         </div>
       )}

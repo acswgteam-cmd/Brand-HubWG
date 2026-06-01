@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Upload, FloppyDisk, Menu, EditPencil, Trash, PageEdit, Calendar, Eye, Clock, Page, Link, Building, Label, Bookmark, Lock, LightBulb } from 'iconoir-react';
 import { Asset, Brand, AssetType, BrandType, AssetFileMetadata } from '../types';
+import { getEmojiIcon } from './IconHelper';
 import { generateAssetMetadata } from '../services/geminiService';
 import * as service from '../services/assetService';
+import AssetTimelinePanel from './AssetTimelinePanel';
 import {
   extractLocalFileMetadata,
   extractGoogleDriveFileId,
@@ -9,7 +12,33 @@ import {
   detectMetadataFromUrl,
   formatBytes,
 } from '../services/metadataService';
-import AssetTimelinePanel from './AssetTimelinePanel';
+const FORMAT_ICONS = [
+  { key: 'folder', label: 'Folder / Archive' },
+  { key: 'page', label: 'Document / Page' },
+  { key: 'palette', label: 'Palette / Brand Logo' },
+  { key: 'image', label: 'Image / Photography' },
+  { key: 'ruler', label: 'Ruler / Guidelines' },
+  { key: 'presentation', label: 'Presentation / Stats' },
+  { key: 'video', label: 'Video / Animation' },
+  { key: 'book', label: 'Book / Manual' },
+  { key: 'internet', label: 'Web / Internet' }
+];
+
+const normalizeIconKey = (icon: string): string => {
+  const clean = icon.trim();
+  switch (clean) {
+    case '📁': return 'folder';
+    case '📄': return 'page';
+    case '🎨': return 'palette';
+    case '🖼️': return 'image';
+    case '📐': return 'ruler';
+    case '📊': return 'presentation';
+    case '🎥': return 'video';
+    case '📖': return 'book';
+    case '🌐': return 'internet';
+    default: return clean.toLowerCase();
+  }
+};
 
 interface AdminPanelProps {
   brands: Brand[];
@@ -61,6 +90,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     changelog: '',
     updateIntervalMonths: null as number | null,
     nextUpdateDue: null as string | null,
+    customThumbnail: null as string | null,
   });
   
   const [tagInput, setTagInput] = useState('');
@@ -76,7 +106,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const [newBrandType, setNewBrandType] = useState<BrandType>('UNIT');
   const [newBrandLogo, setNewBrandLogo] = useState('');
   const [newTypeName, setNewTypeName] = useState('');
-  const [newTypeIcon, setNewTypeIcon] = useState('📁');
+  const [newTypeIcon, setNewTypeIcon] = useState('folder');
+  const [isNewIconDropdownOpen, setIsNewIconDropdownOpen] = useState(false);
+  const [isEditIconDropdownOpen, setIsEditIconDropdownOpen] = useState(false);
   
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -107,6 +139,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         changelog: '',
         updateIntervalMonths: editingAsset.updateIntervalMonths ?? null,
         nextUpdateDue: editingAsset.nextUpdateDue ?? null,
+        customThumbnail: editingAsset.customThumbnail ?? null,
       });
       setFileMetadata(editingAsset.fileMetadata ?? null);
       if (editingAsset.link.startsWith('data:')) {
@@ -129,6 +162,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             changelog: '',
             updateIntervalMonths: null,
             nextUpdateDue: null,
+            customThumbnail: null,
         });
         setFileMetadata(null);
     }
@@ -210,6 +244,44 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     const meta = await fetchGoogleDriveMetadata(fileId);
     setFileMetadata(meta);
     setIsFetchingMeta(false);
+  };
+
+  const handleCustomThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Ukuran gambar maksimal 5MB.");
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxW = 600;
+        const maxH = 400;
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxW || height > maxH) {
+          const ratio = Math.min(maxW / width, maxH / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const webpDataUrl = canvas.toDataURL('image/webp', 0.85);
+          setFormData(prev => ({ ...prev, customThumbnail: webpDataUrl }));
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDragStart = (index: number) => setDraggedIndex(index);
@@ -335,7 +407,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                     className="w-full h-32 border border-dashed border-coinbase-hairline rounded-lg flex flex-col items-center justify-center bg-coinbase-canvas hover:bg-coinbase-surface-soft transition-all cursor-pointer group mt-1"
                   >
                     <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-                    <svg className="w-7 h-7 text-coinbase-muted mb-2 group-hover:text-coinbase-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4 4m0 0L8 8m4-4v12" /></svg>
+                    <Upload className="w-7 h-7 text-coinbase-muted mb-2 group-hover:text-coinbase-primary transition-colors" />
                     <span className="text-[12px] font-medium text-coinbase-muted group-hover:text-coinbase-primary transition-colors">
                       {isUploading ? 'Converting to local asset...' : formData.link.startsWith('data:') ? 'Local File Loaded successfully' : 'Click to select local file'}
                     </span>
@@ -359,8 +431,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider">Status</label>
                   <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as 'PUBLISHED' | 'DRAFT'})} className="w-full px-3 py-2.5 bg-coinbase-canvas border border-coinbase-hairline rounded-lg outline-none text-[13px] font-medium focus:border-coinbase-primary transition-colors font-medium">
-                    <option value="PUBLISHED">🟢 Published</option>
-                    <option value="DRAFT">🟡 Draft</option>
+                    <option value="PUBLISHED">Published</option>
+                    <option value="DRAFT">Draft</option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
@@ -379,8 +451,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               {/* Changelog (shown when version is incremented) */}
               {formData.version > (editingAsset?.version ?? 1) && (
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider flex items-center gap-1">
-                    📝 Changelog
+                  <label className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider flex items-center gap-1.5">
+                    <PageEdit className="w-3.5 h-3.5 text-coinbase-muted" /> Changelog
                     <span className="text-red-500 font-bold">*</span>
                     <span className="text-coinbase-muted font-normal normal-case ml-1">(wajib diisi saat menaikkan versi)</span>
                   </label>
@@ -396,7 +468,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 
               {/* Update Schedule */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider">🗓️ Jadwal Pembaruan</label>
+                <label className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-coinbase-muted" /> Jadwal Pembaruan
+                </label>
                 <select
                   value={formData.updateIntervalMonths ?? ''}
                   onChange={e => {
@@ -490,6 +564,53 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                  )}
               </div>
 
+              {/* Custom WebP Thumbnail Section */}
+              <div className="bg-coinbase-surface-soft border border-coinbase-hairline rounded-xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider">Custom Thumbnail</label>
+                  {formData.customThumbnail && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, customThumbnail: null }))}
+                      className="text-[11px] font-bold text-red-500 hover:text-red-700 transition-colors uppercase tracking-wider"
+                    >
+                      Hapus Thumbnail
+                    </button>
+                  )}
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                  <input
+                    type="file"
+                    id="custom-thumbnail-file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleCustomThumbnailChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('custom-thumbnail-file')?.click()}
+                    className="w-full sm:w-auto px-4 py-2.5 bg-white border border-coinbase-hairline text-coinbase-ink hover:bg-coinbase-surface-soft text-[13px] font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    {formData.customThumbnail ? 'Ganti Thumbnail' : 'Upload Thumbnail'}
+                  </button>
+                  
+                  {formData.customThumbnail ? (
+                    <div className="w-20 h-15 rounded border border-coinbase-hairline overflow-hidden bg-white shrink-0 shadow-soft">
+                      <img src={formData.customThumbnail} className="w-full h-full object-cover" alt="Custom Thumbnail Preview" />
+                    </div>
+                  ) : (
+                    <span className="text-[12px] text-coinbase-muted font-medium italic">Menggunakan default preview aset</span>
+                  )}
+                </div>
+                
+                <p className="text-[11px] text-[#0052ff] font-medium flex items-start gap-1.5 leading-relaxed">
+                  <LightBulb className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>Arahan ukuran: Gunakan gambar dengan resolusi minimal <strong>600x400 piksel (Rasio 3:2)</strong>. Gambar yang diunggah akan otomatis di-convert menjadi <strong>.webp</strong> agar sangat hemat penyimpanan storage.</span>
+                </p>
+              </div>
+
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between mb-0.5">
                   <label className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider">Description</label>
@@ -513,7 +634,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 disabled={isUploading}
                 className="w-full py-2.5 px-4 bg-coinbase-primary text-white hover:bg-coinbase-primary-active font-semibold rounded-lg text-[14px] transition-colors flex items-center justify-center gap-2 shadow-soft disabled:opacity-50"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2h-3" /></svg>
+                <FloppyDisk className="w-4 h-4" />
                 {editingAsset ? 'Save Changes' : 'Upload Asset'}
               </button>
             </div>
@@ -530,7 +651,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       : 'border-transparent text-coinbase-muted hover:text-coinbase-ink'
                   }`}
                 >
-                  👁️ Preview Berkas
+                  <span className="flex items-center justify-center gap-1.5"><Eye className="w-3.5 h-3.5" /> Preview Berkas</span>
                 </button>
                 <button
                   type="button"
@@ -541,7 +662,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       : 'border-transparent text-coinbase-muted hover:text-coinbase-ink'
                   }`}
                 >
-                  🕒 Timeline Riwayat
+                  <span className="flex items-center justify-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Timeline Riwayat</span>
                 </button>
               </div>
             )}
@@ -561,15 +682,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       if (!formData.link) {
                         return (
                           <div className="text-center py-10 px-6 text-coinbase-muted flex flex-col items-center gap-2">
-                            <span className="text-3xl">📄</span>
+                            <Page className="w-8 h-8 opacity-40 text-coinbase-muted" />
                             <span className="text-xs">No media provided. Upload a file or insert a link URL.</span>
                           </div>
                         );
                       }
 
-                      const fileType = service.getFileType(formData.link);
+                      const fileType = formData.customThumbnail ? 'image' : service.getFileType(formData.link);
                       const previewUrl = service.getPreviewLink(formData.link);
-                      const thumbnailUrl = service.getThumbnailUrl(formData.link) || previewUrl;
+                      const thumbnailUrl = formData.customThumbnail || service.getThumbnailUrl(formData.link) || previewUrl;
 
                       switch (fileType) {
                         case 'image':
@@ -596,7 +717,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         default:
                           return (
                             <div className="text-center py-8 px-6 text-coinbase-muted flex flex-col items-center gap-2">
-                              <span className="text-3xl">🔗</span>
+                              <Link className="w-8 h-8 opacity-40 text-coinbase-muted" />
                               <span className="text-[13px] font-semibold text-coinbase-ink">Link Eksternal</span>
                               <a href={formData.link} target="_blank" rel="noreferrer" className="text-[12px] text-coinbase-primary hover:underline break-all max-w-[240px]">{formData.link}</a>
                             </div>
@@ -678,37 +799,49 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                   
                   <div className="space-y-3">
                     <div className="flex justify-between text-[13px]">
-                      <span className="text-coinbase-muted font-medium">🏢 Business & Brands</span>
+                      <span className="text-coinbase-muted font-medium flex items-center gap-1.5">
+                        <Building className="w-4 h-4 text-coinbase-muted" /> Business & Brands
+                      </span>
                       <span className="font-semibold text-coinbase-ink truncate max-w-[200px]">
                         {brands.find(b => b.id === formData.brandId)?.name || 'Not Selected'}
                       </span>
                     </div>
                     <div className="flex justify-between text-[13px]">
-                      <span className="text-coinbase-muted font-medium">🏷️ Format</span>
+                      <span className="text-coinbase-muted font-medium flex items-center gap-1.5">
+                        <Label className="w-4 h-4 text-coinbase-muted" /> Format
+                      </span>
                       <span className="font-semibold text-coinbase-ink">
                         {assetTypes.find(t => t.id === formData.typeId)?.name || 'Not Selected'}
                       </span>
                     </div>
                     <div className="flex justify-between text-[13px]">
-                      <span className="text-coinbase-muted font-medium">🏷️ Tags</span>
+                      <span className="text-coinbase-muted font-medium flex items-center gap-1.5">
+                        <Bookmark className="w-4 h-4 text-coinbase-muted" /> Tags
+                      </span>
                       <span className="font-semibold text-coinbase-ink truncate max-w-[200px]" title={formData.tags.join(', ')}>
                         {formData.tags.join(', ') || '-'}
                       </span>
                     </div>
                     <div className="flex justify-between text-[13px]">
-                      <span className="text-coinbase-muted font-medium">📅 Uploaded date</span>
+                      <span className="text-coinbase-muted font-medium flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4 text-coinbase-muted" /> Uploaded date
+                      </span>
                       <span className="font-semibold text-coinbase-ink font-mono">
                         {editingAsset ? new Date(editingAsset.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}
                       </span>
                     </div>
                     <div className="flex justify-between text-[13px]">
-                      <span className="text-coinbase-muted font-medium">🔖 Version</span>
+                      <span className="text-coinbase-muted font-medium flex items-center gap-1.5">
+                        <Bookmark className="w-4 h-4 text-coinbase-muted" /> Version
+                      </span>
                       <span className="px-2 py-0.5 bg-coinbase-primary/10 text-coinbase-primary border border-coinbase-primary/20 rounded-full text-[11px] font-bold font-mono">
                         v{formData.version}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-[13px]">
-                      <span className="text-coinbase-muted font-medium">🔒 Status</span>
+                      <span className="text-coinbase-muted font-medium flex items-center gap-1.5">
+                        <Lock className="w-4 h-4 text-coinbase-muted" /> Status
+                      </span>
                       {formData.status === 'DRAFT' ? (
                         <span className="px-2.5 py-0.5 bg-[#fef5e7] text-[#b7791f] border border-[#fbd38d] rounded-full text-[11px] font-bold">Draft</span>
                       ) : (
@@ -723,7 +856,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             {/* Tips Section */}
             <div className="bg-[#f7f8fa] border border-coinbase-hairline rounded-xl p-4 space-y-3">
               <h4 className="text-[11px] font-bold text-coinbase-ink flex items-center gap-1.5 uppercase tracking-wider">
-                <span>💡</span> Tips for better assets
+                <LightBulb className="w-3.5 h-3.5 text-coinbase-primary shrink-0" /> Tips for better assets
               </h4>
               <ul className="space-y-2 text-[12px] text-coinbase-body font-medium">
                 <li className="flex items-center gap-2 text-green-600">
@@ -774,8 +907,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                     <span className="text-[12px] text-coinbase-muted font-medium italic">Default: Mengambil dari salah satu aset entitas</span>
                   )}
                 </div>
-                <p className="text-[11px] text-[#0052ff] font-medium mt-1">
-                  💡 Arahan ukuran: Gunakan gambar dengan resolusi minimal <strong>400x300 piksel (Rasio 4:3)</strong> untuk tampilan kartu yang optimal. Ukuran berkas maksimal 2MB.
+                <p className="text-[11px] text-[#0052ff] font-medium mt-1 flex items-center gap-1.5">
+                  <LightBulb className="w-3.5 h-3.5 shrink-0" /> <span>Arahan ukuran: Gunakan gambar dengan resolusi minimal <strong>400x300 piksel (Rasio 4:3)</strong> untuk tampilan kartu yang optimal. Ukuran berkas maksimal 2MB.</span>
                 </p>
               </div>
             </div>
@@ -821,8 +954,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                               <span className="text-[11px] text-coinbase-muted font-medium italic">Default: Mengambil dari salah satu aset entitas</span>
                             )}
                           </div>
-                          <p className="text-[11px] text-[#0052ff] font-medium">
-                            💡 Arahan ukuran: Minimal <strong>400x300 piksel (Rasio 4:3)</strong> untuk tampilan kartu yang optimal. Ukuran berkas maksimal 2MB.
+                          <p className="text-[11px] text-[#0052ff] font-medium flex items-center gap-1.5">
+                            <LightBulb className="w-3.5 h-3.5 shrink-0" /> <span>Arahan ukuran: Minimal <strong>400x300 piksel (Rasio 4:3)</strong> untuk tampilan kartu yang optimal. Ukuran berkas maksimal 2MB.</span>
                           </p>
                         </div>
 
@@ -834,7 +967,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                   ) : (
                       <div className="w-full flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="text-coinbase-muted group-hover:text-coinbase-ink transition-colors cursor-grab"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg></div>
+                          <div className="text-coinbase-muted group-hover:text-coinbase-ink transition-colors cursor-grab"><Menu className="w-5 h-5" /></div>
                           {brand.logo ? (
                             <div className="w-8 h-8 rounded border border-coinbase-hairline overflow-hidden bg-white flex items-center justify-center shrink-0">
                               <img src={brand.logo} className="w-full h-full object-cover" alt="Brand Logo" />
@@ -849,9 +982,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         </div>
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             {!editingItemId && (
-                                <button onClick={() => { setEditingItemId(brand.id); setEditBuffer(brand); }} className="p-2 text-coinbase-muted hover:text-coinbase-primary hover:bg-coinbase-surface-soft transition-colors rounded-full"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                                <button onClick={() => { setEditingItemId(brand.id); setEditBuffer(brand); }} className="p-2 text-coinbase-muted hover:text-coinbase-primary hover:bg-coinbase-surface-soft transition-colors rounded-full"><EditPencil className="w-5 h-5" /></button>
                             )}
-                            <button onClick={() => confirm(`Delete ${brand.name}?`) && onDeleteBrand(brand.id)} className="p-2 text-coinbase-muted hover:text-ship-red hover:bg-[#fff5f5] transition-colors rounded-full"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                            <button onClick={() => confirm(`Delete ${brand.name}?`) && onDeleteBrand(brand.id)} className="p-2 text-coinbase-muted hover:text-ship-red hover:bg-[#fff5f5] transition-colors rounded-full"><Trash className="w-5 h-5" /></button>
                         </div>
                       </div>
                   )}
@@ -864,8 +997,38 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         <div className="bg-white rounded-xl border border-coinbase-hairline shadow-soft overflow-hidden">
           <div className="p-8 lg:p-10 space-y-8">
              <h2 className="text-[24px] font-semibold text-coinbase-ink">Manage Formats</h2>
-            <div className="bg-coinbase-surface-soft p-4 rounded-xl border border-coinbase-hairline flex gap-3">
-              <input value={newTypeIcon} onChange={e => setNewTypeIcon(e.target.value)} className="w-14 px-3 py-3 bg-white border border-coinbase-hairline rounded-md text-center text-[18px] outline-none focus:border-coinbase-primary transition-colors" />
+            <div className="bg-coinbase-surface-soft p-4 rounded-xl border border-coinbase-hairline flex gap-3 z-10 relative">
+              <div className="relative">
+                <button 
+                  type="button"
+                  onClick={() => setIsNewIconDropdownOpen(!isNewIconDropdownOpen)}
+                  className="w-14 h-12 bg-white border border-coinbase-hairline rounded-md flex items-center justify-center text-center outline-none focus:border-coinbase-primary hover:bg-coinbase-surface-soft transition-all"
+                  title="Pilih Icon"
+                >
+                  {getEmojiIcon(newTypeIcon, "w-6 h-6 text-coinbase-muted") || <Page className="w-6 h-6 text-coinbase-muted" />}
+                </button>
+                {isNewIconDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsNewIconDropdownOpen(false)} />
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-coinbase-hairline rounded-lg shadow-soft py-1.5 z-50 min-w-[200px] max-h-60 overflow-y-auto">
+                      {FORMAT_ICONS.map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => {
+                            setNewTypeIcon(item.key);
+                            setIsNewIconDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-coinbase-surface-soft transition-colors text-[14px] text-left font-medium ${normalizeIconKey(newTypeIcon) === item.key ? 'text-coinbase-primary bg-coinbase-primary/5' : 'text-coinbase-body'}`}
+                        >
+                          {getEmojiIcon(item.key, "w-4 h-4 shrink-0 text-coinbase-muted")}
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
               <input value={newTypeName} onChange={e => setNewTypeName(e.target.value)} placeholder="New Format Name" className="flex-1 px-4 py-3 bg-white border border-coinbase-hairline rounded-md text-[15px] outline-none focus:border-coinbase-primary transition-colors placeholder:text-coinbase-muted" />
               <button onClick={() => { if(newTypeName){ onAddAssetType({id:'', name:newTypeName, icon:newTypeIcon, sortOrder: assetTypes.length}); setNewTypeName(''); } }} className="px-8 py-3 bg-coinbase-primary text-white text-[15px] font-semibold rounded-pill hover:bg-coinbase-primary-active transition-colors">Add</button>
             </div>
@@ -874,12 +1037,38 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               {assetTypes.map((type, index) => (
                 <div key={type.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index, 'types')} className={`flex items-center justify-between p-4 bg-white border border-coinbase-hairline rounded-xl cursor-move group transition-all ${draggedIndex === index ? 'opacity-50 scale-[0.99]' : 'hover:shadow-soft'}`}>
                   {editingItemId === type.id ? (
-                     <div className="flex-1 flex gap-3 mr-3">
-                        <input 
-                          value={editBuffer.icon} 
-                          onChange={(e) => setEditBuffer({...editBuffer, icon: e.target.value})}
-                          className="w-14 px-3 py-2 bg-coinbase-canvas border border-coinbase-hairline rounded-md text-center text-[18px] outline-none focus:border-coinbase-primary"
-                        />
+                     <div className="flex-1 flex gap-3 mr-3 items-center">
+                        <div className="relative">
+                          <button 
+                            type="button"
+                            onClick={() => setIsEditIconDropdownOpen(!isEditIconDropdownOpen)}
+                            className="w-14 h-10 bg-white border border-coinbase-hairline rounded-md flex items-center justify-center text-center outline-none focus:border-coinbase-primary hover:bg-coinbase-surface-soft transition-all"
+                            title="Pilih Icon"
+                          >
+                            {getEmojiIcon(editBuffer.icon, "w-5 h-5 text-coinbase-muted") || <Page className="w-5 h-5 text-coinbase-muted" />}
+                          </button>
+                          {isEditIconDropdownOpen && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setIsEditIconDropdownOpen(false)} />
+                              <div className="absolute top-full left-0 mt-1 bg-white border border-coinbase-hairline rounded-lg shadow-soft py-1.5 z-50 min-w-[200px] max-h-60 overflow-y-auto">
+                                {FORMAT_ICONS.map(item => (
+                                  <button
+                                    key={item.key}
+                                    type="button"
+                                    onClick={() => {
+                                      setEditBuffer({ ...editBuffer, icon: item.key });
+                                      setIsEditIconDropdownOpen(false);
+                                    }}
+                                    className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-coinbase-surface-soft transition-colors text-[14px] text-left font-medium ${normalizeIconKey(editBuffer.icon) === item.key ? 'text-coinbase-primary bg-coinbase-primary/5' : 'text-coinbase-body'}`}
+                                  >
+                                    {getEmojiIcon(item.key, "w-4 h-4 shrink-0 text-coinbase-muted")}
+                                    <span>{item.label}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
                         <input 
                           value={editBuffer.name} 
                           onChange={(e) => setEditBuffer({...editBuffer, name: e.target.value})}
@@ -890,15 +1079,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                      </div>
                   ) : (
                       <div className="flex items-center gap-4">
-                        <div className="text-coinbase-muted group-hover:text-coinbase-ink transition-colors cursor-grab"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg></div>
-                        <div className="flex-1 flex items-center gap-3"><span className="text-[20px]">{type.icon}</span><span className="text-[16px] font-medium text-coinbase-ink">{type.name}</span></div>
+                        <div className="text-coinbase-muted group-hover:text-coinbase-ink transition-colors cursor-grab"><Menu className="w-5 h-5" /></div>
+                        <div className="flex-1 flex items-center gap-3">
+                          <span className="text-[20px] flex items-center shrink-0">
+                            {getEmojiIcon(type.icon, "w-5 h-5 text-coinbase-muted") || <Page className="w-5 h-5 text-coinbase-muted" />}
+                          </span>
+                          <span className="text-[16px] font-medium text-coinbase-ink">{type.name}</span>
+                        </div>
                       </div>
                   )}
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       {!editingItemId && (
-                          <button onClick={() => { setEditingItemId(type.id); setEditBuffer(type); }} className="p-2 text-coinbase-muted hover:text-coinbase-primary hover:bg-coinbase-surface-soft transition-colors rounded-full"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                          <button onClick={() => { setEditingItemId(type.id); setEditBuffer(type); }} className="p-2 text-coinbase-muted hover:text-coinbase-primary hover:bg-coinbase-surface-soft transition-colors rounded-full"><EditPencil className="w-5 h-5" /></button>
                       )}
-                      <button onClick={() => confirm(`Delete ${type.name}?`) && onDeleteAssetType(type.id)} className="p-2 text-coinbase-muted hover:text-ship-red hover:bg-[#fff5f5] transition-colors rounded-full"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                      <button onClick={() => confirm(`Delete ${type.name}?`) && onDeleteAssetType(type.id)} className="p-2 text-coinbase-muted hover:text-ship-red hover:bg-[#fff5f5] transition-colors rounded-full"><Trash className="w-5 h-5" /></button>
                   </div>
                 </div>
               ))}

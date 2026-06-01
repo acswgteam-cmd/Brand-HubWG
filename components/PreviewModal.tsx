@@ -1,7 +1,9 @@
 
 import React, { useRef, useEffect } from 'react';
+import { Xmark, Download, OpenNewWindow, Link, Building, Label, Calendar } from 'iconoir-react';
 import { Asset, Brand, AssetType } from '../types';
 import { getPreviewLink, getFileType, getDownloadLink } from '../services/assetService';
+import { getEmojiIcon } from './IconHelper';
 
 interface PreviewModalProps {
   asset: Asset | null;
@@ -72,9 +74,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, brands = [], assetTy
             onClick={onClose}
             className="p-2 bg-coinbase-surface-soft hover:bg-coinbase-surface-strong rounded-full text-coinbase-muted hover:text-coinbase-ink transition-all shrink-0"
           >
-            <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <Xmark className="w-5 h-5 lg:w-6 lg:h-6" />
           </button>
         </div>
         
@@ -102,8 +102,8 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, brands = [], assetTy
                 );
               default:
                 return (
-                  <div className="p-12 lg:p-16 text-center bg-white rounded-xl m-6 border border-coinbase-hairline shadow-soft">
-                    <div className="text-4xl lg:text-5xl mb-5 opacity-30">🔗</div>
+                  <div className="p-12 lg:p-16 text-center bg-white rounded-xl m-6 border border-coinbase-hairline shadow-soft flex flex-col items-center justify-center">
+                    <Link className="w-12 h-12 lg:w-16 lg:h-16 mb-5 opacity-30 text-coinbase-muted" />
                     <h3 className="text-[18px] font-semibold text-coinbase-ink mb-3">No Preview Available</h3>
                     <p className="text-coinbase-muted mb-6 max-w-sm mx-auto text-[14px]">This asset can be viewed by opening or downloading via the links below.</p>
                     <a 
@@ -128,20 +128,20 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, brands = [], assetTy
             <div className="flex flex-wrap gap-4 text-[13px]">
               {brand && (
                 <div className="flex items-center gap-1.5">
-                  <span className="text-coinbase-muted font-medium">🏢</span>
+                  <Building className="w-4 h-4 text-coinbase-muted" />
                   <span className="font-semibold text-coinbase-ink">{brand.name}</span>
                 </div>
               )}
               {assetType && (
                 <div className="flex items-center gap-1.5">
-                  <span className="text-coinbase-muted font-medium">🏷️</span>
-                  <span className="font-semibold text-coinbase-ink flex items-center gap-1">
-                    <span>{assetType.icon}</span> {assetType.name}
+                  <Label className="w-4 h-4 text-coinbase-muted" />
+                  <span className="font-semibold text-coinbase-ink flex items-center gap-1.5">
+                    {assetType.icon && getEmojiIcon(assetType.icon, "w-3.5 h-3.5 opacity-70")} <span>{assetType.name}</span>
                   </span>
                 </div>
               )}
               <div className="flex items-center gap-1.5">
-                <span className="text-coinbase-muted font-medium">📅</span>
+                <Calendar className="w-4 h-4 text-coinbase-muted" />
                 <span className="font-semibold text-coinbase-ink font-mono">{new Date(asset.createdAt).toLocaleDateString()}</span>
               </div>
               {(asset.version ?? 1) > 0 && (
@@ -183,7 +183,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, brands = [], assetTy
               onClick={() => onDownload && onDownload(asset)}
               className="inline-flex items-center gap-2 px-6 py-2.5 bg-coinbase-primary text-white font-semibold text-[14px] rounded-pill hover:bg-coinbase-primary-active transition-colors shadow-soft"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              <Download className="w-4 h-4" />
               Download
             </a>
             <a 
@@ -192,7 +192,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, brands = [], assetTy
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-coinbase-surface-strong text-coinbase-ink font-semibold text-[14px] rounded-pill hover:bg-coinbase-hairline transition-all border border-coinbase-hairline"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+              <OpenNewWindow className="w-4 h-4" />
               Open
             </a>
           </div>
