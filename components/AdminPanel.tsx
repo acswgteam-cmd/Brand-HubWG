@@ -116,6 +116,95 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const [fileMetadata, setFileMetadata] = useState<AssetFileMetadata | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // States to track drag over
+  const [isDragOverAsset, setIsDragOverAsset] = useState(false);
+  const [isDragOverThumbnail, setIsDragOverThumbnail] = useState(false);
+
+  // Process Asset File (direct upload / drag-drop)
+  const processAssetFile = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size exceeds 5MB limit.");
+      return;
+    }
+    setIsUploading(true);
+
+    // Extract real metadata BEFORE converting to base64
+    const meta = await extractLocalFileMetadata(file);
+    setFileMetadata(meta);
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setFormData(prev => ({ ...prev, link: base64 }));
+      setIsUploading(false);
+      if (!formData.title) setFormData(prev => ({ ...prev, title: file.name.split('.')[0] }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Process Thumbnail File (upload / drag-drop / paste)
+  const processThumbnailFile = (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Ukuran gambar maksimal 5MB.");
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxW = 600;
+        const maxH = 400;
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxW || height > maxH) {
+          const ratio = Math.min(maxW / width, maxH / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const webpDataUrl = canvas.toDataURL('image/webp', 0.85);
+          setFormData(prev => ({ ...prev, customThumbnail: webpDataUrl }));
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Paste Event Listener for Custom Thumbnail
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (activeView !== 'admin-upload') return;
+      
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            e.preventDefault();
+            processThumbnailFile(file);
+            break;
+          }
+        }
+      }
+    };
+    
+    window.addEventListener('paste', handlePaste);
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+    };
+  }, [activeView]);
+
   // Extract all unique tags in the system to present as suggestion pills
   const popularSystemTags = useMemo(() => {
     const allTags = assets.flatMap(a => a.tags || []);
@@ -191,25 +280,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert("File size exceeds 5MB limit.");
-      return;
-    }
-    setIsUploading(true);
-
-    // Extract real metadata BEFORE converting to base64
-    const meta = await extractLocalFileMetadata(file);
-    setFileMetadata(meta);
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      setFormData(prev => ({ ...prev, link: base64 }));
-      setIsUploading(false);
-      if (!formData.title) setFormData(prev => ({ ...prev, title: file.name.split('.')[0] }));
-    };
-    reader.readAsDataURL(file);
+    if (file) await processAssetFile(file);
   };
 
   const handleBrandLogoChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
@@ -248,40 +319,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleCustomThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Ukuran gambar maksimal 5MB.");
-      return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const maxW = 600;
-        const maxH = 400;
-        let width = img.width;
-        let height = img.height;
-        
-        if (width > maxW || height > maxH) {
-          const ratio = Math.min(maxW / width, maxH / height);
-          width = Math.round(width * ratio);
-          height = Math.round(height * ratio);
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const webpDataUrl = canvas.toDataURL('image/webp', 0.85);
-          setFormData(prev => ({ ...prev, customThumbnail: webpDataUrl }));
-        }
-      };
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+    if (file) processThumbnailFile(file);
   };
 
   const handleDragStart = (index: number) => setDraggedIndex(index);
@@ -404,12 +442,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 ) : (
                   <div 
                     onClick={() => fileInputRef.current?.click()} 
-                    className="w-full h-32 border border-dashed border-coinbase-hairline rounded-lg flex flex-col items-center justify-center bg-coinbase-canvas hover:bg-coinbase-surface-soft transition-all cursor-pointer group mt-1"
+                    onDragOver={(e) => { e.preventDefault(); setIsDragOverAsset(true); }}
+                    onDragLeave={() => setIsDragOverAsset(false)}
+                    onDrop={(e) => { e.preventDefault(); setIsDragOverAsset(false); const file = e.dataTransfer.files?.[0]; if (file) { processAssetFile(file); } }}
+                    className={`w-full h-32 border border-dashed rounded-lg flex flex-col items-center justify-center transition-all cursor-pointer group mt-1 ${isDragOverAsset ? 'border-coinbase-primary bg-coinbase-primary/5 ring-2 ring-coinbase-primary/20' : 'border-coinbase-hairline bg-coinbase-canvas hover:bg-coinbase-surface-soft'}`}
                   >
                     <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-                    <Upload className="w-7 h-7 text-coinbase-muted mb-2 group-hover:text-coinbase-primary transition-colors" />
-                    <span className="text-[12px] font-medium text-coinbase-muted group-hover:text-coinbase-primary transition-colors">
-                      {isUploading ? 'Converting to local asset...' : formData.link.startsWith('data:') ? 'Local File Loaded successfully' : 'Click to select local file'}
+                    <Upload className={`w-7 h-7 mb-2 transition-colors ${isDragOverAsset ? 'text-coinbase-primary' : 'text-coinbase-muted group-hover:text-coinbase-primary'}`} />
+                    <span className={`text-[12px] font-medium transition-colors ${isDragOverAsset ? 'text-coinbase-primary' : 'text-coinbase-muted group-hover:text-coinbase-primary'}`}>
+                      {isUploading ? 'Converting to local asset...' : formData.link.startsWith('data:') ? 'Local File Loaded successfully' : 'Drag & drop file here or click to select'}
                     </span>
                   </div>
                 )}
@@ -565,7 +606,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
 
               {/* Custom WebP Thumbnail Section */}
-              <div className="bg-coinbase-surface-soft border border-coinbase-hairline rounded-xl p-5 space-y-4">
+              <div 
+                onDragOver={(e) => { e.preventDefault(); setIsDragOverThumbnail(true); }}
+                onDragLeave={() => setIsDragOverThumbnail(false)}
+                onDrop={(e) => { e.preventDefault(); setIsDragOverThumbnail(false); const file = e.dataTransfer.files?.[0]; if (file) { processThumbnailFile(file); } }}
+                className={`border rounded-xl p-5 space-y-4 transition-all duration-200 ${isDragOverThumbnail ? 'border-coinbase-primary bg-coinbase-primary/5 ring-2 ring-coinbase-primary/20 scale-[1.01]' : 'bg-coinbase-surface-soft border-coinbase-hairline'}`}
+              >
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider">Custom Thumbnail</label>
                   {formData.customThumbnail && (
@@ -601,7 +647,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       <img src={formData.customThumbnail} className="w-full h-full object-cover" alt="Custom Thumbnail Preview" />
                     </div>
                   ) : (
-                    <span className="text-[12px] text-coinbase-muted font-medium italic">Menggunakan default preview aset</span>
+                    <span className="text-[12px] text-coinbase-muted font-medium italic">Menggunakan default preview aset, drag & drop gambar, atau paste gambar dari clipboard</span>
                   )}
                 </div>
                 

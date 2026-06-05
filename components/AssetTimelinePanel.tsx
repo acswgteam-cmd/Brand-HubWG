@@ -148,23 +148,36 @@ const AssetTimelinePanel: React.FC<AssetTimelinePanelProps> = ({ asset, onClose,
           let oldValue = value.old;
           let newValue = value.new;
 
-          if (key === 'title') label = 'Judul Aset';
+          if (key === 'title') label = 'Nama Aset';
           if (key === 'description') label = 'Deskripsi';
-          if (key === 'status') label = 'Status Publikasi';
-          if (key === 'brand') label = 'Entitas / Brand';
-          if (key === 'type') label = 'Format File';
+          if (key === 'status') label = 'Status';
+          if (key === 'brand') label = 'Business Brand';
+          if (key === 'type') label = 'Format';
+          if (key === 'updateSchedule') label = 'Jadwal Pembaruan';
+          if (key === 'customThumbnail') label = 'Thumbnail';
           if (key === 'link') {
-            label = 'Link Berkas';
+            label = 'Link Aset';
             oldValue = oldValue ? (oldValue.startsWith('data:') ? 'Lokal berkas (Base64)' : oldValue) : '—';
             newValue = newValue ? (newValue.startsWith('data:') ? 'Lokal berkas (Base64)' : newValue) : '—';
           }
+          if (key === 'fileMetadata') {
+            label = 'File Aset';
+            const formatFileMeta = (val: any) => {
+              if (!val) return '—';
+              const sizeStr = val.size ? ` (${(val.size / 1024).toFixed(1)} KB)` : '';
+              const mimeStr = val.mimeType || 'Berkas';
+              return `${mimeStr}${sizeStr}`;
+            };
+            oldValue = formatFileMeta(oldValue);
+            newValue = formatFileMeta(newValue);
+          }
           if (key === 'tags') {
-            label = 'Tag Aset';
+            label = 'Tags';
             oldValue = Array.isArray(oldValue) ? oldValue.join(', ') : oldValue || '—';
             newValue = Array.isArray(newValue) ? newValue.join(', ') : newValue || '—';
           }
           if (key === 'version') {
-            label = 'Versi Berkas';
+            label = 'Versi';
             oldValue = `v${oldValue}`;
             newValue = `v${newValue}`;
           }

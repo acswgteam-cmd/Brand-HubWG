@@ -124,52 +124,89 @@ const AdminApp: React.FC = () => {
         const changes: string[] = [];
         const details: Record<string, any> = {};
 
+        if (editingAsset.title !== cleanAssetData.title) {
+          changes.push('mengubah nama aset');
+          details.title = { old: editingAsset.title, new: cleanAssetData.title };
+        }
         if (editingAsset.link !== cleanAssetData.link) {
-          changes.push('mengunggah ulang berkas');
+          changes.push('mengubah link aset');
           details.link = { old: editingAsset.link, new: cleanAssetData.link };
         }
+        if (JSON.stringify(editingAsset.fileMetadata) !== JSON.stringify(cleanAssetData.fileMetadata)) {
+          changes.push('mengubah file aset');
+          details.fileMetadata = { old: editingAsset.fileMetadata || null, new: cleanAssetData.fileMetadata || null };
+        }
+        if (editingAsset.brandId !== cleanAssetData.brandId) {
+          changes.push('mengubah business brand');
+          const oldBrand = data.brands.find(b => b.id === editingAsset.brandId)?.name || '—';
+          const newBrand = data.brands.find(b => b.id === cleanAssetData.brandId)?.name || '—';
+          details.brand = { old: oldBrand, new: newBrand };
+        }
+        if (editingAsset.typeId !== cleanAssetData.typeId) {
+          changes.push('mengubah format');
+          const oldType = data.assetTypes.find(t => t.id === editingAsset.typeId)?.name || '—';
+          const newType = data.assetTypes.find(t => t.id === cleanAssetData.typeId)?.name || '—';
+          details.type = { old: oldType, new: newType };
+        }
+        if (editingAsset.status !== cleanAssetData.status) {
+          changes.push('mengubah status');
+          details.status = { old: editingAsset.status, new: cleanAssetData.status };
+        }
         if (editingAsset.version !== cleanAssetData.version) {
-          changes.push(`memperbarui versi berkas ke v${cleanAssetData.version}`);
+          changes.push('mengubah versi');
           details.version = { 
             old: editingAsset.version, 
             new: cleanAssetData.version, 
             changelog: _changelog || 'Tidak ada catatan perubahan.' 
           };
         }
-        if (editingAsset.title !== cleanAssetData.title) {
-          changes.push('mengubah judul');
-          details.title = { old: editingAsset.title, new: cleanAssetData.title };
+        if (editingAsset.updateIntervalMonths !== cleanAssetData.updateIntervalMonths || editingAsset.nextUpdateDue !== cleanAssetData.nextUpdateDue) {
+          changes.push('mengubah jadwal pembaruan');
+          
+          const formatInterval = (months: number | null | undefined) => {
+            if (!months) return 'Tidak di-set';
+            if (months === 1) return 'Setiap 1 Bulan';
+            if (months === 3) return 'Setiap 3 Bulan (Kuartal)';
+            if (months === 6) return 'Setiap 6 Bulan (Semester)';
+            if (months === 12) return 'Setiap 12 Bulan (Tahunan)';
+            return `Setiap ${months} Bulan`;
+          };
+
+          const formatNextDue = (due: string | null | undefined) => {
+            if (!due) return '';
+            try {
+              return ` (Jatuh tempo: ${new Date(due).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })})`;
+            } catch (e) {
+              return ` (Jatuh tempo: ${due})`;
+            }
+          };
+
+          const oldSched = `${formatInterval(editingAsset.updateIntervalMonths)}${formatNextDue(editingAsset.nextUpdateDue)}`;
+          const newSched = `${formatInterval(cleanAssetData.updateIntervalMonths)}${formatNextDue(cleanAssetData.nextUpdateDue)}`;
+
+          details.updateSchedule = { old: oldSched, new: newSched };
+        }
+        if (JSON.stringify(editingAsset.tags) !== JSON.stringify(cleanAssetData.tags)) {
+          changes.push('mengubah tags');
+          details.tags = { old: editingAsset.tags || [], new: cleanAssetData.tags || [] };
+        }
+        if (editingAsset.customThumbnail !== cleanAssetData.customThumbnail) {
+          changes.push('mengubah thumbnail');
+          details.customThumbnail = { 
+            old: editingAsset.customThumbnail ? 'Thumbnail Kustom' : 'Tidak ada thumbnail', 
+            new: cleanAssetData.customThumbnail ? 'Thumbnail Kustom' : 'Tidak ada thumbnail' 
+          };
         }
         if (editingAsset.description !== cleanAssetData.description) {
           changes.push('mengubah deskripsi');
           details.description = { old: editingAsset.description || '—', new: cleanAssetData.description || '—' };
-        }
-        if (JSON.stringify(editingAsset.tags) !== JSON.stringify(cleanAssetData.tags)) {
-          changes.push('mengubah tag');
-          details.tags = { old: editingAsset.tags || [], new: cleanAssetData.tags || [] };
-        }
-        if (editingAsset.brandId !== cleanAssetData.brandId) {
-          changes.push('mengubah entitas');
-          const oldBrand = data.brands.find(b => b.id === editingAsset.brandId)?.name || '—';
-          const newBrand = data.brands.find(b => b.id === cleanAssetData.brandId)?.name || '—';
-          details.brand = { old: oldBrand, new: newBrand };
-        }
-        if (editingAsset.typeId !== cleanAssetData.typeId) {
-          changes.push('mengubah format/tipe');
-          const oldType = data.assetTypes.find(t => t.id === editingAsset.typeId)?.name || '—';
-          const newType = data.assetTypes.find(t => t.id === cleanAssetData.typeId)?.name || '—';
-          details.type = { old: oldType, new: newType };
-        }
-        if (editingAsset.status !== cleanAssetData.status) {
-          changes.push(`mengubah status menjadi ${cleanAssetData.status}`);
-          details.status = { old: editingAsset.status, new: cleanAssetData.status };
         }
 
         if (changes.length > 0) {
           let actionType: 'CREATE' | 'REUPLOAD' | 'VERSION_UPDATE' | 'UPDATE_INFO' = 'UPDATE_INFO';
           if (editingAsset.version !== cleanAssetData.version) {
             actionType = 'VERSION_UPDATE';
-          } else if (editingAsset.link !== cleanAssetData.link) {
+          } else if (editingAsset.link !== cleanAssetData.link || JSON.stringify(editingAsset.fileMetadata) !== JSON.stringify(cleanAssetData.fileMetadata)) {
             actionType = 'REUPLOAD';
           }
 
