@@ -2,7 +2,7 @@
 import { Asset, Brand, AssetType, AboutContent, AssetVersion, AssetRequest, AssetActivity } from '../types';
 import { supabase } from './supabaseClient';
 import { DEFAULT_ABOUT_CONTENT } from '../constants';
-import { extractGoogleDriveFileId } from './metadataService';
+import { extractGoogleDriveFileId, extractGoogleDriveFolderId } from './metadataService';
 
 const mapAssetActivity = (db: any): AssetActivity => ({
   id: db.id,
@@ -310,7 +310,21 @@ export const deleteAssetType = async (id: string) => {
 
 export const getPreviewLink = (url: string) => {
   if (!url) return '';
+  if (url.includes('docs.google.com')) {
+    if (url.includes('/edit') || url.includes('/view')) {
+      return url.replace(/\/edit\b.*/, '/preview').replace(/\/view\b.*/, '/preview');
+    }
+    if (!url.endsWith('/preview')) {
+      const clean = url.replace(/\/+$/, '');
+      return `${clean}/preview`;
+    }
+    return url;
+  }
   if (url.includes('drive.google.com')) {
+    const folderId = extractGoogleDriveFolderId(url);
+    if (folderId) {
+      return `https://drive.google.com/embeddedfolderview?id=${folderId}#list`;
+    }
     const fileId = extractGoogleDriveFileId(url);
     if (fileId) {
       return `https://drive.google.com/file/d/${fileId}/preview`;
@@ -322,7 +336,14 @@ export const getPreviewLink = (url: string) => {
 export const getDownloadLink = (url: string) => {
   if (!url) return '';
   if (url.startsWith('data:')) return url;
+  if (url.includes('docs.google.com')) {
+    return url;
+  }
   if (url.includes('drive.google.com')) {
+    const folderId = extractGoogleDriveFolderId(url);
+    if (folderId) {
+      return url; // For folder, return the original URL since we can't direct-download a folder
+    }
     const fileId = extractGoogleDriveFileId(url);
     if (fileId) {
       return `https://drive.google.com/uc?export=download&id=${fileId}`;
@@ -338,6 +359,9 @@ export const getThumbnailUrl = (url: string) => {
   const lowerUrl = cleanUrl.toLowerCase();
   if (lowerUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/)) return url;
   if (url.includes('drive.google.com')) {
+    if (url.includes('/folders/') || extractGoogleDriveFolderId(url)) {
+      return null; // Folders don't have direct thumbnail image links
+    }
     const fileId = extractGoogleDriveFileId(url);
     if (fileId) {
       return `https://lh3.googleusercontent.com/d/${fileId}=w800`;
@@ -360,7 +384,12 @@ export const getFileType = (url: string) => {
   if (lowerUrl.match(/\.(mp4|webm|ogg|mov|m4v|avi|mkv)$/)) return 'video';
   if (lowerUrl.match(/\.(pdf)$/)) return 'pdf';
   if (lowerUrl.match(/\.(cdr)$/)) return 'cdr'; // Added CDR support
-  if (url.includes('drive.google.com')) return 'google-drive';
+  if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
+    if (url.includes('/folders/') || extractGoogleDriveFolderId(url)) {
+      return 'google-drive-folder';
+    }
+    return 'google-drive';
+  }
   return 'link';
 };
 

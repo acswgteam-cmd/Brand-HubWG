@@ -56,6 +56,15 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
         return;
       }
 
+      const type = getFileType(asset.link);
+      if (type === 'google-drive-folder') {
+        setLiveMetadata({
+          source: 'google-drive',
+          mimeType: 'application/vnd.google-apps.folder',
+        });
+        return;
+      }
+
       // Lazy-fetch Google Drive metadata if not stored yet
       const fileId = extractGoogleDriveFileId(asset.link);
       if (fileId) {
@@ -98,7 +107,9 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
       <div className="flex-1 overflow-y-auto no-scrollbar">
         
         {/* Preview Container */}
-        <div className="bg-[#e2e8f0] flex items-center justify-center h-[220px] lg:h-[320px] border-b border-coinbase-hairline">
+        <div className={`bg-[#e2e8f0] flex items-center justify-center border-b border-coinbase-hairline transition-all duration-300 ${
+          fileType === 'google-drive-folder' ? 'h-[380px] lg:h-[480px]' : 'h-[220px] lg:h-[320px]'
+        }`}>
           {(() => {
             switch (fileType) {
               case 'image':
@@ -115,10 +126,11 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
                 );
               case 'pdf':
               case 'google-drive':
+              case 'google-drive-folder':
                 return (
                   <iframe 
                     src={previewUrl} 
-                    className="w-full h-[320px] bg-white border-0" 
+                    className="w-full h-full bg-white border-0" 
                     title="Asset Preview"
                   />
                 );
@@ -148,7 +160,7 @@ const AssetDetailsPanel: React.FC<AssetDetailsPanelProps> = ({
           <div>
             <h1 className="text-[20px] font-semibold text-coinbase-ink leading-tight tracking-tight mb-1">{asset.title}</h1>
             <p className="text-[12px] text-coinbase-muted uppercase tracking-wide font-semibold">
-              {assetType?.name || '—'} • {fileType === 'google-drive' ? 'Google Drive / Cloud Link' : fileType === 'image' ? 'Image File' : fileType === 'video' ? 'Video File' : fileType === 'pdf' ? 'PDF Document' : 'External Link'}
+              {assetType?.name || '—'} • {fileType === 'google-drive-folder' ? 'Google Drive Folder' : fileType === 'google-drive' ? 'Google Drive / Cloud Link' : fileType === 'image' ? 'Image File' : fileType === 'video' ? 'Video File' : fileType === 'pdf' ? 'PDF Document' : 'External Link'}
             </p>
           </div>
 

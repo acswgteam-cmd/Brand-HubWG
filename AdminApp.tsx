@@ -962,12 +962,12 @@ const AdminApp: React.FC = () => {
               existingTags={Array.from(new Set(data.assets.flatMap(a => a.tags || [])))}
               onClose={() => { setCurrentView('all-assets'); setEditingAsset(null); }}
               onSaveAsset={handleSaveAsset}
-              onAddBrand={async (b) => { const r = await service.createBrand(b); setData(p => ({ ...p, brands: [...p.brands, r] })); }}
-              onUpdateBrand={async (b) => { const r = await service.updateBrand(b.id, b); setData(p => ({ ...p, brands: p.brands.map(x => x.id === r.id ? r : x) })); }}
-              onDeleteBrand={async (id) => { if(confirm("Are you sure?")) { await service.deleteBrand(id); setData(p => ({ ...p, brands: p.brands.filter(b => b.id !== id) })); } }}
-              onAddAssetType={async (t) => { const r = await service.createAssetType(t); setData(p => ({ ...p, assetTypes: [...p.assetTypes, r] })); }}
-              onUpdateAssetType={async (t) => { const r = await service.updateAssetType(t.id, t); setData(p => ({ ...p, assetTypes: p.assetTypes.map(x => x.id === r.id ? r : x) })); }}
-              onDeleteAssetType={async (id) => { if(confirm("Delete this format?")) { await service.deleteAssetType(id); setData(p => ({ ...p, assetTypes: p.assetTypes.filter(t => t.id !== id) })); } }}
+              onAddBrand={async (b) => { try { const r = await service.createBrand(b); setData(p => ({ ...p, brands: [...p.brands, r] })); } catch (e: any) { alert("Error adding brand: " + (e.message || "Unknown error")); } }}
+              onUpdateBrand={async (b) => { try { const r = await service.updateBrand(b.id, b); setData(p => ({ ...p, brands: p.brands.map(x => x.id === r.id ? r : x) })); } catch (e: any) { alert("Error updating brand: " + (e.message || "Unknown error")); } }}
+              onDeleteBrand={async (id) => { if(confirm("Are you sure?")) { try { await service.deleteBrand(id); setData(p => ({ ...p, brands: p.brands.filter(b => b.id !== id) })); } catch (e: any) { alert("Error deleting brand: " + (e.message || "Unknown error")); } } }}
+              onAddAssetType={async (t) => { try { const r = await service.createAssetType(t); setData(p => ({ ...p, assetTypes: [...p.assetTypes, r] })); } catch (e: any) { alert("Error adding format: " + (e.message || "Unknown error")); } }}
+              onUpdateAssetType={async (t) => { try { const r = await service.updateAssetType(t.id, t); setData(p => ({ ...p, assetTypes: p.assetTypes.map(x => x.id === r.id ? r : x) })); } catch (e: any) { alert("Error updating format: " + (e.message || "Unknown error")); } }}
+              onDeleteAssetType={async (id) => { if(confirm("Delete this format?")) { try { await service.deleteAssetType(id); setData(p => ({ ...p, assetTypes: p.assetTypes.filter(t => t.id !== id) })); } catch (e: any) { alert("Error deleting format: " + (e.message || "Unknown error")); } } }}
               onReorderBrands={handleReorderBrands}
               onReorderTypes={handleReorderTypes}
             />

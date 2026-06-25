@@ -93,6 +93,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ asset, brands = [], assetTy
                 );
               case 'pdf':
               case 'google-drive':
+              case 'google-drive-folder':
                 return (
                   <iframe
                     src={previewUrl}

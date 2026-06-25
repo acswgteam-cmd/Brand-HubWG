@@ -99,7 +99,10 @@ export const extractLocalFileMetadata = (file: File): Promise<AssetFileMetadata>
 // =========================================================================
 
 export const extractGoogleDriveFileId = (url: string): string | null => {
-  if (!url || !url.includes('drive.google.com')) return null;
+  if (!url) return null;
+  if (!url.includes('drive.google.com') && !url.includes('docs.google.com')) return null;
+  // If it's a folder URL, it shouldn't be parsed as a file ID
+  if (url.includes('/folders/')) return null;
   const patterns = [
     /\/d\/([a-zA-Z0-9_-]+)/,          // /d/{fileId}
     /[?&]id=([a-zA-Z0-9_-]+)/,         // ?id={fileId}
@@ -109,6 +112,28 @@ export const extractGoogleDriveFileId = (url: string): string | null => {
   for (const pattern of patterns) {
     const match = url.match(pattern);
     if (match?.[1]) return match[1];
+  }
+  return null;
+};
+
+// =========================================================================
+// Extract Google Drive Folder ID from folder URLs
+// =========================================================================
+
+export const extractGoogleDriveFolderId = (url: string): string | null => {
+  if (!url || !url.includes('drive.google.com')) return null;
+  const patterns = [
+    /\/folders\/([a-zA-Z0-9_-]+)/,
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+  ];
+  // Prioritize /folders/ pattern
+  const foldersMatch = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if (foldersMatch?.[1]) return foldersMatch[1];
+  
+  // Fallback to ?id= pattern if it's explicitly a folder structure
+  if (url.includes('/folderview') || url.includes('/folders')) {
+    const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (idMatch?.[1]) return idMatch[1];
   }
   return null;
 };

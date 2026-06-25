@@ -723,54 +723,61 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 <div className="space-y-3">
                   <h3 className="text-[11px] font-semibold text-coinbase-muted uppercase tracking-wider">Preview</h3>
                   
-                  <div className="rounded-xl overflow-hidden bg-[#e2e8f0] border border-coinbase-hairline flex items-center justify-center w-full h-[260px] relative">
-                    {(() => {
-                      if (!formData.link) {
-                        return (
-                          <div className="text-center py-10 px-6 text-coinbase-muted flex flex-col items-center gap-2">
-                            <Page className="w-8 h-8 opacity-40 text-coinbase-muted" />
-                            <span className="text-xs">No media provided. Upload a file or insert a link URL.</span>
-                          </div>
-                        );
-                      }
+                  {(() => {
+                    const fileType = formData.link ? (formData.customThumbnail ? 'image' : service.getFileType(formData.link)) : null;
+                    const heightClass = fileType === 'google-drive-folder' ? 'h-[400px]' : 'h-[260px]';
+                    
+                    return (
+                      <div className={`rounded-xl overflow-hidden bg-[#e2e8f0] border border-coinbase-hairline flex items-center justify-center w-full relative transition-all duration-300 ${heightClass}`}>
+                        {(() => {
+                          if (!formData.link) {
+                            return (
+                              <div className="text-center py-10 px-6 text-coinbase-muted flex flex-col items-center gap-2">
+                                <Page className="w-8 h-8 opacity-40 text-coinbase-muted" />
+                                <span className="text-xs">No media provided. Upload a file or insert a link URL.</span>
+                              </div>
+                            );
+                          }
 
-                      const fileType = formData.customThumbnail ? 'image' : service.getFileType(formData.link);
-                      const previewUrl = service.getPreviewLink(formData.link);
-                      const thumbnailUrl = formData.customThumbnail || service.getThumbnailUrl(formData.link) || previewUrl;
+                          const previewUrl = service.getPreviewLink(formData.link);
+                          const thumbnailUrl = formData.customThumbnail || service.getThumbnailUrl(formData.link) || previewUrl;
 
-                      switch (fileType) {
-                        case 'image':
-                          return (
-                            <div className="p-6 w-full h-full flex items-center justify-center">
-                              <img src={thumbnailUrl} alt="Preview" className="max-w-full max-h-full object-contain rounded shadow-sm" />
-                            </div>
-                          );
-                        case 'video':
-                          return (
-                            <div className="p-4 w-full h-full flex items-center justify-center">
-                              <video controls src={previewUrl} className="max-w-full max-h-full bg-coinbase-ink rounded shadow-inner" />
-                            </div>
-                          );
-                        case 'pdf':
-                        case 'google-drive':
-                          return (
-                            <iframe 
-                              src={previewUrl} 
-                              className="w-full h-full bg-white rounded border-0" 
-                              title="Asset Preview"
-                            />
-                          );
-                        default:
-                          return (
-                            <div className="text-center py-8 px-6 text-coinbase-muted flex flex-col items-center gap-2">
-                              <Link className="w-8 h-8 opacity-40 text-coinbase-muted" />
-                              <span className="text-[13px] font-semibold text-coinbase-ink">Link Eksternal</span>
-                              <a href={formData.link} target="_blank" rel="noreferrer" className="text-[12px] text-coinbase-primary hover:underline break-all max-w-[240px]">{formData.link}</a>
-                            </div>
-                          );
-                      }
-                    })()}
-                  </div>
+                          switch (fileType) {
+                            case 'image':
+                              return (
+                                <div className="p-6 w-full h-full flex items-center justify-center">
+                                  <img src={thumbnailUrl} alt="Preview" className="max-w-full max-h-full object-contain rounded shadow-sm" />
+                                </div>
+                              );
+                            case 'video':
+                              return (
+                                <div className="p-4 w-full h-full flex items-center justify-center">
+                                  <video controls src={previewUrl} className="max-w-full max-h-full bg-coinbase-ink rounded shadow-inner" />
+                                </div>
+                              );
+                            case 'pdf':
+                            case 'google-drive':
+                            case 'google-drive-folder':
+                              return (
+                                <iframe 
+                                  src={previewUrl} 
+                                  className="w-full h-full bg-white rounded border-0" 
+                                  title="Asset Preview"
+                                />
+                              );
+                            default:
+                              return (
+                                <div className="text-center py-8 px-6 text-coinbase-muted flex flex-col items-center gap-2">
+                                  <Link className="w-8 h-8 opacity-40 text-coinbase-muted" />
+                                  <span className="text-[13px] font-semibold text-coinbase-ink">Link Eksternal</span>
+                                  <a href={formData.link} target="_blank" rel="noreferrer" className="text-[12px] text-coinbase-primary hover:underline break-all max-w-[240px]">{formData.link}</a>
+                                </div>
+                              );
+                          }
+                        })()}
+                      </div>
+                    );
+                  })()}
 
                   {/* Dynamic Real Metadata display */}
                   <div className="pt-1 select-none">
